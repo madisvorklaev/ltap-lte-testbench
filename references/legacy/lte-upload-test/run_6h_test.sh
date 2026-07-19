@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RESULTS_DIR="$BASE_DIR/results"
+mkdir -p "$RESULTS_DIR"
+
+SUMMARY_JSON="$(
+  "$BASE_DIR/lte_upload_test.py" \
+    --iterations 30 \
+    --interval-seconds 720 \
+    --sample-seconds 15 \
+    --output-dir "$RESULTS_DIR" \
+    --file-a /home/madis/Downloads/for_upload/Obsidian-1.12.7.AppImage \
+    --url-a http://81.90.121.7:18080/ \
+    --label-a lte1_port18080 \
+    --file-b /home/madis/Downloads/for_upload/balena-etcher_2.1.4_amd64.deb \
+    --url-b http://81.90.121.7:18081/ \
+    --label-b lte2_port18081
+)"
+
+echo "$SUMMARY_JSON"
+
+CSV_PATH="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["csv"])' <<<"$SUMMARY_JSON")"
+REPORT_PATH="${CSV_PATH%.csv}_report.md"
+"$BASE_DIR/analyze_lte_upload.py" "$CSV_PATH" --output "$REPORT_PATH"
+

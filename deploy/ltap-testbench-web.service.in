@@ -1,0 +1,13 @@
+[Unit]
+Description=LtAP LTE Testbench web service
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__ROOT__
+ExecStart=__ROOT__/.venv/bin/ltap-testbench serve --host 127.0.0.1 --port 8787
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

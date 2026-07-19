@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ltap-lte-testbench"
+version = "0.1.0a0"
+description = "Dual-LTE router benchmark and diagnostics application"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.111",
+  "jinja2>=3.1",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "python-multipart>=0.0.9",
+  "sqlalchemy>=2.0",
+  "typer>=0.12",
+  "uvicorn[standard]>=0.30",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27",
+  "mypy>=1.10",
+  "pytest>=8.2",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+ltap-testbench = "ltap_testbench.cli:app"
+ltap-testnode = "ltap_testnode.app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ltap_testbench", "testnode/src/ltap_testnode"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["references/legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "RUF"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+plugins = []

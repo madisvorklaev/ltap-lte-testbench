@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LtAP LTE Testbench</title>
+    <style>
+      body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: #f6f7f9; color: #18202a; }
+      header { background: #102033; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; }
+      main { max-width: 1180px; margin: 0 auto; padding: 22px; display: grid; gap: 18px; }
+      section { background: white; border: 1px solid #d9dee7; border-radius: 8px; padding: 16px; }
+      h1, h2 { margin: 0 0 12px; letter-spacing: 0; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border-bottom: 1px solid #e6e9ef; padding: 8px; text-align: left; }
+      th { color: #526071; font-weight: 600; }
+      code { background: #eef1f5; padding: 2px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LtAP LTE Testbench</h1>
+      <span>v{{ version }}</span>
+    </header>
+    <main>
+      <section>
+        <h2>Router Profiles</h2>
+        <table>
+          <tr><th>Slug</th><th>Name</th><th>Kind</th><th>Changes</th></tr>
+          {% for router in routers %}
+          <tr>
+            <td><code>{{ router.slug }}</code></td>
+            <td>{{ router.display_name }}</td>
+            <td>{{ router.kind.value }}</td>
+            <td>{{ "allowed" if router.allow_configuration_changes else "disabled" }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </section>
+      <section>
+        <h2>Recent Runs</h2>
+        <table>
+          <tr><th>Run</th><th>Router</th><th>Plan</th><th>State</th></tr>
+          {% for run in runs %}
+          <tr>
+            <td><code>{{ run.run_id }}</code></td>
+            <td>{{ run.router.slug }}</td>
+            <td>{{ run.plan_slug }}</td>
+            <td>{{ run.state.value }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </section>
+    </main>
+  </body>
+</html>
