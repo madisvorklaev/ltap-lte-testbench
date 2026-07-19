@@ -14,3 +14,4 @@
 - Added test-node status and metrics endpoints plus reservation conflict/release and upload-sink tests.
 - Added per-run artifact persistence and API/CLI artifact listing.
 - Added validated service/API creation paths for router profiles and test plans.
+- Added server profile persistence plus controller-side test-node client for health, status, metrics, and reservations.
