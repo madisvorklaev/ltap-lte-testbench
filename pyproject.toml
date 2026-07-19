@@ -51,3 +51,9 @@ disallow_untyped_defs = true
 no_implicit_optional = true
 check_untyped_defs = true
 plugins = []
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning",
+  "ignore:.*on_event is deprecated.*:DeprecationWarning",
+]

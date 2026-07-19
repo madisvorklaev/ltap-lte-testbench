@@ -12,3 +12,5 @@
 - Added profile/test-plan validation schemas and tests for duplicate paths, bad port ranges, MikroTik management-host requirements, and duplicate stages.
 - Added fake router scenarios for FastTrack-enabled preflight failure, wrong-path verification failure, and RouterOS API timeout.
 - Added test-node status and metrics endpoints plus reservation conflict/release and upload-sink tests.
+- Added per-run artifact persistence and API/CLI artifact listing.
+- Added validated service/API creation paths for router profiles and test plans.

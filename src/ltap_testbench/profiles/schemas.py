@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -88,6 +89,8 @@ class TemporaryRouterChangesConfig(BaseModel):
 
 
 class TestPlanConfig(BaseModel):
+    __test__: ClassVar[bool] = False
+
     slug: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9][a-z0-9_.-]*$")
     name: str = Field(min_length=1, max_length=160)
     version: str = Field(default="1", min_length=1, max_length=40)

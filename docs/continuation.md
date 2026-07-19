@@ -7,7 +7,7 @@ Last updated: 2026-07-19 Europe/Tallinn.
 - Repository: `/home/madis/projects/ltap-lte-testbench`
 - GitHub: `https://github.com/madisvorklaev/ltap-lte-testbench` private
 - Branch: `main`
-- Last verified feature commit before this note: `c89f387 feat: add test node status and metrics`
+- Last verified feature commit before this note: `e1a9101 feat: add validated profile creation`
 - Web service: `ltap-testbench-web.service`
 - Local URL: `http://127.0.0.1:8787`
 - Database: `var/ltap-testbench.sqlite3` and ignored by Git
@@ -36,6 +36,8 @@ curl http://127.0.0.1:8787/api/v1/health
 - Profile/test-plan schemas validate path IDs, MikroTik host requirements, stage uniqueness, and port overlap.
 - Fake adapter can simulate FastTrack-enabled, wrong-path, and API-timeout failures.
 - Test-node status/metrics/reservation/upload-sink behavior is covered by tests.
+- Runs persist metadata, resolved plan, summary, and events under ignored `var/results/<run-id>/`.
+- Router profiles and test plans can be created through validated service/API paths.
 - Generic and fake router adapters support safe no-hardware development.
 - Controller preflight detects Wi-Fi default route and Ethernet carrier state.
 - Legacy upload scripts and methodology export are preserved under `references/legacy/`.
@@ -54,6 +56,6 @@ curl http://127.0.0.1:8787/api/v1/health
 Implement Milestone 1:
 
 1. Add Alembic migrations instead of direct `create_all`.
-2. Add persisted artifact directories and normalized CSV/JSON writers for simulated runs.
-3. Add CLI/API profile creation using the new validation schemas.
+2. Add controller/test-node clients for live health and reservation checks.
+3. Add CLI create commands for router profiles and test plans.
 4. Split the worker into a separate service once the durable queue shape is tested.
