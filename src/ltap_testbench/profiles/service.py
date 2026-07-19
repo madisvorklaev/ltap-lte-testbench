@@ -1,8 +1,12 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ltap_testbench.db.models import RouterKind, RouterProfile, TestPlan
-from ltap_testbench.profiles.schemas import RouterProfileConfig, TestPlanConfig
+from ltap_testbench.db.models import RouterKind, RouterProfile, ServerProfile, TestPlan
+from ltap_testbench.profiles.schemas import (
+    RouterProfileConfig,
+    ServerProfileConfig,
+    TestPlanConfig,
+)
 
 
 def create_router_profile(session: Session, config: RouterProfileConfig) -> RouterProfile:
@@ -43,3 +47,20 @@ def create_test_plan(session: Session, config: TestPlanConfig) -> TestPlan:
     session.add(plan)
     session.commit()
     return plan
+
+
+def create_server_profile(session: Session, config: ServerProfileConfig) -> ServerProfile:
+    existing = session.scalar(select(ServerProfile).where(ServerProfile.slug == config.slug))
+    if existing is not None:
+        raise ValueError(f"server profile already exists: {config.slug}")
+    server = ServerProfile(
+        slug=config.slug,
+        display_name=config.display_name,
+        control_api_url=config.control_api_url,
+        token_secret_ref=config.token_secret_ref,
+        public_host=config.public_host,
+        metadata_json=config.metadata,
+    )
+    session.add(server)
+    session.commit()
+    return server

@@ -7,9 +7,14 @@ from ltap_testbench.profiles.schemas import (
     RouterKindValue,
     RouterPathConfig,
     RouterProfileConfig,
+    ServerProfileConfig,
     TestPlanConfig,
 )
-from ltap_testbench.profiles.service import create_router_profile, create_test_plan
+from ltap_testbench.profiles.service import (
+    create_router_profile,
+    create_server_profile,
+    create_test_plan,
+)
 
 
 def test_create_router_profile_persists_paths() -> None:
@@ -54,3 +59,20 @@ def test_create_test_plan_rejects_duplicate_slug() -> None:
         create_test_plan(session, config)
         with pytest.raises(ValueError):
             create_test_plan(session, config)
+
+
+def test_create_server_profile() -> None:
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        server = create_server_profile(
+            session,
+            ServerProfileConfig(
+                slug="local-node",
+                display_name="Local Node",
+                control_api_url="http://127.0.0.1:8788",
+            ),
+        )
+        assert server.slug == "local-node"
+        assert server.control_api_url == "http://127.0.0.1:8788"

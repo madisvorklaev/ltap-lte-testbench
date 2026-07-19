@@ -9,12 +9,17 @@ from sqlalchemy.orm import Session
 
 from ltap_testbench import __version__
 from ltap_testbench.db.base import get_session, init_db
-from ltap_testbench.db.models import RouterProfile, TestPlan, TestRun
+from ltap_testbench.db.models import RouterProfile, ServerProfile, TestPlan, TestRun
 from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
-from ltap_testbench.profiles.schemas import RouterProfileConfig, TestPlanConfig
-from ltap_testbench.profiles.service import create_router_profile, create_test_plan
+from ltap_testbench.profiles.schemas import RouterProfileConfig, ServerProfileConfig, TestPlanConfig
+from ltap_testbench.profiles.service import (
+    create_router_profile,
+    create_server_profile,
+    create_test_plan,
+)
 from ltap_testbench.reporting.artifacts import list_run_artifacts
+from ltap_testbench.testnode.client import TestNodeClient
 
 template_dir = Path(__file__).resolve().parents[1] / "web" / "templates"
 templates = Jinja2Templates(directory=str(template_dir))
@@ -118,6 +123,53 @@ def api_create_test_plan(
         "name": plan.name,
         "version": plan.version,
     }
+
+
+@app.get("/api/v1/servers")
+def list_servers(session: Session = Depends(get_session)) -> list[dict]:
+    servers = session.scalars(select(ServerProfile).order_by(ServerProfile.slug)).all()
+    return [
+        {
+            "id": server.id,
+            "slug": server.slug,
+            "display_name": server.display_name,
+            "control_api_url": server.control_api_url,
+            "public_host": server.public_host,
+        }
+        for server in servers
+    ]
+
+
+@app.post("/api/v1/servers")
+def api_create_server(
+    payload: ServerProfileConfig,
+    session: Session = Depends(get_session),
+) -> dict:
+    try:
+        server = create_server_profile(session, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return {
+        "id": server.id,
+        "slug": server.slug,
+        "display_name": server.display_name,
+        "control_api_url": server.control_api_url,
+    }
+
+
+@app.post("/api/v1/servers/{server_slug}/health")
+def server_health(server_slug: str, session: Session = Depends(get_session)) -> dict:
+    server = session.scalar(select(ServerProfile).where(ServerProfile.slug == server_slug))
+    if server is None:
+        raise HTTPException(status_code=404, detail="server not found")
+    client = TestNodeClient(server.control_api_url)
+    try:
+        return client.health()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"test-node health check failed: {exc}",
+        ) from exc
 
 
 @app.post("/api/v1/runs")

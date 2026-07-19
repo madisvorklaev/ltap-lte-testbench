@@ -111,6 +111,15 @@ class TestPlanConfig(BaseModel):
         return self
 
 
+class ServerProfileConfig(BaseModel):
+    slug: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9][a-z0-9_.-]*$")
+    display_name: str = Field(min_length=1, max_length=160)
+    control_api_url: str = Field(min_length=1, max_length=255)
+    token_secret_ref: str | None = None
+    public_host: str | None = None
+    metadata: dict = Field(default_factory=dict)
+
+
 def validate_non_overlapping_ports(paths: list[RouterPathConfig]) -> None:
     configured = [path for path in paths if path.ports is not None]
     for index, path in enumerate(configured):

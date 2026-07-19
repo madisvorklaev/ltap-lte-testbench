@@ -1,18 +1,23 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ltap_testbench.db.models import RouterProfile, TestPlan
+from ltap_testbench.db.models import RouterProfile, ServerProfile, TestPlan
 from ltap_testbench.profiles.schemas import (
     LatencyStageConfig,
     PortRange,
     RouterKindValue,
     RouterPathConfig,
     RouterProfileConfig,
+    ServerProfileConfig,
     TcpUploadStageConfig,
     TemporaryRouterChangesConfig,
     TestPlanConfig,
 )
-from ltap_testbench.profiles.service import create_router_profile, create_test_plan
+from ltap_testbench.profiles.service import (
+    create_router_profile,
+    create_server_profile,
+    create_test_plan,
+)
 
 QUICK_CHECK_PLAN = TestPlanConfig(
     slug="quick-check",
@@ -49,10 +54,17 @@ def seed_demo_data(session: Session) -> None:
             ),
         ],
     )
+    local_testnode = ServerProfileConfig(
+        slug="local-testnode",
+        display_name="Local Test Node",
+        control_api_url="http://127.0.0.1:8788",
+    )
     if session.scalar(select(RouterProfile).where(RouterProfile.slug == "demo-generic")) is None:
         create_router_profile(session, generic)
     if session.scalar(select(RouterProfile).where(RouterProfile.slug == "demo-fake-ltap")) is None:
         create_router_profile(session, fake_ltap)
     if session.scalar(select(TestPlan).where(TestPlan.slug == "quick-check")) is None:
         create_test_plan(session, QUICK_CHECK_PLAN)
+    if session.scalar(select(ServerProfile).where(ServerProfile.slug == "local-testnode")) is None:
+        create_server_profile(session, local_testnode)
     session.commit()

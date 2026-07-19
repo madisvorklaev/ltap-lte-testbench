@@ -66,6 +66,19 @@ class TestPlan(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class ServerProfile(Base):
+    __tablename__ = "server_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    display_name: Mapped[str] = mapped_column(String(160))
+    control_api_url: Mapped[str] = mapped_column(String(255))
+    token_secret_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    public_host: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class TestRun(Base):
     __tablename__ = "test_runs"
 
