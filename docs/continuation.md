@@ -5,14 +5,15 @@ Last updated: 2026-07-19 Europe/Tallinn.
 ## Current Local State
 
 - Repository: `/home/madis/projects/ltap-lte-testbench`
+- GitHub: `https://github.com/madisvorklaev/ltap-lte-testbench` private
 - Branch: `main`
-- Last verified commit: `e5108c9 feat: scaffold LtAP LTE testbench`
+- Last verified commit before this note: `f3a4581 docs: add continuation notes`
 - Web service: `ltap-testbench-web.service`
 - Local URL: `http://127.0.0.1:8787`
 - Database: `var/ltap-testbench.sqlite3` and ignored by Git
 - Router state: not contacted; currently disconnected
 - Controller network: preflight saw default route on Wi-Fi `wlp2s0` and Ethernet `eno1` down
-- GitHub: `gh` is not authenticated; remote repository was not created
+- GitHub issues: milestone tracking created as issues `#1` through `#9`
 
 ## Verification Commands
 
@@ -38,7 +39,6 @@ curl http://127.0.0.1:8787/api/v1/health
 
 ## Main Gaps
 
-- Private GitHub repo must be created after authentication.
 - MikroTik adapter is read-only scaffold only; secret backend and live discovery are next.
 - Worker currently runs synchronously in-process for the MVP.
 - IRTT/iperf3 traffic stages are not implemented yet.
