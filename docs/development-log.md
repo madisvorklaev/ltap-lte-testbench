@@ -9,3 +9,6 @@
 - GitHub repository `madisvorklaev/ltap-lte-testbench` is private and synced.
 - Created GitHub milestone tracking issues `#1` through `#9`.
 - Began Milestone 1 with explicit run state-transition validation, cancellation entrypoints, and incomplete-run recovery tests.
+- Added profile/test-plan validation schemas and tests for duplicate paths, bad port ranges, MikroTik management-host requirements, and duplicate stages.
+- Added fake router scenarios for FastTrack-enabled preflight failure, wrong-path verification failure, and RouterOS API timeout.
+- Added test-node status and metrics endpoints plus reservation conflict/release and upload-sink tests.
