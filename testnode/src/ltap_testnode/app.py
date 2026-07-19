@@ -1,3 +1,4 @@
+import time
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -5,9 +6,12 @@ import uvicorn
 from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
 
+from ltap_testnode.metrics import collect_metrics
+
 app = FastAPI(title="LtAP Test Node")
 RUNS: dict[str, list[dict]] = {}
 RESERVATIONS: dict[str, dict] = {}
+STARTED_AT = time.time()
 
 
 class ReservationCreate(BaseModel):
@@ -20,9 +24,33 @@ def now_iso() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
+def prune_expired_reservations() -> None:
+    now = time.time()
+    expired = [
+        reservation_id
+        for reservation_id, reservation in RESERVATIONS.items()
+        if now - reservation["created_epoch"] > reservation["ttl_seconds"]
+    ]
+    for reservation_id in expired:
+        RESERVATIONS.pop(reservation_id, None)
+
+
 @app.get("/api/v1/health")
 def health() -> dict:
     return {"ok": True, "utc": now_iso(), "service": "ltap-testnode"}
+
+
+@app.get("/api/v1/status")
+def status() -> dict:
+    prune_expired_reservations()
+    return {
+        "ok": True,
+        "utc": now_iso(),
+        "started_at_epoch": STARTED_AT,
+        "uptime_seconds": max(0.0, time.time() - STARTED_AT),
+        "active_reservations": list(RESERVATIONS.values()),
+        "known_runs": sorted(RUNS),
+    }
 
 
 @app.get("/api/v1/capabilities")
@@ -37,6 +65,7 @@ def capabilities() -> dict:
 
 @app.post("/api/v1/reservations")
 def create_reservation(payload: ReservationCreate) -> dict:
+    prune_expired_reservations()
     if RESERVATIONS:
         raise HTTPException(status_code=409, detail="test node already reserved")
     reservation_id = f"res-{uuid4().hex[:12]}"
@@ -45,6 +74,7 @@ def create_reservation(payload: ReservationCreate) -> dict:
         "owner": payload.owner,
         "run_id": payload.run_id,
         "created_at": now_iso(),
+        "created_epoch": time.time(),
         "ttl_seconds": payload.ttl_seconds,
     }
     return RESERVATIONS[reservation_id]
@@ -52,6 +82,7 @@ def create_reservation(payload: ReservationCreate) -> dict:
 
 @app.get("/api/v1/reservations/{reservation_id}")
 def get_reservation(reservation_id: str) -> dict:
+    prune_expired_reservations()
     if reservation_id not in RESERVATIONS:
         raise HTTPException(status_code=404, detail="reservation not found")
     return RESERVATIONS[reservation_id]
@@ -61,6 +92,16 @@ def get_reservation(reservation_id: str) -> dict:
 def delete_reservation(reservation_id: str) -> dict:
     RESERVATIONS.pop(reservation_id, None)
     return {"ok": True}
+
+
+@app.get("/api/v1/metrics")
+def metrics() -> dict:
+    return collect_metrics()
+
+
+@app.get("/api/v1/runs/{run_id}")
+def get_run(run_id: str) -> dict:
+    return {"run_id": run_id, "connections": RUNS.get(run_id, [])}
 
 
 @app.put("/upload/{run_id}")
