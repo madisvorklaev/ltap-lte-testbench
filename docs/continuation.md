@@ -39,6 +39,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Runs persist metadata, resolved plan, summary, and events under ignored `var/results/<run-id>/`.
 - Router profiles and test plans can be created through validated service/API paths.
 - Server profiles exist, with a controller-side test-node client for health/status/metrics/reservations.
+- CLI can list/create routers, servers, and test plans from JSON files; profile list smoke commands passed locally.
 - Generic and fake router adapters support safe no-hardware development.
 - Controller preflight detects Wi-Fi default route and Ethernet carrier state.
 - Legacy upload scripts and methodology export are preserved under `references/legacy/`.
@@ -57,6 +58,6 @@ curl http://127.0.0.1:8787/api/v1/health
 Implement Milestone 1:
 
 1. Add Alembic migrations instead of direct `create_all`.
-2. Add CLI create commands for router, server, and test-plan profiles.
-3. Add worker-side server reservation lifecycle around runs.
+2. Add worker-side server reservation lifecycle around runs.
+3. Add traffic tool wrappers for iperf3/IRTT/HTTP upload.
 4. Split the worker into a separate service once the durable queue shape is tested.
