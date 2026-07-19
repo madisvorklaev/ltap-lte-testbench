@@ -12,6 +12,8 @@ from ltap_testbench.db.base import get_session, init_db
 from ltap_testbench.db.models import RouterProfile, TestPlan, TestRun
 from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
+from ltap_testbench.profiles.schemas import RouterProfileConfig, TestPlanConfig
+from ltap_testbench.profiles.service import create_router_profile, create_test_plan
 from ltap_testbench.reporting.artifacts import list_run_artifacts
 
 template_dir = Path(__file__).resolve().parents[1] / "web" / "templates"
@@ -70,6 +72,23 @@ def list_routers(session: Session = Depends(get_session)) -> list[dict]:
     ]
 
 
+@app.post("/api/v1/routers")
+def api_create_router(
+    payload: RouterProfileConfig,
+    session: Session = Depends(get_session),
+) -> dict:
+    try:
+        router = create_router_profile(session, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return {
+        "id": router.id,
+        "slug": router.slug,
+        "display_name": router.display_name,
+        "kind": router.kind,
+    }
+
+
 @app.get("/api/v1/test-plans")
 def list_test_plans(session: Session = Depends(get_session)) -> list[dict]:
     plans = session.scalars(select(TestPlan).order_by(TestPlan.slug)).all()
@@ -82,6 +101,23 @@ def list_test_plans(session: Session = Depends(get_session)) -> list[dict]:
         }
         for plan in plans
     ]
+
+
+@app.post("/api/v1/test-plans")
+def api_create_test_plan(
+    payload: TestPlanConfig,
+    session: Session = Depends(get_session),
+) -> dict:
+    try:
+        plan = create_test_plan(session, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return {
+        "id": plan.id,
+        "slug": plan.slug,
+        "name": plan.name,
+        "version": plan.version,
+    }
 
 
 @app.post("/api/v1/runs")

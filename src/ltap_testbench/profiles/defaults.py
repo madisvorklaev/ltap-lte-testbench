@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ltap_testbench.db.models import RouterKind, RouterProfile, TestPlan
+from ltap_testbench.db.models import RouterProfile, TestPlan
 from ltap_testbench.profiles.schemas import (
     LatencyStageConfig,
     PortRange,
@@ -12,6 +12,7 @@ from ltap_testbench.profiles.schemas import (
     TemporaryRouterChangesConfig,
     TestPlanConfig,
 )
+from ltap_testbench.profiles.service import create_router_profile, create_test_plan
 
 QUICK_CHECK_PLAN = TestPlanConfig(
     slug="quick-check",
@@ -49,38 +50,9 @@ def seed_demo_data(session: Session) -> None:
         ],
     )
     if session.scalar(select(RouterProfile).where(RouterProfile.slug == "demo-generic")) is None:
-        session.add(
-            RouterProfile(
-                slug=generic.slug,
-                display_name=generic.display_name,
-                kind=RouterKind.GENERIC,
-                expected_gateway=generic.expected_gateway,
-                controller_interface=generic.controller_interface,
-                metadata_json={
-                    "paths": [path.model_dump(mode="json") for path in generic.paths],
-                    **generic.metadata,
-                },
-            )
-        )
+        create_router_profile(session, generic)
     if session.scalar(select(RouterProfile).where(RouterProfile.slug == "demo-fake-ltap")) is None:
-        session.add(
-            RouterProfile(
-                slug=fake_ltap.slug,
-                display_name=fake_ltap.display_name,
-                kind=RouterKind.FAKE,
-                metadata_json={
-                    "paths": [path.model_dump(mode="json") for path in fake_ltap.paths],
-                    **fake_ltap.metadata,
-                },
-            )
-        )
+        create_router_profile(session, fake_ltap)
     if session.scalar(select(TestPlan).where(TestPlan.slug == "quick-check")) is None:
-        session.add(
-            TestPlan(
-                slug=QUICK_CHECK_PLAN.slug,
-                name=QUICK_CHECK_PLAN.name,
-                version=QUICK_CHECK_PLAN.version,
-                definition=QUICK_CHECK_PLAN.model_dump(mode="json"),
-            )
-        )
+        create_test_plan(session, QUICK_CHECK_PLAN)
     session.commit()
