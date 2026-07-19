@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from ltap_testbench import __version__
 from ltap_testbench.db.base import get_session, init_db
 from ltap_testbench.db.models import RouterProfile, TestPlan, TestRun
-from ltap_testbench.jobs.engine import create_run, execute_run
+from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 
 template_dir = Path(__file__).resolve().parents[1] / "web" / "templates"
@@ -129,3 +129,12 @@ def get_run(run_id: str, session: Session = Depends(get_session)) -> dict:
             for event in run.events
         ],
     }
+
+
+@app.post("/api/v1/runs/{run_id}/cancel")
+def cancel_run(run_id: str, session: Session = Depends(get_session)) -> dict:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    run = request_cancel(session, run)
+    return {"run_id": run.run_id, "state": run.state, "reason": run.state_reason}

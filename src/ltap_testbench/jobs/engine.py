@@ -6,16 +6,13 @@ from sqlalchemy.orm import Session
 
 from ltap_testbench.core.time import utc_now
 from ltap_testbench.db.models import RouterProfile, RunEvent, RunState, TestPlan, TestRun
+from ltap_testbench.jobs.state_machine import (
+    TERMINAL_STATES,
+    require_transition,
+    restart_target_for,
+)
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
-
-TERMINAL_STATES = {
-    RunState.COMPLETED,
-    RunState.FAILED,
-    RunState.CANCELLED,
-    RunState.INTERRUPTED,
-    RunState.RECOVERY_REQUIRED,
-}
 
 
 def add_event(
@@ -32,6 +29,7 @@ def add_event(
 
 
 def transition(session: Session, run: TestRun, state: RunState, reason: str | None = None) -> None:
+    require_transition(run.state, state)
     run.state = state
     run.state_reason = reason
     run.updated_at = utc_now()
@@ -88,6 +86,7 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
             transition(session, run, RunState.FAILED, "path verification failed")
             return run
 
+        transition(session, run, RunState.WARMING_UP)
         transition(session, run, RunState.RUNNING)
         add_event(
             session,
@@ -96,6 +95,7 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
             "MVP simulated measurement completed; live traffic stages are not enabled yet.",
             {"latency_ms_median": 42.0, "latency_ms_p95": 88.0, "loss_percent": 0.0},
         )
+        transition(session, run, RunState.COOLING_DOWN)
         transition(session, run, RunState.ANALYZING)
         run.summary = {
             "validity": "simulated",
@@ -104,8 +104,41 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
         }
         session.add(run)
         session.commit()
+        transition(session, run, RunState.GENERATING_REPORT)
         transition(session, run, RunState.COMPLETED)
     except Exception as exc:
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
     return run
+
+
+def request_cancel(session: Session, run: TestRun) -> TestRun:
+    if run.state in TERMINAL_STATES:
+        add_event(session, run, "cancel-ignored", "Run is already terminal.", {"state": run.state})
+        return run
+    if run.state == RunState.CREATED:
+        transition(session, run, RunState.CANCELLED, "cancelled before start")
+        return run
+    transition(session, run, RunState.CANCEL_REQUESTED, "cancel requested")
+    transition(session, run, RunState.RESTORING, "cleanup after cancellation")
+    transition(session, run, RunState.CANCELLED, "cancelled cleanly")
+    return run
+
+
+def recover_incomplete_runs(session: Session) -> list[TestRun]:
+    runs = session.scalars(select(TestRun).order_by(TestRun.id)).all()
+    recovered: list[TestRun] = []
+    for run in runs:
+        target = restart_target_for(run.state)
+        if target is None:
+            continue
+        transition(session, run, target, "worker restart recovery")
+        if target == RunState.RESTORING:
+            transition(
+                session,
+                run,
+                RunState.RECOVERY_REQUIRED,
+                "manual recovery required after restart",
+            )
+        recovered.append(run)
+    return recovered

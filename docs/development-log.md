@@ -8,3 +8,4 @@
 - Did not contact or modify the router because it is disconnected.
 - GitHub repository `madisvorklaev/ltap-lte-testbench` is private and synced.
 - Created GitHub milestone tracking issues `#1` through `#9`.
+- Began Milestone 1 with explicit run state-transition validation, cancellation entrypoints, and incomplete-run recovery tests.
