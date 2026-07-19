@@ -10,6 +10,7 @@ from ltap_testbench.db.base import SessionLocal, init_db
 from ltap_testbench.db.models import RouterProfile, TestRun
 from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
+from ltap_testbench.reporting.artifacts import list_run_artifacts
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
 
@@ -129,6 +130,17 @@ def runs_cancel(run_id: str, json_output: bool = typer.Option(False, "--json")) 
             "state": test_run.state.value,
             "reason": test_run.state_reason,
         }
+    emit(data, json_output)
+
+
+@runs_app.command("artifacts")
+def runs_artifacts(run_id: str, json_output: bool = typer.Option(False, "--json")) -> None:
+    init_db()
+    with SessionLocal() as session:
+        test_run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+        if test_run is None:
+            raise typer.BadParameter(f"unknown run: {run_id}")
+        data = list_run_artifacts(test_run)
     emit(data, json_output)
 
 

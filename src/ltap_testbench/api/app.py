@@ -12,6 +12,7 @@ from ltap_testbench.db.base import get_session, init_db
 from ltap_testbench.db.models import RouterProfile, TestPlan, TestRun
 from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
+from ltap_testbench.reporting.artifacts import list_run_artifacts
 
 template_dir = Path(__file__).resolve().parents[1] / "web" / "templates"
 templates = Jinja2Templates(directory=str(template_dir))
@@ -138,3 +139,11 @@ def cancel_run(run_id: str, session: Session = Depends(get_session)) -> dict:
         raise HTTPException(status_code=404, detail="run not found")
     run = request_cancel(session, run)
     return {"run_id": run.run_id, "state": run.state, "reason": run.state_reason}
+
+
+@app.get("/api/v1/runs/{run_id}/artifacts")
+def get_run_artifacts(run_id: str, session: Session = Depends(get_session)) -> list[dict]:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    return list_run_artifacts(run)

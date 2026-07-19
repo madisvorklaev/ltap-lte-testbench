@@ -11,6 +11,7 @@ from ltap_testbench.jobs.state_machine import (
     require_transition,
     restart_target_for,
 )
+from ltap_testbench.reporting.artifacts import persist_run_artifacts
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
 
@@ -109,6 +110,7 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
     except Exception as exc:
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
+    persist_run_artifacts(run)
     return run
 
 
