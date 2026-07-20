@@ -1,0 +1,18 @@
+{
+  "slug": "r1-live-smoke",
+  "name": "R1 Live Smoke",
+  "server_slug": "stockbot",
+  "stages": ["preflight", "path-verification", "short-upload"],
+  "tcp_upload": {
+    "duration_seconds": 10,
+    "parallel_streams": [1]
+  },
+  "telemetry": {
+    "controller_interval_seconds": 1,
+    "lte_interval_seconds": 5
+  },
+  "temporary_router_changes": {
+    "disable_fasttrack": false,
+    "clear_test_connections": true
+  }
+}

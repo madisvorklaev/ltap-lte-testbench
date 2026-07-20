@@ -58,6 +58,12 @@ class TestNodeClient:
             response.raise_for_status()
             return response.json()
 
+    def run_connections(self, run_id: str) -> list[dict]:
+        with self._client() as client:
+            response = client.get(f"/api/v1/runs/{run_id}/connections")
+            response.raise_for_status()
+            return response.json()
+
     def create_reservation(
         self,
         owner: str,

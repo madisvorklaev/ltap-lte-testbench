@@ -1,0 +1,28 @@
+{
+  "slug": "r1-ltap-live",
+  "display_name": "R1 LtAP live",
+  "kind": "mikrotik",
+  "management_host": "192.168.101.254",
+  "management_protocol": "routeros-api",
+  "username": "admin",
+  "secret_ref": "env:LTAP_R1_PASSWORD",
+  "expected_gateway": "192.168.101.254",
+  "controller_interface": "eno1",
+  "allow_configuration_changes": false,
+  "paths": [
+    {
+      "id": "lte1",
+      "label": "LTE 1",
+      "interface": "lte1",
+      "routing_table": "to-lte1",
+      "ports": {"start": 18080, "end": 18080}
+    },
+    {
+      "id": "lte2",
+      "label": "LTE 2",
+      "interface": "lte2",
+      "routing_table": "to-lte2",
+      "ports": {"start": 18081, "end": 18081}
+    }
+  ]
+}

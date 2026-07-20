@@ -50,12 +50,14 @@ curl http://127.0.0.1:8787/api/v1/health
 - Stockbot-compatible fileserver deployment is versioned at `deploy/stockbot-fileserver.py`; it preserves the legacy authenticated file server and adds project-compatible test-node endpoints on the same port.
 - Dashboard links recent runs to `/runs/{run_id}`, which shows summary JSON, artifact download links, and the event timeline.
 - Dashboard command center can seed demo data, run preflight, start runs, check server health, cancel runs, and create router/server/plan records from JSON.
+- Live MikroTik read-only preflight/path verification works through RouterOS API credentials resolved from runtime environment secret refs such as `env:LTAP_R1_PASSWORD`.
+- Plans with upload stages can run small HTTP upload smoke tests to the configured stockbot server and attach test-node connection records to the run summary/report.
 
 ## Main Gaps
 
-- MikroTik adapter is read-only scaffold only; secret backend and live discovery are next.
+- MikroTik adapter is read-only but no longer a scaffold; it does not make RouterOS configuration changes.
 - Worker currently runs synchronously in-process for the MVP.
-- IRTT/iperf3/HTTP traffic parsers and command builders exist; live traffic stage execution is still not wired into the run engine.
+- HTTP upload smoke execution is wired into the run engine; IRTT/iperf3 live execution is still pending.
 - SQLite schema is created directly; Alembic migrations are still needed.
 - Web UI has command/control coverage but still needs richer guided forms and historical-result import.
 
@@ -64,5 +66,5 @@ curl http://127.0.0.1:8787/api/v1/health
 Implement Milestone 1:
 
 1. Add Alembic migrations instead of direct `create_all`.
-2. Wire the run engine to execute HTTP upload/iperf3/IRTT stages against the reserved test node.
+2. Wire the run engine to execute iperf3/IRTT stages against the reserved test node.
 3. Split the worker into a separate service once the durable queue shape is tested.

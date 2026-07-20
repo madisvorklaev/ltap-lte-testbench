@@ -34,6 +34,15 @@ def test_testnode_client_reservation() -> None:
     client.release_reservation(reservation.id)
 
 
+def test_testnode_client_run_connections() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/v1/runs/run-a/connections"
+        return httpx.Response(200, json=[{"bytes_received": 123}])
+
+    client = TestNodeClient("http://testnode", transport=httpx.MockTransport(handler))
+    assert client.run_connections("run-a")[0]["bytes_received"] == 123
+
+
 def test_testnode_client_raises_for_unhealthy_response() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(503, json={"ok": False})

@@ -64,7 +64,7 @@ def test_execute_run_reserves_and_releases_configured_test_node(session_factory)
                 slug="with-server",
                 name="With Server",
                 server_slug="stockbot",
-                stages=["preflight", "tcp-upload"],
+                stages=["preflight", "path-verification"],
             ),
         )
 
