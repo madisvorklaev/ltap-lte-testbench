@@ -40,7 +40,7 @@ Open <http://127.0.0.1:8787>.
 - Generate `report.md`, `report.json`, `summary.json`, `events.jsonl`, and plan metadata for each run.
 - Show and download reports from the web UI run-detail page.
 
-Finite-payload TCP upload results are server-confirmed by stockbot connection records. Timed TCP uploads report client-side throughput now and will become server-confirmed after the updated stockbot fileserver is deployed. UDP results are currently sender-side unless stockbot's UDP listener and public UDP forwarding are active.
+Finite-payload and timed TCP upload results are server-confirmed by stockbot connection records. UDP results are currently sender-side until Chateau forwards public UDP `18080`/`18081` to stockbot.
 
 ## Live R1 LtAP Example
 

@@ -38,7 +38,7 @@ def run_timed_tcp_upload(
     bytes_sent = 0
     response_head = b""
     with socket.create_connection((host, port), timeout=10) as sock:
-        sock.settimeout(0.5)
+        sock.settimeout(max(duration_seconds + 30, 30))
         sock.sendall(request_head)
         while time.monotonic() < deadline:
             try:

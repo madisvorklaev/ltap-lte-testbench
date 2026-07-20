@@ -52,7 +52,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Dashboard command center can seed demo data, run preflight, start runs, check server health, cancel runs, and create router/server/plan records from JSON.
 - Live MikroTik read-only preflight/path verification works through RouterOS API credentials resolved from runtime environment secret refs such as `env:LTAP_R1_PASSWORD`.
 - Plans with TCP upload stages can run server-confirmed HTTP upload tests to the configured stockbot server and attach test-node connection records to the run summary/report.
-- Plans with TCP upload stages can also run timed streams when `tcp_upload.payload_bytes` is omitted.
+- Plans with TCP upload stages can also run stockbot-confirmed timed streams when `tcp_upload.payload_bytes` is omitted.
 - Plans with UDP upload stages can run timed UDP uploads through the configured path ports.
 - Live run `run-bcea1fc5bab2` completed against `r1-ltap-live` with latency samples, 1 MiB TCP upload per LTE path, 10 seconds of 2 Mbit/s UDP sender traffic per LTE path, and LTE telemetry snapshots.
 
@@ -61,7 +61,8 @@ curl http://127.0.0.1:8787/api/v1/health
 - MikroTik adapter is read-only but no longer a scaffold; it does not make RouterOS configuration changes.
 - Worker currently runs synchronously in-process for the MVP.
 - HTTP/TCP upload execution, timed UDP sender execution, RouterOS latency sampling, and LTE telemetry snapshots are wired into the run engine.
-- UDP receiver-side confirmation is still pending until stockbot exposes and the network forwards a UDP receive path. The versioned stockbot deployment script already contains the UDP recorder, but the live stockbot service was not reachable over SSH while this controller was routed through the LtAP LAN.
+- Stockbot now runs the versioned fileserver as user service `stockbot-fileserver.service` from `/home/madis/stockbot-fileserver`; it listens on TCP and UDP `0.0.0.0:8088`.
+- UDP receiver-side confirmation is still pending on network forwarding: stockbot's UDP listener works locally, but Chateau still needs public UDP `18080`/`18081` dst-nat rules to `192.168.71.8:8088`.
 - IRTT/iperf3 live execution is still pending as a future alternative to the built-in HTTP/UDP stages.
 - SQLite schema is created directly; Alembic migrations are still needed.
 - Web UI has command/control coverage but still needs richer guided forms and historical-result import.
