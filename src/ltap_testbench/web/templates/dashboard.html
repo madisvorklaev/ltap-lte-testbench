@@ -3,232 +3,157 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LtAP LTE Testbench</title>
+    <title>LtAP Lab Test</title>
     <style>
       :root {
-        color-scheme: light;
-        --bg: #f5f7fa;
+        --bg: #f4f6f8;
         --surface: #ffffff;
-        --soft: #f8fafc;
-        --text: #1f2933;
-        --muted: #5f6c7b;
-        --line: #d9e0ea;
-        --accent: #166534;
-        --danger: #b91c1c;
-        --info: #075985;
+        --text: #18212f;
+        --muted: #617083;
+        --line: #d7dee8;
+        --ok: #166534;
+        --warn: #9a3412;
+        --bad: #b91c1c;
+        --blue: #075985;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--text); }
-      header { background: #132238; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-      main { max-width: 1240px; margin: 0 auto; padding: 22px; display: grid; gap: 18px; }
-      section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+      header { background: #172033; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      main { max-width: 1180px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+      section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
       h1, h2, h3 { margin: 0; letter-spacing: 0; }
       h1 { font-size: 20px; }
-      h2 { font-size: 16px; }
-      h3 { font-size: 14px; margin-bottom: 8px; }
-      a { color: var(--info); text-decoration: none; }
-      a:hover { text-decoration: underline; }
+      h2 { font-size: 16px; margin-bottom: 10px; }
+      h3 { font-size: 14px; margin-bottom: 6px; }
+      label { display: grid; gap: 4px; font-size: 12px; font-weight: 650; color: var(--muted); }
+      input, select { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; color: var(--text); background: #fff; width: 100%; }
+      button, .button { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; font: inherit; background: #fff; color: var(--text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+      button.primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+      button.danger { background: #fff1f2; border-color: #fecaca; color: var(--bad); }
+      button:disabled { opacity: .55; cursor: wait; }
+      pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 340px; }
       table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-      th, td { border-bottom: 1px solid #e6eaf0; padding: 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+      th, td { border-bottom: 1px solid #e8edf3; text-align: left; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
       th { color: var(--muted); font-weight: 650; }
-      code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
-      label { display: grid; gap: 4px; color: var(--muted); font-size: 12px; font-weight: 650; }
-      select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--text); font: inherit; }
-      select { min-height: 36px; padding: 6px 8px; }
-      textarea { min-height: 190px; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; resize: vertical; }
-      pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 10px; max-height: 360px; overflow: auto; }
-      button, .button { min-height: 34px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--text); padding: 6px 10px; font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-      button.primary { background: #0f766e; border-color: #0f766e; color: white; }
-      button.danger { color: var(--danger); border-color: #fecaca; background: #fff1f2; }
-      button:hover, .button:hover { filter: brightness(0.98); text-decoration: none; }
-      details { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe; }
-      details + details { margin-top: 10px; }
-      summary { cursor: pointer; font-weight: 650; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+      progress { width: 100%; height: 18px; accent-color: #0f766e; }
+      code { background: #edf2f7; padding: 2px 4px; border-radius: 4px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+      .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
       .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
-      .topline { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
-      .stack { display: grid; gap: 10px; }
-      .badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
-      .badge.completed { color: var(--accent); border-color: #86efac; background: #f0fdf4; }
-      .badge.failed, .badge.cancelled { color: var(--danger); border-color: #fecaca; background: #fff1f2; }
-      .badge.running, .badge.preflight, .badge.verifying_paths { color: var(--info); border-color: #bae6fd; background: #f0f9ff; }
       .muted { color: var(--muted); }
-      .output { min-height: 92px; }
-      @media (max-width: 720px) {
-        main { padding: 14px; }
-        th:nth-child(3), td:nth-child(3) { display: none; }
+      .badge { display: inline-flex; min-height: 24px; align-items: center; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
+      .badge.completed { color: var(--ok); background: #f0fdf4; border-color: #86efac; }
+      .badge.failed, .badge.cancelled { color: var(--bad); background: #fff1f2; border-color: #fecaca; }
+      .badge.running, .badge.preflight, .badge.verifying_paths { color: var(--blue); background: #f0f9ff; border-color: #bae6fd; }
+      .metric { background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-height: 74px; }
+      .metric strong { display: block; font-size: 20px; margin-top: 3px; }
+      @media (max-width: 820px) {
+        main { padding: 12px; }
+        .split { grid-template-columns: 1fr; }
       }
     </style>
   </head>
   <body>
     <header>
-      <h1>LtAP LTE Testbench</h1>
+      <h1>LtAP Lab Test</h1>
       <span>v{{ version }}</span>
     </header>
     <main>
       <section>
-        <div class="topline">
-          <h2>Command Center</h2>
-          <button type="button" id="seed-demo">Seed Demo Data</button>
-        </div>
+        <h2>Prepare Test</h2>
         <div class="grid">
-          <label>
-            Router
-            <select id="router-select">
-              {% for router in routers %}
-              <option value="{{ router.slug }}">{{ router.slug }} · {{ router.display_name }}</option>
+          <label>Router IP
+            <input id="router-ip" value="192.168.101.254" inputmode="numeric">
+          </label>
+          <label>TCP file size
+            <select id="tcp-file-size">
+              {% for size in tcp_file_size_options_mb %}
+              <option value="{{ size }}" {% if size == 25 %}selected{% endif %}>{{ size }} MB</option>
               {% endfor %}
             </select>
           </label>
-          <label>
-            Test Plan
-            <select id="plan-select">
-              {% for plan in plans %}
-              <option value="{{ plan.slug }}">{{ plan.slug }} · {{ plan.name }}</option>
+          <label>UDP duration
+            <input id="udp-duration" type="number" min="1" max="3600" value="60">
+          </label>
+          <label>UDP bitrate
+            <input id="udp-bitrate" type="number" min="0.1" max="50" step="0.1" value="5">
+          </label>
+          <label>Antenna and placement
+            <input id="antenna" list="antenna-options" placeholder="Outdoor panel, attic window, etc.">
+            <datalist id="antenna-options">
+              {% for value in antenna_options %}
+              <option value="{{ value }}"></option>
               {% endfor %}
-            </select>
+            </datalist>
           </label>
         </div>
         <div class="toolbar" style="margin-top: 12px;">
-          <button type="button" id="run-preflight">Run Preflight</button>
-          <button type="button" id="start-run" class="primary">Start Run</button>
-          <button type="button" id="refresh-page">Refresh</button>
-        </div>
-        <div class="stack" style="margin-top: 12px;">
-          <h3>Command Output</h3>
-          <pre id="command-output" class="output">Ready.</pre>
+          <button id="start-lab" class="primary" type="button">Start / Restart Test</button>
+          <button id="refresh-status" type="button">Refresh</button>
+          <a id="open-run" class="button" href="#" style="display:none;">Open Run</a>
         </div>
       </section>
 
       <section>
-        <div class="topline">
-          <h2>Profiles</h2>
-          <span class="muted">{{ routers | length }} routers · {{ plans | length }} plans</span>
-        </div>
+        <h2>Running Test</h2>
         <div class="grid">
+          <div class="metric">
+            <span class="muted">Current test</span>
+            <strong id="current-test">none</strong>
+          </div>
+          <div class="metric">
+            <span class="muted">State</span>
+            <strong><span id="run-state" class="badge">IDLE</span></strong>
+          </div>
+          <div class="metric">
+            <span class="muted">Progress</span>
+            <strong id="progress-label">0%</strong>
+          </div>
+        </div>
+        <progress id="progress" value="0" max="100" style="margin-top:10px;"></progress>
+        <div class="split" style="margin-top:14px;">
           <div>
-            <h3>Routers</h3>
+            <h3>Live Speed</h3>
             <table>
-              <tr><th>Slug</th><th>Kind</th><th>Changes</th></tr>
-              {% for router in routers %}
-              <tr>
-                <td><code>{{ router.slug }}</code></td>
-                <td>{{ router.kind.value }}</td>
-                <td>{{ "allowed" if router.allow_configuration_changes else "disabled" }}</td>
-              </tr>
-              {% endfor %}
+              <tr><th>Modem</th><th>Current TX</th><th>Average TCP</th><th>Average UDP</th></tr>
+              <tr><td>lte1</td><td id="lte1-current">-</td><td id="lte1-tcp">-</td><td id="lte1-udp">-</td></tr>
+              <tr><td>lte2</td><td id="lte2-current">-</td><td id="lte2-tcp">-</td><td id="lte2-udp">-</td></tr>
             </table>
           </div>
           <div>
-            <h3>Test Plans</h3>
+            <h3>Signal Quality</h3>
             <table>
-              <tr><th>Slug</th><th>Version</th><th>Stages</th></tr>
-              {% for plan in plans %}
-              <tr>
-                <td><code>{{ plan.slug }}</code></td>
-                <td>{{ plan.version }}</td>
-                <td>{{ plan.definition.get("stages", []) | join(", ") }}</td>
-              </tr>
-              {% endfor %}
+              <tr><th>Modem</th><th>Band</th><th>RSRP</th><th>RSRQ</th><th>SINR</th></tr>
+              <tr><td>lte1</td><td id="lte1-band">-</td><td id="lte1-rsrp">-</td><td id="lte1-rsrq">-</td><td id="lte1-sinr">-</td></tr>
+              <tr><td>lte2</td><td id="lte2-band">-</td><td id="lte2-rsrp">-</td><td id="lte2-rsrq">-</td><td id="lte2-sinr">-</td></tr>
             </table>
           </div>
         </div>
       </section>
 
       <section>
-        <div class="topline">
-          <h2>Servers</h2>
-          <span class="muted">{{ servers | length }} configured</span>
-        </div>
-        <table>
-          <tr><th>Slug</th><th>Name</th><th>Control API</th><th>Public Host</th><th>Action</th></tr>
-          {% for server in servers %}
-          <tr>
-            <td><code>{{ server.slug }}</code></td>
-            <td>{{ server.display_name }}</td>
-            <td>{{ server.control_api_url }}</td>
-            <td>{{ server.public_host or "" }}</td>
-            <td><button type="button" data-server-health="{{ server.slug }}">Health</button></td>
-          </tr>
-          {% endfor %}
-        </table>
+        <h2>Log</h2>
+        <pre id="backend-log">No run loaded.</pre>
       </section>
 
       <section>
-        <div class="topline">
-          <h2>Recent Runs</h2>
-          <span class="muted">{{ runs | length }} shown</span>
-        </div>
-        <table>
-          <tr><th>Run</th><th>Router</th><th>Plan</th><th>State</th><th>Action</th></tr>
-          {% for run in runs %}
-          <tr>
-            <td><a href="/runs/{{ run.run_id }}"><code>{{ run.run_id }}</code></a></td>
-            <td>{{ run.router.slug }}</td>
-            <td>{{ run.plan_slug }}</td>
-            <td><span class="badge {{ run.state.value | lower }}">{{ run.state.value }}</span></td>
-            <td>
-              <a class="button" href="/runs/{{ run.run_id }}">Open</a>
-              <button type="button" class="danger" data-cancel-run="{{ run.run_id }}">Cancel</button>
-            </td>
-          </tr>
-          {% endfor %}
-        </table>
-      </section>
-
-      <section>
-        <div class="topline">
-          <h2>Configuration</h2>
-          <span class="muted">Create profiles and plans from JSON</span>
-        </div>
-        <details>
-          <summary>Create Router Profile</summary>
-          <div class="stack" style="margin-top: 10px;">
-            <textarea id="router-json">{
-  "slug": "new-fake-router",
-  "display_name": "New Fake Router",
-  "kind": "fake",
-  "paths": [
-    {"id": "lte1", "label": "LTE 1", "ports": {"start": 18080, "end": 18080}},
-    {"id": "lte2", "label": "LTE 2", "ports": {"start": 18081, "end": 18081}}
-  ]
-}</textarea>
-            <button type="button" data-create-json="router">Create Router</button>
-          </div>
-        </details>
-        <details>
-          <summary>Create Server Profile</summary>
-          <div class="stack" style="margin-top: 10px;">
-            <textarea id="server-json">{
-  "slug": "new-test-node",
-  "display_name": "New Test Node",
-  "control_api_url": "http://192.168.71.8:8088",
-  "public_host": "81.90.121.7"
-}</textarea>
-            <button type="button" data-create-json="server">Create Server</button>
-          </div>
-        </details>
-        <details>
-          <summary>Create Test Plan</summary>
-          <div class="stack" style="margin-top: 10px;">
-            <textarea id="plan-json">{
-  "slug": "stockbot-smoke",
-  "name": "Stockbot Smoke",
-  "server_slug": "stockbot",
-  "stages": ["preflight", "path-verification", "idle-latency", "short-upload", "udp-upload"],
-  "latency": {"duration_seconds": 10, "interval_ms": 1000},
-  "tcp_upload": {"duration_seconds": 10, "parallel_streams": [1], "payload_bytes": 1048576},
-  "udp_upload": {"duration_seconds": 10, "bitrate_mbit_s": 2.0, "datagram_bytes": 1200}
-}</textarea>
-            <button type="button" data-create-json="plan">Create Plan</button>
-          </div>
-        </details>
+        <h2>Test Results</h2>
+        <pre id="summary">No summary yet.</pre>
       </section>
     </main>
     <script>
-      const output = document.querySelector("#command-output");
-      const show = (value) => {
-        output.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      const $ = (id) => document.getElementById(id);
+      let pollTimer = null;
+
+      const fmtMbit = (value) => {
+        if (value === null || value === undefined || value === "") return "-";
+        const n = Number(value);
+        if (!Number.isFinite(n)) return String(value);
+        return `${n.toFixed(2)} Mbit/s`;
+      };
+      const bitsToMbit = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${(n / 1000000).toFixed(2)} Mbit/s` : "-";
       };
       const request = async (url, options = {}) => {
         const response = await fetch(url, {
@@ -238,61 +163,91 @@
         const text = await response.text();
         let payload = text;
         try { payload = text ? JSON.parse(text) : {}; } catch (_error) {}
-        if (!response.ok) {
-          throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
-        }
+        if (!response.ok) throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
         return payload;
       };
-      const selectedRouter = () => document.querySelector("#router-select").value;
-      const selectedPlan = () => document.querySelector("#plan-select").value;
-
-      document.querySelector("#seed-demo").addEventListener("click", async () => {
+      const latestEvent = (run, type) => [...run.events].reverse().find((event) => event.type === type);
+      const eventTime = (event) => event ? new Date(event.timestamp).getTime() / 1000 : null;
+      const progressFor = (run) => {
+        const state = String(run.state);
+        if (["COMPLETED"].includes(state)) return 100;
+        if (["FAILED", "CANCELLED", "INTERRUPTED"].includes(state)) return 100;
+        const udpStart = latestEvent(run, "udp-upload-stage-started");
+        if (udpStart) {
+          const seconds = Number(udpStart.details.duration_seconds || 1);
+          const elapsed = Math.max(0, Date.now() / 1000 - eventTime(udpStart));
+          return Math.min(95, 55 + (elapsed / seconds) * 40);
+        }
+        if (latestEvent(run, "upload-stage-started")) return 45;
+        if (latestEvent(run, "latency-stage")) return 35;
+        if (latestEvent(run, "server-reservation")) return 25;
+        if (latestEvent(run, "path-verification")) return 15;
+        return 5;
+      };
+      const setText = (id, value) => { $(id).textContent = value ?? "-"; };
+      const applyTelemetry = (rows) => {
+        for (const row of rows || []) {
+          const id = row.path_id;
+          if (!["lte1", "lte2"].includes(id)) continue;
+          setText(`${id}-current`, bitsToMbit(row.tx_rate));
+          setText(`${id}-band`, row.primary_band || "-");
+          setText(`${id}-rsrp`, row.rsrp || "-");
+          setText(`${id}-rsrq`, row.rsrq || "-");
+          setText(`${id}-sinr`, row.sinr || "-");
+        }
+      };
+      const applyAverages = (summary) => {
+        for (const id of ["lte1", "lte2"]) {
+          const tcp = (summary.upload_results || []).find((row) => row.path_id === id);
+          const udp = (summary.udp_upload_results || []).find((row) => row.path_id === id);
+          setText(`${id}-tcp`, fmtMbit(tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
+          setText(`${id}-udp`, fmtMbit(udp?.server_average_mbit_s ?? udp?.average_mbit_s));
+        }
+      };
+      const render = (data) => {
+        if (!data.run) return;
+        const run = data.run;
+        const desc = run.description || {};
+        const title = `${run.router_name || "router"} · TCP ${desc.tcp_file_size_mb || "-"} MB · UDP ${desc.udp_duration_seconds || "-"} s @ ${desc.udp_bitrate_mbit_s || "-"} Mbit/s`;
+        setText("current-test", title);
+        $("run-state").textContent = run.state;
+        $("run-state").className = `badge ${String(run.state).toLowerCase()}`;
+        const progress = Math.round(progressFor(run));
+        $("progress").value = progress;
+        setText("progress-label", `${progress}%`);
+        $("open-run").href = `/runs/${run.run_id}`;
+        $("open-run").style.display = "inline-flex";
+        applyTelemetry(run.telemetry || []);
+        applyAverages(run.summary || {});
+        $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
+        $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
+      };
+      const poll = async () => {
+        try { render(await request("/api/v1/lab/status")); }
+        catch (error) { $("backend-log").textContent = error.message; }
+      };
+      $("start-lab").addEventListener("click", async () => {
+        $("start-lab").disabled = true;
         try {
-          show(await request("/api/v1/demo/seed", {method: "POST"}));
-          setTimeout(() => location.reload(), 700);
-        } catch (error) { show(error.message); }
+          const payload = {
+            router_ip: $("router-ip").value.trim(),
+            tcp_file_size_mb: Number($("tcp-file-size").value),
+            udp_duration_seconds: Number($("udp-duration").value),
+            udp_bitrate_mbit_s: Number($("udp-bitrate").value),
+            antenna: $("antenna").value.trim()
+          };
+          const started = await request("/api/v1/lab/start", {method: "POST", body: JSON.stringify(payload)});
+          $("backend-log").textContent = `Started ${started.run_id}`;
+          await poll();
+        } catch (error) {
+          $("backend-log").textContent = error.message;
+        } finally {
+          $("start-lab").disabled = false;
+        }
       });
-      document.querySelector("#run-preflight").addEventListener("click", async () => {
-        try { show(await request(`/api/v1/routers/${selectedRouter()}/preflight`, {method: "POST"})); }
-        catch (error) { show(error.message); }
-      });
-      document.querySelector("#start-run").addEventListener("click", async () => {
-        try {
-          const run = await request("/api/v1/runs", {
-            method: "POST",
-            body: JSON.stringify({router_slug: selectedRouter(), plan_slug: selectedPlan(), execute_now: true})
-          });
-          show(run);
-          if (run.run_id) setTimeout(() => { location.href = `/runs/${run.run_id}`; }, 500);
-        } catch (error) { show(error.message); }
-      });
-      document.querySelector("#refresh-page").addEventListener("click", () => location.reload());
-      document.querySelectorAll("[data-server-health]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          try { show(await request(`/api/v1/servers/${button.dataset.serverHealth}/health`, {method: "POST"})); }
-          catch (error) { show(error.message); }
-        });
-      });
-      document.querySelectorAll("[data-cancel-run]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          try {
-            show(await request(`/api/v1/runs/${button.dataset.cancelRun}/cancel`, {method: "POST"}));
-            setTimeout(() => location.reload(), 700);
-          } catch (error) { show(error.message); }
-        });
-      });
-      document.querySelectorAll("[data-create-json]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          const kind = button.dataset.createJson;
-          const source = document.querySelector(`#${kind}-json`);
-          const endpoints = {router: "/api/v1/routers", server: "/api/v1/servers", plan: "/api/v1/test-plans"};
-          try {
-            const payload = JSON.parse(source.value);
-            show(await request(endpoints[kind], {method: "POST", body: JSON.stringify(payload)}));
-            setTimeout(() => location.reload(), 700);
-          } catch (error) { show(error.message); }
-        });
-      });
+      $("refresh-status").addEventListener("click", poll);
+      poll();
+      pollTimer = setInterval(poll, 2500);
     </script>
   </body>
 </html>

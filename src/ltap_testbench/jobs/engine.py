@@ -242,6 +242,19 @@ def _execute_http_upload_stage(
         payload_path.write_bytes((pattern * repeats)[:payload_bytes])
 
     paths = _router_paths(run)
+    add_event(
+        session,
+        run,
+        "upload-stage-started",
+        "TCP upload stage started.",
+        {
+            "paths": [path.get("id", "path") for path in paths],
+            "mode": "timed" if payload_bytes is None else "payload",
+            "payload_bytes": payload_bytes,
+            "duration_seconds": duration_seconds,
+            "parallel_paths": True,
+        },
+    )
 
     def run_path(path: dict) -> dict:
         path_id = path.get("id", "path")
@@ -397,6 +410,19 @@ def _execute_udp_upload_stage(
     bitrate_mbit_s = float(config.get("bitrate_mbit_s", 2.0))
     datagram_bytes = int(config.get("datagram_bytes", 1200))
     paths = _router_paths(run)
+    add_event(
+        session,
+        run,
+        "udp-upload-stage-started",
+        "UDP upload stage started.",
+        {
+            "paths": [path.get("id", "path") for path in paths],
+            "duration_seconds": duration_seconds,
+            "bitrate_mbit_s": bitrate_mbit_s,
+            "datagram_bytes": datagram_bytes,
+            "parallel_paths": True,
+        },
+    )
 
     def run_path(path: dict) -> dict:
         path_id = path.get("id", "path")
@@ -486,6 +512,11 @@ def execute_run(
         router_checks = adapter.preflight()
         for check in router_checks:
             add_event(session, run, "router-preflight", check.message, asdict(check))
+            identity = check.details.get("identity") if check.ok else None
+            if check.name == "mikrotik-api" and identity:
+                router.display_name = str(identity)
+                session.add(router)
+                session.commit()
         if any(not check.ok for check in router_checks):
             transition(session, run, RunState.FAILED, "router preflight failed")
             return run
