@@ -72,11 +72,21 @@
               {% endfor %}
             </select>
           </label>
+          <label>TCP upload count
+            <input id="tcp-upload-count" type="number" min="1" max="20" value="1">
+          </label>
           <label>UDP duration
             <input id="udp-duration" type="number" min="1" max="3600" value="60">
           </label>
           <label>UDP bitrate
             <input id="udp-bitrate" type="number" min="0.1" max="50" step="0.1" value="5">
+          </label>
+          <label>UDP test pattern
+            <select id="udp-pattern">
+              <option value="end">once in the end</option>
+              <option value="beginning">once in the beginning</option>
+              <option value="after_each_tcp">after every TCP round</option>
+            </select>
           </label>
           <label>Antenna and placement
             <input id="antenna" list="antenna-options" placeholder="Outdoor panel, attic window, etc.">
@@ -106,6 +116,10 @@
             <strong><span id="run-state" class="badge">IDLE</span></strong>
           </div>
           <div class="metric">
+            <span class="muted">Uploaded in phase</span>
+            <strong id="phase-uploaded">0 MB</strong>
+          </div>
+          <div class="metric">
             <span class="muted">Progress</span>
             <strong id="progress-label">0%</strong>
           </div>
@@ -129,6 +143,14 @@
             </table>
           </div>
         </div>
+        <div style="margin-top:14px;">
+          <h3>Latency</h3>
+          <table>
+            <tr><th>Modem</th><th>Average</th><th>Min</th><th>Max</th><th>Loss</th></tr>
+            <tr><td>lte1</td><td id="lte1-lat-avg">-</td><td id="lte1-lat-min">-</td><td id="lte1-lat-max">-</td><td id="lte1-lat-loss">-</td></tr>
+            <tr><td>lte2</td><td id="lte2-lat-avg">-</td><td id="lte2-lat-min">-</td><td id="lte2-lat-max">-</td><td id="lte2-lat-loss">-</td></tr>
+          </table>
+        </div>
       </section>
 
       <section>
@@ -150,6 +172,18 @@
         const n = Number(value);
         if (!Number.isFinite(n)) return String(value);
         return `${n.toFixed(2)} Mbit/s`;
+      };
+      const fmtMb = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(2)} MB` : "-";
+      };
+      const fmtMs = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(1)} ms` : "-";
+      };
+      const fmtPct = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(1)}%` : "-";
       };
       const bitsToMbit = (value) => {
         const n = Number(value);
@@ -196,19 +230,41 @@
           setText(`${id}-sinr`, row.sinr || "-");
         }
       };
-      const applyAverages = (summary) => {
+      const applyAverages = (summary, liveMetrics) => {
         for (const id of ["lte1", "lte2"]) {
-          const tcp = (summary.upload_results || []).find((row) => row.path_id === id);
-          const udp = (summary.udp_upload_results || []).find((row) => row.path_id === id);
-          setText(`${id}-tcp`, fmtMbit(tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
-          setText(`${id}-udp`, fmtMbit(udp?.server_average_mbit_s ?? udp?.average_mbit_s));
+          const tcpRows = (summary.upload_results || []).filter((row) => row.path_id === id);
+          const udpRows = (summary.udp_upload_results || []).filter((row) => row.path_id === id);
+          const tcp = tcpRows.at(-1);
+          const udp = udpRows.at(-1);
+          const live = (liveMetrics?.paths || {})[id] || {};
+          setText(`${id}-tcp`, fmtMbit(live.tcp_average_mbit_s ?? tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
+          setText(`${id}-udp`, fmtMbit(live.udp_average_mbit_s ?? udp?.server_average_mbit_s ?? udp?.average_mbit_s));
+        }
+      };
+      const applyPhaseUpload = (liveMetrics) => {
+        const paths = liveMetrics?.paths || {};
+        const total = Object.values(paths).reduce((sum, row) => sum + Number(row.phase_uploaded_mb || 0), 0);
+        setText("phase-uploaded", fmtMb(total));
+      };
+      const latencyRows = (run) => {
+        if ((run.summary?.latency_results || []).length) return run.summary.latency_results;
+        const latency = latestEvent(run, "latency-stage");
+        return latency?.details?.results || [];
+      };
+      const applyLatency = (run) => {
+        for (const id of ["lte1", "lte2"]) {
+          const row = latencyRows(run).find((item) => item.path_id === id);
+          setText(`${id}-lat-avg`, fmtMs(row?.avg_ms));
+          setText(`${id}-lat-min`, fmtMs(row?.min_ms));
+          setText(`${id}-lat-max`, fmtMs(row?.max_ms));
+          setText(`${id}-lat-loss`, fmtPct(row?.loss_percent));
         }
       };
       const render = (data) => {
         if (!data.run) return;
         const run = data.run;
         const desc = run.description || {};
-        const title = `${run.router_name || "router"} · TCP ${desc.tcp_file_size_mb || "-"} MB · UDP ${desc.udp_duration_seconds || "-"} s @ ${desc.udp_bitrate_mbit_s || "-"} Mbit/s`;
+        const title = `${run.router_name || "router"} · TCP ${desc.tcp_file_size_mb || "-"} MB × ${desc.tcp_upload_count || 1} · UDP ${desc.udp_duration_seconds || "-"} s @ ${desc.udp_bitrate_mbit_s || "-"} Mbit/s · ${desc.udp_pattern || "end"}`;
         setText("current-test", title);
         $("run-state").textContent = run.state;
         $("run-state").className = `badge ${String(run.state).toLowerCase()}`;
@@ -218,7 +274,9 @@
         $("open-run").href = `/runs/${run.run_id}`;
         $("open-run").style.display = "inline-flex";
         applyTelemetry(run.telemetry || []);
-        applyAverages(run.summary || {});
+        applyAverages(run.summary || {}, run.live_metrics || {});
+        applyPhaseUpload(run.live_metrics || {});
+        applyLatency(run);
         $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
         $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
       };
@@ -232,8 +290,10 @@
           const payload = {
             router_ip: $("router-ip").value.trim(),
             tcp_file_size_mb: Number($("tcp-file-size").value),
+            tcp_upload_count: Number($("tcp-upload-count").value),
             udp_duration_seconds: Number($("udp-duration").value),
             udp_bitrate_mbit_s: Number($("udp-bitrate").value),
+            udp_pattern: $("udp-pattern").value,
             antenna: $("antenna").value.trim()
           };
           const started = await request("/api/v1/lab/start", {method: "POST", body: JSON.stringify(payload)});

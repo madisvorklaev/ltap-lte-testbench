@@ -165,6 +165,19 @@ def _latency_config(run: TestRun) -> dict:
     return config if isinstance(config, dict) else {}
 
 
+def _tcp_upload_count(run: TestRun) -> int:
+    config = _tcp_upload_config(run)
+    return max(1, int(config.get("count", 1)))
+
+
+def _udp_pattern(run: TestRun) -> str:
+    config = _udp_upload_config(run)
+    pattern = str(config.get("pattern", "end"))
+    if pattern not in {"after_each_tcp", "beginning", "end"}:
+        return "end"
+    return pattern
+
+
 def _safe_router_telemetry(
     session: Session,
     run: TestRun,
@@ -221,6 +234,8 @@ def _execute_http_upload_stage(
     run: TestRun,
     server: ServerProfile | None,
     client: TestNodeClient | None,
+    round_index: int = 1,
+    total_rounds: int = 1,
 ) -> list[dict]:
     if server is None or client is None or not _plan_has_upload_stage(run):
         add_event(session, run, "upload-stage", "No live HTTP upload stage configured.")
@@ -252,6 +267,8 @@ def _execute_http_upload_stage(
             "mode": "timed" if payload_bytes is None else "payload",
             "payload_bytes": payload_bytes,
             "duration_seconds": duration_seconds,
+            "round": round_index,
+            "rounds": total_rounds,
             "parallel_paths": True,
         },
     )
@@ -261,7 +278,7 @@ def _execute_http_upload_stage(
         port = _path_port(path)
         if port is None:
             return {"path_id": path_id, "skipped": True, "reason": "no TCP port configured"}
-        upload_run_id = f"{run.run_id}-{path_id}"
+        upload_run_id = f"{run.run_id}-{path_id}-tcp{round_index}"
         response_path = artifact_dir / f"{upload_run_id}_response.txt"
         url = f"http://{public_host}:{port}/upload/{upload_run_id}"
         if payload_bytes is None:
@@ -336,6 +353,8 @@ def _execute_http_upload_stage(
             http_code = None
         row = {
             "path_id": path_id,
+            "round": round_index,
+            "rounds": total_rounds,
             "url": url,
             "target_host": public_host,
             "target_port": port,
@@ -398,6 +417,7 @@ def _execute_udp_upload_stage(
     session: Session,
     run: TestRun,
     server: ServerProfile | None,
+    label: str = "end",
 ) -> list[dict]:
     if server is None or not _plan_has_udp_upload_stage(run):
         add_event(session, run, "udp-upload-stage", "No UDP upload stage configured.")
@@ -420,6 +440,7 @@ def _execute_udp_upload_stage(
             "duration_seconds": duration_seconds,
             "bitrate_mbit_s": bitrate_mbit_s,
             "datagram_bytes": datagram_bytes,
+            "label": label,
             "parallel_paths": True,
         },
     )
@@ -429,7 +450,7 @@ def _execute_udp_upload_stage(
         port = _path_port(path)
         if port is None:
             return {"path_id": path_id, "skipped": True, "reason": "no UDP port configured"}
-        udp_run_id = f"{run.run_id}-{path_id}-udp"
+        udp_run_id = f"{run.run_id}-{path_id}-udp-{label}"
         result = run_udp_upload(
             public_host,
             port,
@@ -446,6 +467,7 @@ def _execute_udp_upload_stage(
                 connections = []
         row = {
             "path_id": path_id,
+            "label": label,
             "test_node_run_id": udp_run_id,
             "target_host": result.target_host,
             "target_port": result.target_port,
@@ -534,8 +556,29 @@ def execute_run(
         transition(session, run, RunState.RUNNING)
         telemetry_before = _safe_router_telemetry(session, run, adapter, "before-traffic")
         latency_results = _execute_latency_stage(session, run, adapter, server)
-        upload_results = _execute_http_upload_stage(session, run, server, reservation_client)
-        udp_upload_results = _execute_udp_upload_stage(session, run, server)
+        upload_results = []
+        udp_upload_results = []
+        tcp_rounds = _tcp_upload_count(run)
+        udp_pattern = _udp_pattern(run)
+        if udp_pattern == "beginning":
+            udp_upload_results.extend(_execute_udp_upload_stage(session, run, server, "beginning"))
+        for round_index in range(1, tcp_rounds + 1):
+            upload_results.extend(
+                _execute_http_upload_stage(
+                    session,
+                    run,
+                    server,
+                    reservation_client,
+                    round_index=round_index,
+                    total_rounds=tcp_rounds,
+                )
+            )
+            if udp_pattern == "after_each_tcp":
+                udp_upload_results.extend(
+                    _execute_udp_upload_stage(session, run, server, f"after-tcp-{round_index}")
+                )
+        if udp_pattern == "end":
+            udp_upload_results.extend(_execute_udp_upload_stage(session, run, server, "end"))
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
         if not upload_results and not udp_upload_results and not latency_results:
             add_event(

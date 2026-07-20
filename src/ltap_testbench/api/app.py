@@ -1,5 +1,6 @@
 from pathlib import Path
 from threading import Lock, Thread
+from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
@@ -37,8 +38,10 @@ class RunCreate(BaseModel):
 class LabRunCreate(BaseModel):
     router_ip: str = "192.168.101.254"
     tcp_file_size_mb: int = 25
+    tcp_upload_count: int = 1
     udp_duration_seconds: int = 60
     udp_bitrate_mbit_s: float = 5.0
+    udp_pattern: str = "end"
     antenna: str = ""
 
 
@@ -92,11 +95,13 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
             "duration_seconds": 120,
             "parallel_streams": [1],
             "payload_bytes": tcp_bytes,
+            "count": payload.tcp_upload_count,
         },
         "udp_upload": {
             "duration_seconds": payload.udp_duration_seconds,
             "bitrate_mbit_s": payload.udp_bitrate_mbit_s,
             "datagram_bytes": 1200,
+            "pattern": payload.udp_pattern,
         },
         "traffic": {"path_concurrency": "parallel"},
         "telemetry": {"controller_interval_seconds": 1, "lte_interval_seconds": 5},
@@ -104,8 +109,10 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
         "lab": {
             "router_ip": payload.router_ip,
             "tcp_file_size_mb": payload.tcp_file_size_mb,
+            "tcp_upload_count": payload.tcp_upload_count,
             "udp_duration_seconds": payload.udp_duration_seconds,
             "udp_bitrate_mbit_s": payload.udp_bitrate_mbit_s,
+            "udp_pattern": payload.udp_pattern,
             "antenna": payload.antenna,
         },
     }
@@ -159,6 +166,131 @@ def _latest_lab_run(session: Session) -> TestRun | None:
         if run is not None:
             return run
     return session.scalar(select(TestRun).order_by(TestRun.id.desc()))
+
+
+def _path_ports(run: TestRun) -> dict[str, int]:
+    paths = run.router.metadata_json.get("paths", []) if run.router.metadata_json else []
+    ports = {}
+    for path in paths:
+        path_id = path.get("id")
+        port = path.get("ports", {}).get("start")
+        if path_id and port:
+            ports[str(path_id)] = int(port)
+    return ports
+
+
+def _tcp_upload_count(run: TestRun) -> int:
+    tcp_config = run.resolved_plan.get("tcp_upload", {}) if run.resolved_plan else {}
+    try:
+        return max(1, int(tcp_config.get("count", 1)))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _udp_labels(run: TestRun) -> list[str]:
+    udp_config = run.resolved_plan.get("udp_upload", {}) if run.resolved_plan else {}
+    pattern = str(udp_config.get("pattern", "end"))
+    if pattern == "beginning":
+        return ["beginning"]
+    if pattern == "after_each_tcp":
+        return [f"after-tcp-{index}" for index in range(1, _tcp_upload_count(run) + 1)]
+    return ["end"]
+
+
+def _connections_for(client: TestNodeClient, run_id: str) -> list[dict]:
+    try:
+        return client.run_connections(run_id)
+    except Exception:
+        return []
+
+
+def _sum_connection_bytes(connections: list[dict]) -> int:
+    return sum(int(connection.get("bytes_received") or 0) for connection in connections)
+
+
+def _sum_connection_duration(connections: list[dict]) -> float:
+    return sum(float(connection.get("duration_seconds") or 0) for connection in connections)
+
+
+def _mbit_s(byte_count: int, duration_seconds: float) -> float | None:
+    if duration_seconds <= 0:
+        return None
+    return byte_count * 8 / duration_seconds / 1_000_000
+
+
+def _current_phase_info(run: TestRun) -> dict[str, Any]:
+    for event in reversed(run.events):
+        if event.event_type == "udp-upload-stage-started":
+            return {"name": "udp", "label": event.details.get("label", "end")}
+        if event.event_type == "upload-stage-started":
+            return {"name": "tcp", "round": int(event.details.get("round", 1))}
+        if event.event_type == "latency-stage":
+            return {"name": "latency"}
+        if event.event_type == "path-verification":
+            return {"name": "path verification"}
+        if event.event_type == "router-preflight":
+            return {"name": "preflight"}
+    return {"name": "setup"}
+
+
+def _live_lab_metrics(session: Session, run: TestRun) -> dict:
+    paths = _path_ports(run)
+    path_metrics_by_id: dict[str, dict[str, Any]] = {
+        path_id: {
+            "tcp_uploaded_mb": 0.0,
+            "udp_uploaded_mb": 0.0,
+            "phase_uploaded_mb": 0.0,
+            "tcp_average_mbit_s": None,
+            "udp_average_mbit_s": None,
+        }
+        for path_id in paths
+    }
+    metrics = {
+        "current_phase": _current_phase_info(run),
+        "paths": path_metrics_by_id,
+    }
+    if not paths:
+        return metrics
+    try:
+        client = TestNodeClient(_stockbot(session).control_api_url)
+    except Exception:
+        return metrics
+    phase = metrics["current_phase"]
+    phase_name = str(phase.get("name", "setup"))
+    phase_round = int(phase.get("round", 1))
+    phase_label = str(phase.get("label", "end"))
+    tcp_count = _tcp_upload_count(run)
+    udp_labels = _udp_labels(run)
+    for path_id in paths:
+        tcp_connections = [
+            connection
+            for round_index in range(1, tcp_count + 1)
+            for connection in _connections_for(client, f"{run.run_id}-{path_id}-tcp{round_index}")
+        ]
+        udp_connections = [
+            connection
+            for label in udp_labels
+            for connection in _connections_for(client, f"{run.run_id}-{path_id}-udp-{label}")
+        ]
+        tcp_bytes = _sum_connection_bytes(tcp_connections)
+        udp_bytes = _sum_connection_bytes(udp_connections)
+        phase_connections = []
+        if phase_name == "tcp":
+            phase_connections = _connections_for(client, f"{run.run_id}-{path_id}-tcp{phase_round}")
+        elif phase_name == "udp":
+            phase_connections = _connections_for(
+                client, f"{run.run_id}-{path_id}-udp-{phase_label}"
+            )
+        phase_bytes = _sum_connection_bytes(phase_connections)
+        tcp_duration = _sum_connection_duration(tcp_connections)
+        udp_duration = _sum_connection_duration(udp_connections)
+        path_metrics = path_metrics_by_id[path_id]
+        path_metrics["tcp_uploaded_mb"] = round(tcp_bytes / 1024 / 1024, 2)
+        path_metrics["udp_uploaded_mb"] = round(udp_bytes / 1024 / 1024, 2)
+        path_metrics["phase_uploaded_mb"] = round(phase_bytes / 1024 / 1024, 2)
+        path_metrics["tcp_average_mbit_s"] = _mbit_s(tcp_bytes, tcp_duration)
+        path_metrics["udp_average_mbit_s"] = _mbit_s(udp_bytes, udp_duration)
+    return metrics
 
 
 @app.on_event("startup")
@@ -219,10 +351,14 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
     global LAB_ACTIVE_RUN_ID
     if payload.tcp_file_size_mb not in TCP_FILE_SIZE_OPTIONS_MB:
         raise HTTPException(status_code=400, detail="unsupported TCP file size")
+    if payload.tcp_upload_count < 1 or payload.tcp_upload_count > 20:
+        raise HTTPException(status_code=400, detail="TCP upload count must be 1..20")
     if payload.udp_duration_seconds < 1 or payload.udp_duration_seconds > 3600:
         raise HTTPException(status_code=400, detail="UDP duration must be 1..3600 seconds")
     if payload.udp_bitrate_mbit_s <= 0 or payload.udp_bitrate_mbit_s > 50:
         raise HTTPException(status_code=400, detail="UDP bitrate must be 0..50 Mbit/s")
+    if payload.udp_pattern not in {"after_each_tcp", "beginning", "end"}:
+        raise HTTPException(status_code=400, detail="unsupported UDP pattern")
     try:
         _clear_lab_reservations(session)
         _lab_router(session, payload.router_ip)
@@ -274,6 +410,7 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
             "summary": run.summary,
             "events": events,
             "telemetry": telemetry,
+            "live_metrics": _live_lab_metrics(session, run),
             "artifacts": list_run_artifacts(run),
         },
     }
