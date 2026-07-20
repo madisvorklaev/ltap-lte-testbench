@@ -27,6 +27,10 @@ def test_run_artifacts_are_written(tmp_path) -> None:
     assert (tmp_path / run.run_id / "events.jsonl").read_text()
     report = (tmp_path / run.run_id / "report.md").read_text()
     assert f"# LtAP Test Run {run.run_id}" in report
+    assert "## TCP Upload Results" in report
+    assert "## UDP Upload Results" in report
+    assert "## Latency Results" in report
+    assert "## LTE Telemetry" in report
     assert "## Event Timeline" in report
     report_json = json.loads((tmp_path / run.run_id / "report.json").read_text())
     assert report_json["run_id"] == run.run_id

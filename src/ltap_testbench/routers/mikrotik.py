@@ -1,4 +1,5 @@
 import os
+import re
 import socket
 
 from ltap_testbench.routers.base import RouterAdapter, RouterCheck
@@ -253,3 +254,120 @@ class MikroTikRouterAdapter(RouterAdapter):
                 )
             )
         return checks
+
+    def collect_path_telemetry(self) -> list[dict]:
+        rows = []
+        with self._api() as api:
+            for path in self._paths():
+                interface = path.get("interface") or path.get("id")
+                lte_monitor = api.rows(
+                    api.command(["/interface/lte/monitor", f"=numbers={interface}", "=once="])
+                )
+                traffic = api.rows(
+                    api.command(["/interface/monitor-traffic", f"=interface={interface}", "=once="])
+                )
+                monitor = lte_monitor[0] if lte_monitor else {}
+                counters = traffic[0] if traffic else {}
+                rows.append(
+                    {
+                        "path_id": path.get("id"),
+                        "interface": interface,
+                        "routing_table": path.get("routing_table"),
+                        "status": monitor.get("status") or monitor.get("registration-status"),
+                        "operator": monitor.get("current-operator"),
+                        "access_technology": monitor.get("access-technology"),
+                        "primary_band": monitor.get("primary-band"),
+                        "ca_band": monitor.get("ca-band"),
+                        "earfcn": monitor.get("earfcn"),
+                        "rsrp": monitor.get("rsrp"),
+                        "rsrq": monitor.get("rsrq"),
+                        "sinr": monitor.get("sinr"),
+                        "rssi": monitor.get("rssi"),
+                        "tx_rate": counters.get("tx-bits-per-second"),
+                        "rx_rate": counters.get("rx-bits-per-second"),
+                        "tx_packets": counters.get("tx-packets-per-second"),
+                        "rx_packets": counters.get("rx-packets-per-second"),
+                    }
+                )
+        return rows
+
+    def measure_latency(self, target_host: str, count: int = 5) -> list[dict]:
+        results = []
+        count = max(1, min(count, 50))
+        with self._api() as api:
+            for path in self._paths():
+                path_id = path.get("id")
+                routing_table = path.get("routing_table")
+                commands = [
+                    [
+                        "/ping",
+                        f"=address={target_host}",
+                        f"=count={count}",
+                        f"=routing-table={routing_table}",
+                    ],
+                    ["/ping", f"=address={target_host}", f"=count={count}"],
+                ]
+                rows = []
+                routed = False
+                for index, command in enumerate(commands):
+                    if index == 0 and not routing_table:
+                        continue
+                    rows = api.rows(api.command(command))
+                    if rows:
+                        routed = index == 0
+                        break
+                samples = [_routeros_duration_to_ms(row.get("time")) for row in rows]
+                samples = [sample for sample in samples if sample is not None]
+                last = rows[-1] if rows else {}
+                received = _int_or_zero(last.get("received"))
+                sent = _int_or_zero(last.get("sent")) or count
+                results.append(
+                    {
+                        "path_id": path_id,
+                        "target_host": target_host,
+                        "routing_table": routing_table,
+                        "routing_table_used": routed,
+                        "sent": sent,
+                        "received": received,
+                        "loss_percent": _float_or_none(last.get("packet-loss")),
+                        "avg_ms": _routeros_duration_to_ms(last.get("avg-rtt")),
+                        "min_ms": _routeros_duration_to_ms(last.get("min-rtt")),
+                        "max_ms": _routeros_duration_to_ms(last.get("max-rtt")),
+                        "samples_ms": samples,
+                    }
+                )
+        return results
+
+
+def _routeros_duration_to_ms(value: str | None) -> float | None:
+    if not value:
+        return None
+    total = 0.0
+    for number, unit in re.findall(r"(\d+(?:\.\d+)?)([a-z]+)", value):
+        amount = float(number)
+        if unit == "s":
+            total += amount * 1000
+        elif unit == "ms":
+            total += amount
+        elif unit == "us":
+            total += amount / 1000
+        elif unit == "ns":
+            total += amount / 1_000_000
+    return total if total else None
+
+
+def _float_or_none(value: str | None) -> float | None:
+    if value is None:
+        return None
+    cleaned = value.removesuffix("%")
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def _int_or_zero(value: str | None) -> int:
+    try:
+        return int(value or 0)
+    except ValueError:
+        return 0

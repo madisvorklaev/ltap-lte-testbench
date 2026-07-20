@@ -53,6 +53,15 @@ def _format_value(value: object) -> str:
     return str(value)
 
 
+def _format_float(value: object, digits: int = 2) -> str:
+    if not isinstance(value, int | float | str):
+        return _format_value(value)
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return _format_value(value)
+
+
 def render_markdown_report(payload: dict) -> str:
     router = payload["router"]
     plan = payload["plan"]
@@ -82,6 +91,129 @@ def render_markdown_report(payload: dict) -> str:
         lines.append("")
     else:
         lines.extend(["No summary recorded.", ""])
+
+    upload_results = summary.get("upload_results") or []
+    lines.extend(["## TCP Upload Results", ""])
+    if upload_results:
+        lines.extend(
+            [
+                "| Path | Port | Bytes | Duration s | Speed Mbit/s | Connect s | Server source |",
+                "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
+            ]
+        )
+        for result in upload_results:
+            connections_for_result = result.get("test_node_connections") or []
+            source = connections_for_result[0].get("source") if connections_for_result else ""
+            duration = result.get("time_total_seconds") or result.get("server_duration_seconds")
+            speed = result.get("speed_upload_mbit_s") or result.get("server_average_mbit_s")
+            row = "| {path} | {port} | {bytes} | {duration} | {speed} | {connect} | {source} |"
+            lines.append(
+                row.format(
+                    path=_format_value(result.get("path_id")),
+                    port=_format_value(result.get("remote_port") or result.get("target_port")),
+                    bytes=_format_value(
+                        result.get("size_upload_bytes") or result.get("server_bytes_received")
+                    ),
+                    duration=_format_float(duration),
+                    speed=_format_float(speed),
+                    connect=_format_float(result.get("time_connect_seconds"), 3),
+                    source=_format_value(source),
+                )
+            )
+        lines.append("")
+    else:
+        lines.extend(["No TCP upload results were recorded.", ""])
+
+    udp_results = summary.get("udp_upload_results") or []
+    lines.extend(["## UDP Upload Results", ""])
+    if udp_results:
+        lines.extend(
+            [
+                (
+                    "| Path | Port | Duration s | Target Mbit/s | Sent Mbit/s | "
+                    "Datagrams | Bytes | Validity |"
+                ),
+                "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+            ]
+        )
+        for result in udp_results:
+            row = (
+                "| {path} | {port} | {duration} | {target} | {speed} | "
+                "{datagrams} | {bytes} | {validity} |"
+            )
+            lines.append(
+                row.format(
+                    path=_format_value(result.get("path_id")),
+                    port=_format_value(result.get("target_port")),
+                    duration=_format_float(result.get("duration_seconds")),
+                    target=_format_float(result.get("configured_bitrate_mbit_s")),
+                    speed=_format_float(result.get("average_mbit_s")),
+                    datagrams=_format_value(result.get("datagrams_sent")),
+                    bytes=_format_value(result.get("bytes_sent")),
+                    validity=_format_value(result.get("validity")),
+                )
+            )
+        lines.append("")
+    else:
+        lines.extend(["No UDP upload results were recorded.", ""])
+
+    latency_results = summary.get("latency_results") or []
+    lines.extend(["## Latency Results", ""])
+    if latency_results:
+        lines.extend(
+            [
+                "| Path | Target | Sent | Received | Loss % | Avg ms | Min ms | Max ms |",
+                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for result in latency_results:
+            row = "| {path} | {target} | {sent} | {received} | {loss} | {avg} | {min} | {max} |"
+            lines.append(
+                row.format(
+                    path=_format_value(result.get("path_id")),
+                    target=_format_value(result.get("target_host")),
+                    sent=_format_value(result.get("sent")),
+                    received=_format_value(result.get("received")),
+                    loss=_format_float(result.get("loss_percent")),
+                    avg=_format_float(result.get("avg_ms")),
+                    min=_format_float(result.get("min_ms")),
+                    max=_format_float(result.get("max_ms")),
+                )
+            )
+        lines.append("")
+    else:
+        lines.extend(["No latency results were recorded.", ""])
+
+    telemetry_after = summary.get("telemetry_after") or []
+    lines.extend(["## LTE Telemetry", ""])
+    if telemetry_after:
+        lines.extend(
+            [
+                "| Path | Status | Operator | Band | RSRP | RSRQ | SINR | TX rate | RX rate |",
+                "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for row in telemetry_after:
+            table_row = (
+                "| {path} | {status} | {operator} | {band} | {rsrp} | {rsrq} | "
+                "{sinr} | {tx} | {rx} |"
+            )
+            lines.append(
+                table_row.format(
+                    path=_format_value(row.get("path_id")),
+                    status=_format_value(row.get("status")),
+                    operator=_format_value(row.get("operator")),
+                    band=_format_value(row.get("primary_band")),
+                    rsrp=_format_value(row.get("rsrp")),
+                    rsrq=_format_value(row.get("rsrq")),
+                    sinr=_format_value(row.get("sinr")),
+                    tx=_format_value(row.get("tx_rate")),
+                    rx=_format_value(row.get("rx_rate")),
+                )
+            )
+        lines.append("")
+    else:
+        lines.extend(["No LTE telemetry snapshots were recorded.", ""])
 
     connections = payload.get("connections") or []
     lines.extend(["## Test Node Connections", ""])

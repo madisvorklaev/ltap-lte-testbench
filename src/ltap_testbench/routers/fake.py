@@ -41,3 +41,33 @@ class FakeRouterAdapter(RouterAdapter):
             )
             for path in self.profile.metadata_json.get("paths", [])
         ]
+
+    def collect_path_telemetry(self) -> list[dict]:
+        return [
+            {
+                "path_id": path.get("id", "unknown"),
+                "interface": path.get("interface") or path.get("id"),
+                "status": "registered",
+                "operator": "Demo LTE",
+                "rsrp": "-82dBm",
+                "rsrq": "-9dB",
+                "sinr": "18dB",
+            }
+            for path in self.profile.metadata_json.get("paths", [])
+        ]
+
+    def measure_latency(self, target_host: str, count: int = 5) -> list[dict]:
+        return [
+            {
+                "path_id": path.get("id", "unknown"),
+                "target_host": target_host,
+                "sent": count,
+                "received": count,
+                "loss_percent": 0.0,
+                "avg_ms": 42.0,
+                "min_ms": 35.0,
+                "max_ms": 63.0,
+                "samples_ms": [35.0, 42.0, 63.0][:count],
+            }
+            for path in self.profile.metadata_json.get("paths", [])
+        ]

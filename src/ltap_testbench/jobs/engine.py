@@ -20,11 +20,14 @@ from ltap_testbench.jobs.state_machine import (
     restart_target_for,
 )
 from ltap_testbench.reporting.artifacts import persist_run_artifacts, run_artifact_dir
+from ltap_testbench.routers.base import RouterAdapter
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
 from ltap_testbench.testnode.client import TestNodeClient, TestNodeReservation
 from ltap_testbench.traffic.commands import run_command
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
+from ltap_testbench.traffic.tcp_upload import run_timed_tcp_upload
+from ltap_testbench.traffic.udp_upload import run_udp_upload
 
 
 def add_event(
@@ -123,6 +126,16 @@ def _plan_has_upload_stage(run: TestRun) -> bool:
     return any("upload" in str(stage) for stage in stages)
 
 
+def _plan_has_udp_upload_stage(run: TestRun) -> bool:
+    stages = run.resolved_plan.get("stages", [])
+    return any("udp" in str(stage) and "upload" in str(stage) for stage in stages)
+
+
+def _plan_has_latency_stage(run: TestRun) -> bool:
+    stages = run.resolved_plan.get("stages", [])
+    return any("latency" in str(stage) for stage in stages)
+
+
 def _router_paths(run: TestRun) -> list[dict]:
     paths = run.router.metadata_json.get("paths", [])
     return paths if isinstance(paths, list) else []
@@ -134,6 +147,72 @@ def _path_port(path: dict) -> int | None:
         return None
     start = ports.get("start")
     return int(start) if start else None
+
+
+def _tcp_upload_config(run: TestRun) -> dict:
+    config = run.resolved_plan.get("tcp_upload", {})
+    return config if isinstance(config, dict) else {}
+
+
+def _udp_upload_config(run: TestRun) -> dict:
+    config = run.resolved_plan.get("udp_upload", {})
+    return config if isinstance(config, dict) else {}
+
+
+def _latency_config(run: TestRun) -> dict:
+    config = run.resolved_plan.get("latency", {})
+    return config if isinstance(config, dict) else {}
+
+
+def _safe_router_telemetry(
+    session: Session,
+    run: TestRun,
+    adapter: RouterAdapter,
+    label: str,
+) -> list[dict]:
+    try:
+        rows = adapter.collect_path_telemetry()
+    except Exception as exc:
+        add_event(
+            session,
+            run,
+            "router-telemetry",
+            f"Router telemetry collection failed during {label}.",
+            {"type": type(exc).__name__, "error": str(exc)},
+        )
+        return []
+    add_event(
+        session,
+        run,
+        "router-telemetry",
+        f"Router telemetry collected during {label}.",
+        {"label": label, "paths": rows},
+    )
+    return rows
+
+
+def _execute_latency_stage(
+    session: Session,
+    run: TestRun,
+    adapter: RouterAdapter,
+    server: ServerProfile | None,
+) -> list[dict]:
+    if server is None or not server.public_host or not _plan_has_latency_stage(run):
+        add_event(session, run, "latency-stage", "No live latency stage configured.")
+        return []
+    config = _latency_config(run)
+    interval_ms = int(config.get("interval_ms", 100))
+    duration_seconds = int(config.get("duration_seconds", 60))
+    count = max(1, min(50, int(duration_seconds * 1000 / interval_ms)))
+    results = adapter.measure_latency(server.public_host, count=count)
+    add_event(
+        session,
+        run,
+        "latency-stage",
+        "Router-originated latency probes completed.",
+        {"target_host": server.public_host, "count": count, "results": results},
+    )
+    return results
 
 
 def _execute_http_upload_stage(
@@ -148,10 +227,17 @@ def _execute_http_upload_stage(
     if not server.public_host:
         raise RuntimeError(f"Server {server.slug} has no public_host for upload tests")
 
+    config = _tcp_upload_config(run)
+    raw_payload_bytes = config.get("payload_bytes")
+    payload_bytes = int(raw_payload_bytes) if raw_payload_bytes else None
+    duration_seconds = int(config.get("duration_seconds", 30))
     artifact_dir = run_artifact_dir(run)
     artifact_dir.mkdir(parents=True, exist_ok=True)
     payload_path = artifact_dir / "upload-payload.bin"
-    payload_path.write_bytes((f"{run.run_id}\n".encode()) * 4096)
+    if payload_bytes is not None:
+        pattern = f"{run.run_id}\n".encode()
+        repeats = payload_bytes // len(pattern) + 1
+        payload_path.write_bytes((pattern * repeats)[:payload_bytes])
 
     results = []
     for path in _router_paths(run):
@@ -169,53 +255,174 @@ def _execute_http_upload_stage(
         upload_run_id = f"{run.run_id}-{path_id}"
         response_path = artifact_dir / f"{upload_run_id}_response.txt"
         url = f"http://{server.public_host}:{port}/upload/{upload_run_id}"
-        write_out = json.dumps(
-            {
-                "http_code": "%{http_code}",
-                "time_total": "%{time_total}",
-                "speed_upload": "%{speed_upload}",
-                "size_upload": "%{size_upload}",
-                "remote_ip": "%{remote_ip}",
-                "remote_port": "%{remote_port}",
-            }
-        )
-        result = run_command(
-            [
-                "curl",
-                "--silent",
-                "--show-error",
-                "--fail-with-body",
-                "--upload-file",
-                str(payload_path),
-                "--output",
-                str(response_path),
-                "--write-out",
-                write_out,
-                url,
-            ],
-            timeout_seconds=60,
-        )
-        summary = parse_curl_write_out(result.stdout)
+        if payload_bytes is None:
+            timed = run_timed_tcp_upload(
+                server.public_host,
+                port,
+                f"/upload/{upload_run_id}",
+                duration_seconds,
+            )
+            result = None
+            summary = None
+            response_path.write_text(timed.response_head)
+        else:
+            write_out = json.dumps(
+                {
+                    "http_code": "%{http_code}",
+                    "time_connect": "%{time_connect}",
+                    "time_total": "%{time_total}",
+                    "speed_upload": "%{speed_upload}",
+                    "size_upload": "%{size_upload}",
+                    "remote_ip": "%{remote_ip}",
+                    "remote_port": "%{remote_port}",
+                }
+            )
+            timeout_seconds = max(duration_seconds + 120, 120)
+            result = run_command(
+                [
+                    "curl",
+                    "--silent",
+                    "--show-error",
+                    "--fail-with-body",
+                    "--upload-file",
+                    str(payload_path),
+                    "--output",
+                    str(response_path),
+                    "--write-out",
+                    write_out,
+                    url,
+                ],
+                timeout_seconds=timeout_seconds,
+            )
+            summary = parse_curl_write_out(result.stdout)
+            timed = None
         connections = client.run_connections(upload_run_id)
+        server_bytes = sum(int(connection.get("bytes_received") or 0) for connection in connections)
+        server_duration = max(
+            [float(connection.get("duration_seconds") or 0) for connection in connections],
+            default=None,
+        )
+        server_mbit_s = (
+            max(float(connection.get("average_mbit_s") or 0) for connection in connections)
+            if connections
+            else None
+        )
+        time_total_seconds: float | None
+        speed_upload_mbit_s: float | None
+        size_upload_bytes: int | None
+        if timed is not None:
+            time_total_seconds = timed.duration_seconds
+            speed_upload_mbit_s = timed.average_mbit_s
+            size_upload_bytes = timed.bytes_sent
+            http_code = None
+        elif summary is not None:
+            time_total_seconds = summary.time_total_seconds
+            speed_upload_mbit_s = summary.speed_upload_mbit_s
+            size_upload_bytes = summary.size_upload_bytes
+            http_code = summary.http_code
+        else:
+            time_total_seconds = None
+            speed_upload_mbit_s = None
+            size_upload_bytes = None
+            http_code = None
         row = {
             "path_id": path_id,
             "url": url,
-            "curl_exit_code": result.exit_code,
-            "curl_stderr": result.stderr,
-            "http_code": summary.http_code,
-            "time_total_seconds": summary.time_total_seconds,
-            "speed_upload_mbit_s": summary.speed_upload_mbit_s,
-            "size_upload_bytes": summary.size_upload_bytes,
-            "remote_ip": summary.remote_ip,
-            "remote_port": summary.remote_port,
+            "target_host": server.public_host,
+            "target_port": port,
+            "mode": "timed" if payload_bytes is None else "payload",
+            "curl_exit_code": result.exit_code if result is not None else None,
+            "curl_stderr": result.stderr if result is not None else None,
+            "http_code": http_code,
+            "time_connect_seconds": summary.time_connect_seconds if summary is not None else None,
+            "time_total_seconds": time_total_seconds,
+            "speed_upload_mbit_s": speed_upload_mbit_s,
+            "size_upload_bytes": size_upload_bytes,
+            "configured_duration_seconds": duration_seconds,
+            "configured_payload_bytes": payload_bytes,
+            "remote_ip": summary.remote_ip if summary is not None else server.public_host,
+            "remote_port": summary.remote_port if summary is not None else port,
+            "response_artifact": response_path.name,
+            "server_bytes_received": server_bytes,
+            "server_duration_seconds": server_duration,
+            "server_average_mbit_s": server_mbit_s,
             "test_node_run_id": upload_run_id,
             "test_node_connections": connections,
         }
         add_event(session, run, "upload-stage", f"HTTP upload completed for {path_id}.", row)
-        if result.exit_code != 0 or summary.http_code not in {"200", "201"} or not connections:
+        expected_server_bytes = payload_bytes if payload_bytes is not None else 1
+        server_confirmed = bool(connections) and server_bytes >= expected_server_bytes
+        curl_confirmed = (
+            result is not None and result.exit_code == 0 and http_code in {"200", "201"}
+        )
+        timed_confirmed = timed is not None and timed.bytes_sent > 0
+        if not server_confirmed and not curl_confirmed and not timed_confirmed:
             raise RuntimeError(f"HTTP upload failed for {path_id}: {row}")
         results.append(row)
     return results
+
+
+def _execute_udp_upload_stage(
+    session: Session,
+    run: TestRun,
+    server: ServerProfile | None,
+) -> list[dict]:
+    if server is None or not _plan_has_udp_upload_stage(run):
+        add_event(session, run, "udp-upload-stage", "No UDP upload stage configured.")
+        return []
+    if not server.public_host:
+        raise RuntimeError(f"Server {server.slug} has no public_host for UDP upload tests")
+    config = _udp_upload_config(run)
+    duration_seconds = int(config.get("duration_seconds", 30))
+    bitrate_mbit_s = float(config.get("bitrate_mbit_s", 2.0))
+    datagram_bytes = int(config.get("datagram_bytes", 1200))
+    rows = []
+    for path in _router_paths(run):
+        path_id = path.get("id", "path")
+        port = _path_port(path)
+        if port is None:
+            add_event(
+                session,
+                run,
+                "udp-upload-stage",
+                f"Skipping {path_id}: no UDP port configured.",
+                {"path": path},
+            )
+            continue
+        udp_run_id = f"{run.run_id}-{path_id}-udp"
+        result = run_udp_upload(
+            server.public_host,
+            port,
+            duration_seconds,
+            bitrate_mbit_s,
+            datagram_bytes,
+            run_id=udp_run_id,
+        )
+        connections = []
+        if server.public_host and server:
+            try:
+                connections = TestNodeClient(server.control_api_url).run_connections(udp_run_id)
+            except Exception:
+                connections = []
+        row = {
+            "path_id": path_id,
+            "test_node_run_id": udp_run_id,
+            "target_host": result.target_host,
+            "target_port": result.target_port,
+            "requested_duration_seconds": result.requested_duration_seconds,
+            "duration_seconds": result.duration_seconds,
+            "configured_bitrate_mbit_s": result.bitrate_mbit_s,
+            "average_mbit_s": result.average_mbit_s,
+            "datagram_bytes": result.datagram_bytes,
+            "datagrams_sent": result.datagrams_sent,
+            "bytes_sent": result.bytes_sent,
+            "validity": "server-confirmed" if connections else "sender-side",
+            "server_confirmation": bool(connections),
+            "test_node_connections": connections,
+        }
+        add_event(session, run, "udp-upload-stage", f"UDP upload completed for {path_id}.", row)
+        rows.append(row)
+    return rows
 
 
 def execute_run(
@@ -257,8 +464,12 @@ def execute_run(
         transition(session, run, RunState.WARMING_UP)
         reservation, reservation_client = _reserve_server(session, run, server, client_factory)
         transition(session, run, RunState.RUNNING)
+        telemetry_before = _safe_router_telemetry(session, run, adapter, "before-traffic")
+        latency_results = _execute_latency_stage(session, run, adapter, server)
         upload_results = _execute_http_upload_stage(session, run, server, reservation_client)
-        if not upload_results:
+        udp_upload_results = _execute_udp_upload_stage(session, run, server)
+        telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
+        if not upload_results and not udp_upload_results and not latency_results:
             add_event(
                 session,
                 run,
@@ -274,15 +485,23 @@ def execute_run(
             for connection in result.get("test_node_connections", [])
         ]
         run.summary = {
-            "validity": "live-upload" if upload_results else "simulated",
+            "validity": (
+                "live-upload"
+                if upload_results or udp_upload_results or latency_results
+                else "simulated"
+            ),
             "warnings": controller_check.warnings,
             "message": (
-                "Run completed with live HTTP upload stage."
-                if upload_results
+                "Run completed with live measured stages."
+                if upload_results or udp_upload_results or latency_results
                 else "MVP run completed using adapter checks and simulated measurements."
             ),
             "test_node_reserved": reservation is not None,
+            "latency_results": latency_results,
             "upload_results": upload_results,
+            "udp_upload_results": udp_upload_results,
+            "telemetry_before": telemetry_before,
+            "telemetry_after": telemetry_after,
             "test_node_connections": connections,
         }
         session.add(run)

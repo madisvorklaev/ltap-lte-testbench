@@ -75,12 +75,19 @@ class LatencyStageConfig(BaseModel):
 class TcpUploadStageConfig(BaseModel):
     duration_seconds: int = Field(default=30, ge=1)
     parallel_streams: list[int] = Field(default_factory=lambda: [1])
+    payload_bytes: int | None = Field(default=None, ge=1)
 
     @model_validator(mode="after")
     def validate_parallel_streams(self) -> "TcpUploadStageConfig":
         if any(streams < 1 for streams in self.parallel_streams):
             raise ValueError("parallel stream counts must be positive")
         return self
+
+
+class UdpUploadStageConfig(BaseModel):
+    duration_seconds: int = Field(default=30, ge=1)
+    bitrate_mbit_s: float = Field(default=2.0, gt=0)
+    datagram_bytes: int = Field(default=1200, ge=64, le=9000)
 
 
 class TemporaryRouterChangesConfig(BaseModel):
@@ -98,6 +105,7 @@ class TestPlanConfig(BaseModel):
     stages: list[str] = Field(default_factory=list)
     latency: LatencyStageConfig = Field(default_factory=LatencyStageConfig)
     tcp_upload: TcpUploadStageConfig = Field(default_factory=TcpUploadStageConfig)
+    udp_upload: UdpUploadStageConfig = Field(default_factory=UdpUploadStageConfig)
     telemetry: dict = Field(default_factory=dict)
     temporary_router_changes: TemporaryRouterChangesConfig = Field(
         default_factory=TemporaryRouterChangesConfig

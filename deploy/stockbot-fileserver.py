@@ -6,6 +6,8 @@ import os
 import posixpath
 import re
 import shutil
+import socketserver
+import threading
 import time
 from datetime import UTC, datetime
 from http import HTTPStatus
@@ -23,6 +25,7 @@ MAX_FORM_SIZE = int(
 RUNS: dict[str, list[dict]] = {}
 RESERVATIONS: dict[str, dict] = {}
 STARTED_AT = time.time()
+RUNS_LOCK = threading.Lock()
 
 
 def now_iso() -> str:
@@ -102,6 +105,87 @@ def prune_expired_reservations() -> None:
         RESERVATIONS.pop(reservation_id, None)
 
 
+def record_udp_datagram(run_id: str, source: str, port: int, size: int) -> None:
+    now = datetime.now(UTC)
+    with RUNS_LOCK:
+        records = RUNS.setdefault(run_id, [])
+        record = next(
+            (
+                item
+                for item in records
+                if item.get("protocol") == "udp" and item.get("source") == source
+            ),
+            None,
+        )
+        if record is None:
+            record = {
+                "request_id": f"udp-{uuid4().hex[:12]}",
+                "run_id": run_id,
+                "protocol": "udp",
+                "source": source,
+                "destination_port": port,
+                "bytes_received": 0,
+                "datagrams_received": 0,
+                "started_at": now.replace(microsecond=0).isoformat(),
+                "ended_at": now.replace(microsecond=0).isoformat(),
+                "duration_seconds": 0.000001,
+                "average_mbit_s": 0.0,
+                "token_present": False,
+            }
+            records.append(record)
+        record["bytes_received"] += size
+        record["datagrams_received"] += 1
+        started = datetime.fromisoformat(record["started_at"])
+        duration = max((now - started).total_seconds(), 0.000001)
+        record["ended_at"] = now.replace(microsecond=0).isoformat()
+        record["duration_seconds"] = duration
+        record["average_mbit_s"] = record["bytes_received"] * 8 / duration / 1_000_000
+
+
+def record_tcp_upload(
+    run_id: str,
+    source: str,
+    port: int,
+    started: datetime,
+    ended: datetime,
+    bytes_received: int,
+    complete: bool,
+    token_present: bool,
+) -> dict:
+    duration = max((ended - started).total_seconds(), 0.000001)
+    record = {
+        "request_id": f"upload-{uuid4().hex[:12]}",
+        "run_id": run_id,
+        "protocol": "tcp",
+        "source": source,
+        "destination_port": port,
+        "bytes_received": bytes_received,
+        "complete": complete,
+        "started_at": started.replace(microsecond=0).isoformat(),
+        "ended_at": ended.replace(microsecond=0).isoformat(),
+        "duration_seconds": duration,
+        "average_mbit_s": bytes_received * 8 / duration / 1_000_000,
+        "token_present": token_present,
+    }
+    with RUNS_LOCK:
+        RUNS.setdefault(run_id, []).append(record)
+    return record
+
+
+class UdpUploadHandler(socketserver.BaseRequestHandler):
+    def handle(self) -> None:
+        data = self.request[0]
+        header, _, _body = data.partition(b"\n")
+        if not header.startswith(b"LTAPUDP "):
+            return
+        run_id = header.removeprefix(b"LTAPUDP ").decode("utf-8", errors="replace").strip()
+        if not run_id:
+            return
+        record_udp_datagram(
+            run_id, self.client_address[0], self.server.server_address[1], len(data)
+        )
+
+
 class UploadHandler(BaseHTTPRequestHandler):
     server_version = "StockbotFileServer/1.1"
 
@@ -169,6 +253,7 @@ class UploadHandler(BaseHTTPRequestHandler):
                 HTTPStatus.OK,
                 {
                     "upload_sink": True,
+                    "udp_upload_sink": True,
                     "iperf3_external": False,
                     "irtt_external": False,
                     "reservations": True,
@@ -337,23 +422,20 @@ class UploadHandler(BaseHTTPRequestHandler):
                 bytes_received += len(chunk)
                 remaining -= len(chunk)
             ended = datetime.now(UTC)
-            if remaining:
-                self.send_error(HTTPStatus.BAD_REQUEST, "incomplete upload")
+            complete = remaining == 0
+            record = record_tcp_upload(
+                run_id,
+                self.client_address[0],
+                self.server.server_port,
+                started,
+                ended,
+                bytes_received,
+                complete,
+                bool(self.headers.get("X-Ltap-Token")),
+            )
+            if not complete:
+                self.send_json(HTTPStatus.ACCEPTED, record)
                 return
-            duration = max((ended - started).total_seconds(), 0.000001)
-            record = {
-                "request_id": f"upload-{uuid4().hex[:12]}",
-                "run_id": run_id,
-                "source": self.client_address[0],
-                "destination_port": self.server.server_port,
-                "bytes_received": bytes_received,
-                "started_at": started.replace(microsecond=0).isoformat(),
-                "ended_at": ended.replace(microsecond=0).isoformat(),
-                "duration_seconds": duration,
-                "average_mbit_s": bytes_received * 8 / duration / 1_000_000,
-                "token_present": bool(self.headers.get("X-Ltap-Token")),
-            }
-            RUNS.setdefault(run_id, []).append(record)
             self.send_json(HTTPStatus.OK, record)
             return
         if not self.require_auth():
@@ -389,4 +471,7 @@ if __name__ == "__main__":
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     port = int(os.environ.get("STOCKBOT_FILESERVER_PORT", "8088"))
     host = os.environ.get("STOCKBOT_FILESERVER_HOST", "0.0.0.0")
+    udp_port = int(os.environ.get("STOCKBOT_FILESERVER_UDP_PORT", str(port)))
+    udp_server = socketserver.ThreadingUDPServer((host, udp_port), UdpUploadHandler)
+    threading.Thread(target=udp_server.serve_forever, daemon=True).start()
     ThreadingHTTPServer((host, port), UploadHandler).serve_forever()

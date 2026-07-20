@@ -7,6 +7,7 @@ from numbers import Real
 class HttpUploadSummary:
     http_code: str | None
     time_total_seconds: float | None
+    time_connect_seconds: float | None
     speed_upload_bytes_s: float | None
     size_upload_bytes: int | None
     remote_ip: str | None
@@ -24,6 +25,7 @@ def parse_curl_write_out(output: str) -> HttpUploadSummary:
     return HttpUploadSummary(
         http_code=data.get("http_code"),
         time_total_seconds=_float_or_none(data.get("time_total")),
+        time_connect_seconds=_float_or_none(data.get("time_connect")),
         speed_upload_bytes_s=_float_or_none(data.get("speed_upload")),
         size_upload_bytes=_int_or_none(data.get("size_upload")),
         remote_ip=data.get("remote_ip"),

@@ -3,6 +3,8 @@ import json
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
 from ltap_testbench.traffic.iperf import build_iperf3_client_command, parse_iperf3_json
 from ltap_testbench.traffic.irtt import build_irtt_client_command, parse_irtt_json
+from ltap_testbench.traffic.tcp_upload import run_timed_tcp_upload
+from ltap_testbench.traffic.udp_upload import run_udp_upload
 
 
 def test_build_iperf3_command() -> None:
@@ -83,6 +85,7 @@ def test_parse_curl_write_out() -> None:
         json.dumps(
             {
                 "http_code": "201",
+                "time_connect": "0.123",
                 "time_total": "10.0",
                 "speed_upload": "1250000",
                 "size_upload": "12500000",
@@ -92,5 +95,78 @@ def test_parse_curl_write_out() -> None:
         )
     )
     assert summary.http_code == "201"
+    assert summary.time_connect_seconds == 0.123
     assert summary.speed_upload_mbit_s == 10
     assert summary.remote_port == 18080
+
+
+def test_run_udp_upload(monkeypatch) -> None:
+    sent = []
+
+    class FakeSocket:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def connect(self, address):
+            self.address = address
+
+        def send(self, payload):
+            sent.append(payload)
+            return len(payload)
+
+    times = iter([0.0, 0.0, 0.01, 0.02, 0.03, 1.01, 1.01])
+    monkeypatch.setattr("ltap_testbench.traffic.udp_upload.time.monotonic", lambda: next(times))
+    monkeypatch.setattr("ltap_testbench.traffic.udp_upload.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        "ltap_testbench.traffic.udp_upload.socket.socket", lambda *_args: FakeSocket()
+    )
+
+    result = run_udp_upload("198.51.100.10", 18080, 1, 1.0, 1000)
+
+    assert result.target_port == 18080
+    assert result.bytes_sent == len(sent) * 1000
+    assert result.average_mbit_s > 0
+
+
+def test_run_timed_tcp_upload(monkeypatch) -> None:
+    sent = []
+
+    class FakeSocket:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def sendall(self, payload):
+            sent.append(payload)
+
+        def shutdown(self, _how):
+            return None
+
+        def recv(self, _size):
+            return b"HTTP/1.1 202 Accepted\r\n\r\n"
+
+    times = iter([0.0, 0.0, 0.2, 0.4, 1.1, 1.1])
+    monkeypatch.setattr("ltap_testbench.traffic.tcp_upload.time.monotonic", lambda: next(times))
+    monkeypatch.setattr(
+        "ltap_testbench.traffic.tcp_upload.socket.create_connection",
+        lambda *_args, **_kwargs: FakeSocket(),
+    )
+
+    result = run_timed_tcp_upload("198.51.100.10", 18080, "/upload/run-test", 1)
+
+    assert result.target_port == 18080
+    assert result.bytes_sent == 3 * 64 * 1024
+    assert result.average_mbit_s > 0
+    assert result.response_head.startswith("HTTP/1.1 202")
+    assert sent[0].startswith(b"PUT /upload/run-test HTTP/1.1")

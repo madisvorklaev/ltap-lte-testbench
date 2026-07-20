@@ -23,3 +23,9 @@ class RouterAdapter(ABC):
     @abstractmethod
     def verify_paths(self) -> list[RouterCheck]:
         raise NotImplementedError
+
+    def collect_path_telemetry(self) -> list[dict]:
+        return []
+
+    def measure_latency(self, target_host: str, count: int = 5) -> list[dict]:
+        return []

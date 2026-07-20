@@ -7,12 +7,12 @@ Last updated: 2026-07-20 Europe/Tallinn.
 - Repository: `/home/madis/projects/ltap-lte-testbench`
 - GitHub: `https://github.com/madisvorklaev/ltap-lte-testbench` private
 - Branch: `main`
-- Last verified pushed commit before 2026-07-20 work: `787d7fe feat: add traffic tool parsers`
+- Last verified pushed commit before live throughput work: `9d9da6f feat: add live LtAP smoke test support`
 - Web service: `ltap-testbench-web.service`
 - Local URL: `http://127.0.0.1:8787`
 - Database: `var/ltap-testbench.sqlite3` and ignored by Git
-- Router state: not contacted; currently disconnected
-- Controller network: preflight saw default route on Wi-Fi `wlp2s0` and Ethernet `eno1` down
+- Router state: connected on the controller LAN at `192.168.101.254`; live RouterOS API preflight works with password resolved from `env:LTAP_R1_PASSWORD`.
+- Controller network: default route over `eno1` through the LtAP LAN during live tests.
 - GitHub issues: milestone tracking created as issues `#1` through `#9`
 - Stockbot upload/test node: `192.168.71.8:8088`, public ports `18080` and `18081` forward to it on `81.90.121.7`.
 
@@ -38,7 +38,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Fake adapter can simulate FastTrack-enabled, wrong-path, and API-timeout failures.
 - Test-node status/metrics/reservation/upload-sink behavior is covered by tests.
 - Runs persist metadata, resolved plan, summary, and events under ignored `var/results/<run-id>/`.
-- Runs generate `report.md` and `report.json` artifacts with overview, summary, test-node connection table, and event timeline.
+- Runs generate `report.md` and `report.json` artifacts with overview, TCP upload, UDP upload, latency, LTE telemetry, test-node connection, and event timeline sections.
 - Router profiles and test plans can be created through validated service/API paths.
 - Server profiles exist, with a controller-side test-node client for health/status/metrics/reservations.
 - Test plans can reference a `server_slug`; the worker reserves that test node for the run and releases it afterward.
@@ -51,20 +51,25 @@ curl http://127.0.0.1:8787/api/v1/health
 - Dashboard links recent runs to `/runs/{run_id}`, which shows summary JSON, artifact download links, and the event timeline.
 - Dashboard command center can seed demo data, run preflight, start runs, check server health, cancel runs, and create router/server/plan records from JSON.
 - Live MikroTik read-only preflight/path verification works through RouterOS API credentials resolved from runtime environment secret refs such as `env:LTAP_R1_PASSWORD`.
-- Plans with upload stages can run small HTTP upload smoke tests to the configured stockbot server and attach test-node connection records to the run summary/report.
+- Plans with TCP upload stages can run server-confirmed HTTP upload tests to the configured stockbot server and attach test-node connection records to the run summary/report.
+- Plans with TCP upload stages can also run timed streams when `tcp_upload.payload_bytes` is omitted.
+- Plans with UDP upload stages can run timed UDP uploads through the configured path ports.
+- Live run `run-bcea1fc5bab2` completed against `r1-ltap-live` with latency samples, 1 MiB TCP upload per LTE path, 10 seconds of 2 Mbit/s UDP sender traffic per LTE path, and LTE telemetry snapshots.
 
 ## Main Gaps
 
 - MikroTik adapter is read-only but no longer a scaffold; it does not make RouterOS configuration changes.
 - Worker currently runs synchronously in-process for the MVP.
-- HTTP upload smoke execution is wired into the run engine; IRTT/iperf3 live execution is still pending.
+- HTTP/TCP upload execution, timed UDP sender execution, RouterOS latency sampling, and LTE telemetry snapshots are wired into the run engine.
+- UDP receiver-side confirmation is still pending until stockbot exposes and the network forwards a UDP receive path. The versioned stockbot deployment script already contains the UDP recorder, but the live stockbot service was not reachable over SSH while this controller was routed through the LtAP LAN.
+- IRTT/iperf3 live execution is still pending as a future alternative to the built-in HTTP/UDP stages.
 - SQLite schema is created directly; Alembic migrations are still needed.
 - Web UI has command/control coverage but still needs richer guided forms and historical-result import.
 
 ## Recommended Next Step
 
-Implement Milestone 1:
+Recommended next step:
 
-1. Add Alembic migrations instead of direct `create_all`.
-2. Wire the run engine to execute iperf3/IRTT stages against the reserved test node.
+1. Add stockbot UDP receive accounting and public UDP forwards for `18080`/`18081`, then mark UDP results server-confirmed.
+2. Add Alembic migrations instead of direct `create_all`.
 3. Split the worker into a separate service once the durable queue shape is tested.
