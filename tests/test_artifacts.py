@@ -22,4 +22,12 @@ def test_run_artifacts_are_written(tmp_path) -> None:
     metadata = json.loads((tmp_path / run.run_id / "metadata.json").read_text())
     assert metadata["run_id"] == run.run_id
     assert "events" in artifacts
+    assert "report_markdown" in artifacts
+    assert "report_json" in artifacts
     assert (tmp_path / run.run_id / "events.jsonl").read_text()
+    report = (tmp_path / run.run_id / "report.md").read_text()
+    assert f"# LtAP Test Run {run.run_id}" in report
+    assert "## Event Timeline" in report
+    report_json = json.loads((tmp_path / run.run_id / "report.json").read_text())
+    assert report_json["run_id"] == run.run_id
+    assert report_json["events"]

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -18,7 +18,7 @@ from ltap_testbench.profiles.service import (
     create_server_profile,
     create_test_plan,
 )
-from ltap_testbench.reporting.artifacts import list_run_artifacts
+from ltap_testbench.reporting.artifacts import list_run_artifacts, run_artifact_dir
 from ltap_testbench.testnode.client import TestNodeClient
 
 template_dir = Path(__file__).resolve().parents[1] / "web" / "templates"
@@ -47,6 +47,25 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
         request,
         "dashboard.html",
         {"version": __version__, "routers": routers, "runs": runs},
+    )
+
+
+@app.get("/runs/{run_id}", response_class=HTMLResponse)
+def run_detail(
+    run_id: str,
+    request: Request,
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    return templates.TemplateResponse(
+        request,
+        "run_detail.html",
+        {
+            "run": run,
+            "artifacts": list_run_artifacts(run),
+        },
     )
 
 
@@ -235,3 +254,21 @@ def get_run_artifacts(run_id: str, session: Session = Depends(get_session)) -> l
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
     return list_run_artifacts(run)
+
+
+@app.get("/api/v1/runs/{run_id}/artifacts/{relative_path:path}")
+def download_run_artifact(
+    run_id: str,
+    relative_path: str,
+    session: Session = Depends(get_session),
+) -> FileResponse:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    root = run_artifact_dir(run).resolve()
+    target = (root / relative_path).resolve()
+    if target != root and root not in target.parents:
+        raise HTTPException(status_code=400, detail="invalid artifact path")
+    if not target.is_file():
+        raise HTTPException(status_code=404, detail="artifact not found")
+    return FileResponse(target)

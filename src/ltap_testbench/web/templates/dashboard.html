@@ -16,6 +16,12 @@
       th, td { border-bottom: 1px solid #e6e9ef; padding: 8px; text-align: left; }
       th { color: #526071; font-weight: 600; }
       code { background: #eef1f5; padding: 2px 4px; border-radius: 4px; }
+      a { color: #075985; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border-radius: 999px; border: 1px solid #d9dee7; font-size: 12px; font-weight: 650; }
+      .badge.completed { color: #166534; border-color: #86efac; background: #f0fdf4; }
+      .badge.failed, .badge.cancelled { color: #b91c1c; border-color: #fecaca; background: #fff1f2; }
+      .badge.running, .badge.preflight, .badge.verifying_paths { color: #075985; border-color: #bae6fd; background: #f0f9ff; }
     </style>
   </head>
   <body>
@@ -44,10 +50,10 @@
           <tr><th>Run</th><th>Router</th><th>Plan</th><th>State</th></tr>
           {% for run in runs %}
           <tr>
-            <td><code>{{ run.run_id }}</code></td>
+            <td><a href="/runs/{{ run.run_id }}"><code>{{ run.run_id }}</code></a></td>
             <td>{{ run.router.slug }}</td>
             <td>{{ run.plan_slug }}</td>
-            <td>{{ run.state.value }}</td>
+            <td><span class="badge {{ run.state.value | lower }}">{{ run.state.value }}</span></td>
           </tr>
           {% endfor %}
         </table>

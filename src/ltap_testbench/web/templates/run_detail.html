@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ run.run_id }} · LtAP LTE Testbench</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fa;
+        --surface: #ffffff;
+        --text: #1f2933;
+        --muted: #5f6c7b;
+        --line: #d9e0ea;
+        --accent: #166534;
+        --warning: #9a3412;
+        --danger: #b91c1c;
+        --info: #075985;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+      header { background: #132238; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+      main { max-width: 1180px; margin: 0 auto; padding: 22px; display: grid; gap: 18px; }
+      h1, h2 { margin: 0; letter-spacing: 0; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; }
+      a { color: #075985; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .band { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+      .topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+      .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 14px; }
+      .metric { border: 1px solid var(--line); border-radius: 6px; padding: 10px; background: #fbfcfe; min-height: 66px; }
+      .metric span { display: block; color: var(--muted); font-size: 12px; }
+      .metric strong { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+      .badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
+      .badge.completed { color: var(--accent); border-color: #86efac; background: #f0fdf4; }
+      .badge.failed, .badge.cancelled { color: var(--danger); border-color: #fecaca; background: #fff1f2; }
+      .badge.running, .badge.preflight, .badge.verifying_paths { color: var(--info); border-color: #bae6fd; background: #f0f9ff; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th, td { border-bottom: 1px solid #e6eaf0; padding: 8px; text-align: left; vertical-align: top; }
+      th { color: var(--muted); font-weight: 650; }
+      td { overflow-wrap: anywhere; }
+      code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .button { display: inline-flex; align-items: center; min-height: 32px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--text); }
+      .empty { color: var(--muted); margin: 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LtAP LTE Testbench</h1>
+      <a href="/" style="color: white;">Dashboard</a>
+    </header>
+    <main>
+      <section class="band">
+        <div class="topline">
+          <h2><code>{{ run.run_id }}</code></h2>
+          <span class="badge {{ run.state.value | lower }}">{{ run.state.value }}</span>
+        </div>
+        <div class="meta">
+          <div class="metric"><span>Router</span><strong>{{ run.router.slug }}</strong></div>
+          <div class="metric"><span>Plan</span><strong>{{ run.plan_slug }}</strong></div>
+          <div class="metric"><span>Created</span><strong>{{ run.created_at }}</strong></div>
+          <div class="metric"><span>Updated</span><strong>{{ run.updated_at }}</strong></div>
+        </div>
+      </section>
+
+      <section class="band">
+        <div class="topline">
+          <h2>Artifacts</h2>
+          <div class="actions">
+            {% for artifact in artifacts %}
+              {% if artifact.relative_path in ["report.md", "report.json"] %}
+                <a class="button" href="/api/v1/runs/{{ run.run_id }}/artifacts/{{ artifact.relative_path }}">{{ artifact.relative_path }}</a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% if artifacts %}
+        <table>
+          <tr><th>File</th><th>Bytes</th></tr>
+          {% for artifact in artifacts %}
+          <tr>
+            <td><a href="/api/v1/runs/{{ run.run_id }}/artifacts/{{ artifact.relative_path }}"><code>{{ artifact.relative_path }}</code></a></td>
+            <td>{{ artifact.bytes }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <p class="empty">No artifacts found.</p>
+        {% endif %}
+      </section>
+
+      <section class="band">
+        <h2>Summary</h2>
+        {% if run.summary %}
+        <pre>{{ run.summary | tojson(indent=2) }}</pre>
+        {% else %}
+        <p class="empty">No summary recorded.</p>
+        {% endif %}
+      </section>
+
+      <section class="band">
+        <h2>Event Timeline</h2>
+        {% if run.events %}
+        <table>
+          <tr><th style="width: 190px;">Time</th><th style="width: 160px;">Type</th><th>Message</th></tr>
+          {% for event in run.events %}
+          <tr>
+            <td>{{ event.timestamp }}</td>
+            <td><code>{{ event.event_type }}</code></td>
+            <td>{{ event.message }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <p class="empty">No events recorded.</p>
+        {% endif %}
+      </section>
+    </main>
+  </body>
+</html>

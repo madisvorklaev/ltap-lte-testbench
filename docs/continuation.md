@@ -38,6 +38,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Fake adapter can simulate FastTrack-enabled, wrong-path, and API-timeout failures.
 - Test-node status/metrics/reservation/upload-sink behavior is covered by tests.
 - Runs persist metadata, resolved plan, summary, and events under ignored `var/results/<run-id>/`.
+- Runs generate `report.md` and `report.json` artifacts with overview, summary, test-node connection table, and event timeline.
 - Router profiles and test plans can be created through validated service/API paths.
 - Server profiles exist, with a controller-side test-node client for health/status/metrics/reservations.
 - Test plans can reference a `server_slug`; the worker reserves that test node for the run and releases it afterward.
@@ -47,6 +48,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Legacy upload scripts and methodology export are preserved under `references/legacy/`.
 - Test-node upload sink can count and discard uploads, with reservation and health endpoints.
 - Stockbot-compatible fileserver deployment is versioned at `deploy/stockbot-fileserver.py`; it preserves the legacy authenticated file server and adds project-compatible test-node endpoints on the same port.
+- Dashboard links recent runs to `/runs/{run_id}`, which shows summary JSON, artifact download links, and the event timeline.
 
 ## Main Gaps
 
