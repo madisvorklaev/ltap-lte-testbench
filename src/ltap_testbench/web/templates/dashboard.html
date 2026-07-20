@@ -88,6 +88,29 @@
               <option value="after_each_tcp">after every TCP round</option>
             </select>
           </label>
+          <label>Video resolution
+            <select id="video-resolution">
+              <option value="1080p" selected>1080p FullHD</option>
+              <option value="720p">720p</option>
+              <option value="1440p">1440p</option>
+              <option value="4k">4K</option>
+            </select>
+          </label>
+          <label>Video FPS
+            <select id="video-fps">
+              <option value="25" selected>25 fps</option>
+              <option value="30">30 fps</option>
+              <option value="50">50 fps</option>
+            </select>
+          </label>
+          <label>Driving scenario
+            <select id="video-scenario">
+              <option value="city" selected>city driving</option>
+              <option value="parked">parked / low motion</option>
+              <option value="highway">highway</option>
+              <option value="rough-road">rough road / high motion</option>
+            </select>
+          </label>
           <label>Antenna and placement
             <input id="antenna" list="antenna-options" placeholder="Outdoor panel, attic window, etc.">
             <datalist id="antenna-options">
@@ -150,6 +173,15 @@
             <tr><td>lte1</td><td id="lte1-lat-avg">-</td><td id="lte1-lat-min">-</td><td id="lte1-lat-max">-</td><td id="lte1-lat-loss">-</td></tr>
             <tr><td>lte2</td><td id="lte2-lat-avg">-</td><td id="lte2-lat-min">-</td><td id="lte2-lat-max">-</td><td id="lte2-lat-loss">-</td></tr>
           </table>
+        </div>
+        <div style="margin-top:14px;">
+          <h3>Video Health</h3>
+          <table>
+            <tr><th>Modem</th><th>Frames</th><th>Complete</th><th>Incomplete</th><th>p95 frame</th></tr>
+            <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-p95">-</td></tr>
+            <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-p95">-</td></tr>
+          </table>
+          <div class="muted" id="video-compare" style="margin-top:6px;">No video frame probe yet.</div>
         </div>
       </section>
 
@@ -260,11 +292,28 @@
           setText(`${id}-lat-loss`, fmtPct(row?.loss_percent));
         }
       };
+      const applyVideoHealth = (summary) => {
+        const video = summary.video_probe_results?.receiver_summary || {};
+        const paths = video.paths || {};
+        for (const id of ["lte1", "lte2"]) {
+          const row = paths[id] || {};
+          setText(`${id}-video-frames`, row.frames_seen ?? "-");
+          setText(`${id}-video-complete`, row.frames_complete ?? "-");
+          setText(`${id}-video-incomplete`, row.frames_incomplete ?? "-");
+          setText(`${id}-video-p95`, fmtMs(row.frame_completion_ms_p95));
+        }
+        const winners = video.first_arrival_winners || {};
+        const paired = video.paired_frames_complete ?? 0;
+        const delta = fmtMs(video.path_arrival_delta_ms_p95);
+        $("video-compare").textContent = paired
+          ? `Paired complete frames: ${paired}. First-arrival winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}. p95 path arrival difference: ${delta}.`
+          : "No paired complete video frames yet.";
+      };
       const render = (data) => {
         if (!data.run) return;
         const run = data.run;
         const desc = run.description || {};
-        const title = `${run.router_name || "router"} · TCP ${desc.tcp_file_size_mb || "-"} MB × ${desc.tcp_upload_count || 1} · UDP ${desc.udp_duration_seconds || "-"} s @ ${desc.udp_bitrate_mbit_s || "-"} Mbit/s · ${desc.udp_pattern || "end"}`;
+        const title = `${run.router_name || "router"} · TCP ${desc.tcp_file_size_mb || "-"} MB × ${desc.tcp_upload_count || 1} · UDP/video ${desc.udp_duration_seconds || "-"} s @ ${desc.udp_bitrate_mbit_s || "-"} Mbit/s · ${desc.video_resolution || "1080p"} ${desc.video_scenario || "city"}`;
         setText("current-test", title);
         $("run-state").textContent = run.state;
         $("run-state").className = `badge ${String(run.state).toLowerCase()}`;
@@ -277,6 +326,7 @@
         applyAverages(run.summary || {}, run.live_metrics || {});
         applyPhaseUpload(run.live_metrics || {});
         applyLatency(run);
+        applyVideoHealth(run.summary || {});
         $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
         $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
       };
@@ -294,6 +344,9 @@
             udp_duration_seconds: Number($("udp-duration").value),
             udp_bitrate_mbit_s: Number($("udp-bitrate").value),
             udp_pattern: $("udp-pattern").value,
+            video_resolution: $("video-resolution").value,
+            video_fps: Number($("video-fps").value),
+            video_scenario: $("video-scenario").value,
             antenna: $("antenna").value.trim()
           };
           const started = await request("/api/v1/lab/start", {method: "POST", body: JSON.stringify(payload)});

@@ -23,6 +23,7 @@ MAX_FORM_SIZE = int(
     os.environ.get("STOCKBOT_FILESERVER_MAX_FORM_SIZE", str(2 * 1024 * 1024 * 1024))
 )
 RUNS: dict[str, list[dict]] = {}
+VIDEO_FRAMES: dict[str, dict] = {}
 RESERVATIONS: dict[str, dict] = {}
 STARTED_AT = time.time()
 RUNS_LOCK = threading.Lock()
@@ -142,6 +143,128 @@ def record_udp_datagram(run_id: str, source: str, port: int, size: int) -> None:
         record["average_mbit_s"] = record["bytes_received"] * 8 / duration / 1_000_000
 
 
+def percentile(values: list[float], pct: float) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+    index = min(len(ordered) - 1, max(0, round((len(ordered) - 1) * pct)))
+    return ordered[index]
+
+
+def record_video_frame_datagram(header: dict, source: str, port: int, size: int) -> None:
+    run_id = str(header.get("run_id") or "")
+    path_id = str(header.get("path_id") or "")
+    if not run_id or not path_id:
+        return
+    try:
+        frame_id = int(header["frame_id"])
+        fragment_index = int(header["fragment_index"])
+        fragment_count = int(header["fragment_count"])
+    except (KeyError, TypeError, ValueError):
+        return
+    now_ns = time.monotonic_ns()
+    now_wall = datetime.now(UTC)
+    with RUNS_LOCK:
+        run = VIDEO_FRAMES.setdefault(run_id, {"paths": {}})
+        path = run["paths"].setdefault(
+            path_id,
+            {
+                "source": source,
+                "destination_port": port,
+                "first_seen_at": now_wall.replace(microsecond=0).isoformat(),
+                "last_seen_at": now_wall.replace(microsecond=0).isoformat(),
+                "bytes_received": 0,
+                "datagrams_received": 0,
+                "frames": {},
+            },
+        )
+        path["source"] = source
+        path["destination_port"] = port
+        path["last_seen_at"] = now_wall.replace(microsecond=0).isoformat()
+        path["bytes_received"] += size
+        path["datagrams_received"] += 1
+        frame = path["frames"].setdefault(
+            frame_id,
+            {
+                "frame_id": frame_id,
+                "fragment_count": fragment_count,
+                "fragments": set(),
+                "first_arrival_ns": now_ns,
+                "last_arrival_ns": now_ns,
+            },
+        )
+        frame["fragment_count"] = max(int(frame["fragment_count"]), fragment_count)
+        frame["fragments"].add(fragment_index)
+        frame["first_arrival_ns"] = min(int(frame["first_arrival_ns"]), now_ns)
+        frame["last_arrival_ns"] = max(int(frame["last_arrival_ns"]), now_ns)
+
+
+def summarize_video_frames(run_id: str) -> dict:
+    with RUNS_LOCK:
+        raw = VIDEO_FRAMES.get(run_id, {"paths": {}})
+        paths = raw.get("paths", {})
+        path_summaries = {}
+        complete_by_path = {}
+        first_by_path = {}
+        for path_id, path in paths.items():
+            frames = path.get("frames", {})
+            complete = []
+            incomplete = 0
+            completion_ms = []
+            for frame_id, frame in frames.items():
+                fragment_count = int(frame.get("fragment_count") or 0)
+                received = len(frame.get("fragments") or [])
+                if fragment_count and received >= fragment_count:
+                    complete.append(int(frame_id))
+                    completion_ms.append(
+                        (int(frame["last_arrival_ns"]) - int(frame["first_arrival_ns"])) / 1_000_000
+                    )
+                    first_by_path.setdefault(path_id, {})[int(frame_id)] = int(
+                        frame["first_arrival_ns"]
+                    )
+                else:
+                    incomplete += 1
+            complete_by_path[path_id] = set(complete)
+            path_summaries[path_id] = {
+                "path_id": path_id,
+                "source": path.get("source"),
+                "destination_port": path.get("destination_port"),
+                "first_seen_at": path.get("first_seen_at"),
+                "last_seen_at": path.get("last_seen_at"),
+                "bytes_received": path.get("bytes_received", 0),
+                "datagrams_received": path.get("datagrams_received", 0),
+                "frames_seen": len(frames),
+                "frames_complete": len(complete),
+                "frames_incomplete": incomplete,
+                "frame_completion_ms_p50": percentile(completion_ms, 0.50),
+                "frame_completion_ms_p95": percentile(completion_ms, 0.95),
+                "frame_completion_ms_p99": percentile(completion_ms, 0.99),
+                "frame_completion_ms_max": max(completion_ms, default=None),
+            }
+        paired_diffs = []
+        winners = {}
+        if len(first_by_path) >= 2:
+            ids = sorted(first_by_path)[:2]
+            common = complete_by_path.get(ids[0], set()) & complete_by_path.get(ids[1], set())
+            for frame_id in common:
+                diff_ms = (
+                    first_by_path[ids[0]][frame_id] - first_by_path[ids[1]][frame_id]
+                ) / 1_000_000
+                paired_diffs.append(diff_ms)
+                winner = ids[0] if diff_ms < 0 else ids[1]
+                winners[winner] = winners.get(winner, 0) + 1
+        return {
+            "run_id": run_id,
+            "paths": path_summaries,
+            "paired_frames_complete": len(paired_diffs),
+            "first_arrival_winners": winners,
+            "path_arrival_delta_ms_p50": percentile([abs(v) for v in paired_diffs], 0.50),
+            "path_arrival_delta_ms_p95": percentile([abs(v) for v in paired_diffs], 0.95),
+            "path_arrival_delta_ms_p99": percentile([abs(v) for v in paired_diffs], 0.99),
+            "path_arrival_delta_ms_max": max([abs(v) for v in paired_diffs], default=None),
+        }
+
+
 def record_tcp_upload(
     run_id: str,
     source: str,
@@ -176,6 +299,15 @@ class UdpUploadHandler(socketserver.BaseRequestHandler):
     def handle(self) -> None:
         data = self.request[0]
         header, _, _body = data.partition(b"\n")
+        if header.startswith(b"LTAPFRAME "):
+            try:
+                payload = json.loads(header.removeprefix(b"LTAPFRAME ").decode("utf-8"))
+            except json.JSONDecodeError:
+                return
+            record_video_frame_datagram(
+                payload, self.client_address[0], self.server.server_address[1], len(data)
+            )
+            return
         if not header.startswith(b"LTAPUDP "):
             return
         run_id = header.removeprefix(b"LTAPUDP ").decode("utf-8", errors="replace").strip()
@@ -254,6 +386,7 @@ class UploadHandler(BaseHTTPRequestHandler):
                 {
                     "upload_sink": True,
                     "udp_upload_sink": True,
+                    "udp_video_frame_probe": True,
                     "iperf3_external": False,
                     "irtt_external": False,
                     "reservations": True,
@@ -273,6 +406,11 @@ class UploadHandler(BaseHTTPRequestHandler):
         if conn_match:
             run_id = unquote(conn_match.group(1))
             self.send_json(HTTPStatus.OK, RUNS.get(run_id, []))
+            return True
+        frame_match = re.fullmatch(r"/api/v1/runs/([^/]+)/video-frames", path)
+        if frame_match:
+            run_id = unquote(frame_match.group(1))
+            self.send_json(HTTPStatus.OK, summarize_video_frames(run_id))
             return True
         reservation_match = re.fullmatch(r"/api/v1/reservations/([^/]+)", path)
         if reservation_match:

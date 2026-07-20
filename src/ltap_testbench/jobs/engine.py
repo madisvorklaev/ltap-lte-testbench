@@ -1,4 +1,5 @@
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from uuid import uuid4
@@ -29,6 +30,7 @@ from ltap_testbench.traffic.commands import run_command
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
 from ltap_testbench.traffic.tcp_upload import run_timed_tcp_upload
 from ltap_testbench.traffic.udp_upload import run_udp_upload
+from ltap_testbench.traffic.video_udp import run_video_udp_probe
 
 
 def add_event(
@@ -163,6 +165,19 @@ def _udp_upload_config(run: TestRun) -> dict:
 def _latency_config(run: TestRun) -> dict:
     config = run.resolved_plan.get("latency", {})
     return config if isinstance(config, dict) else {}
+
+
+def _video_probe_config(run: TestRun) -> dict:
+    config = run.resolved_plan.get("video_probe", {})
+    return config if isinstance(config, dict) else {}
+
+
+def _plan_has_video_probe_stage(run: TestRun) -> bool:
+    config = _video_probe_config(run)
+    if config.get("enabled") is False:
+        return False
+    stages = run.resolved_plan.get("stages", [])
+    return any("video" in str(stage) and "udp" in str(stage) for stage in stages)
 
 
 def _tcp_upload_count(run: TestRun) -> int:
@@ -510,6 +525,127 @@ def _execute_udp_upload_stage(
     return rows
 
 
+def _execute_video_probe_stage(
+    session: Session,
+    run: TestRun,
+    server: ServerProfile | None,
+) -> dict:
+    if server is None or not _plan_has_video_probe_stage(run):
+        add_event(session, run, "video-probe-stage", "No UDP video frame probe configured.")
+        return {}
+    if not server.public_host:
+        raise RuntimeError(f"Server {server.slug} has no public_host for video probe")
+    public_host = server.public_host
+    config = _video_probe_config(run)
+    duration_seconds = int(config.get("duration_seconds", 30))
+    bitrate_mbit_s = float(config.get("bitrate_mbit_s", 5.0))
+    fps = int(config.get("fps", 25))
+    resolution = str(config.get("resolution", "1080p"))
+    scenario = str(config.get("scenario", "city"))
+    payload_bytes = int(config.get("payload_bytes", 1200))
+    receiver_settle_seconds = max(0, min(30, int(config.get("receiver_settle_seconds", 5))))
+    paths = _router_paths(run)
+    add_event(
+        session,
+        run,
+        "video-probe-stage-started",
+        "UDP video frame probe started.",
+        {
+            "paths": [path.get("id", "path") for path in paths],
+            "duration_seconds": duration_seconds,
+            "bitrate_mbit_s": bitrate_mbit_s,
+            "fps": fps,
+            "resolution": resolution,
+            "scenario": scenario,
+            "payload_bytes": payload_bytes,
+            "parallel_paths": True,
+        },
+    )
+
+    def run_path(path: dict) -> dict:
+        path_id = path.get("id", "path")
+        port = _path_port(path)
+        if port is None:
+            return {"path_id": path_id, "skipped": True, "reason": "no UDP port configured"}
+        probe_run_id = f"{run.run_id}-video"
+        result = run_video_udp_probe(
+            public_host,
+            port,
+            probe_run_id,
+            path_id,
+            duration_seconds,
+            bitrate_mbit_s,
+            fps=fps,
+            resolution=resolution,
+            scenario=scenario,
+            payload_bytes=payload_bytes,
+        )
+        return {
+            "path_id": path_id,
+            "test_node_run_id": probe_run_id,
+            "target_host": result.target_host,
+            "target_port": result.target_port,
+            "resolution": result.resolution,
+            "scenario": result.scenario,
+            "duration_seconds": result.duration_seconds,
+            "requested_duration_seconds": result.requested_duration_seconds,
+            "bitrate_mbit_s": result.bitrate_mbit_s,
+            "fps": result.fps,
+            "payload_bytes": result.payload_bytes,
+            "frames_sent": result.frames_sent,
+            "datagrams_sent": result.datagrams_sent,
+            "bytes_sent": result.bytes_sent,
+            "average_mbit_s": result.average_mbit_s,
+        }
+
+    sender_results = []
+    with ThreadPoolExecutor(max_workers=max(1, len(paths))) as executor:
+        futures = {executor.submit(run_path, path): path for path in paths}
+        for future in as_completed(futures):
+            row = future.result()
+            if row.get("skipped"):
+                add_event(
+                    session,
+                    run,
+                    "video-probe-stage",
+                    f"Skipping {row['path_id']}: {row['reason']}.",
+                    {"path": futures[future]},
+                )
+                continue
+            add_event(
+                session,
+                run,
+                "video-probe-stage",
+                f"UDP video frame probe completed for {row['path_id']}.",
+                row,
+            )
+            sender_results.append(row)
+    receiver_summary = {}
+    if receiver_settle_seconds:
+        add_event(
+            session,
+            run,
+            "video-probe-settle",
+            "Waiting for late UDP video packets before collecting receiver summary.",
+            {"seconds": receiver_settle_seconds},
+        )
+        time.sleep(receiver_settle_seconds)
+    try:
+        receiver_summary = TestNodeClient(server.control_api_url).video_frame_stats(
+            f"{run.run_id}-video"
+        )
+    except Exception as exc:
+        receiver_summary = {"error": str(exc), "type": type(exc).__name__}
+    add_event(
+        session,
+        run,
+        "video-probe-summary",
+        "UDP video frame probe receiver summary collected.",
+        receiver_summary,
+    )
+    return {"sender_results": sender_results, "receiver_summary": receiver_summary}
+
+
 def execute_run(
     session: Session,
     run: TestRun,
@@ -579,8 +715,12 @@ def execute_run(
                 )
         if udp_pattern == "end":
             udp_upload_results.extend(_execute_udp_upload_stage(session, run, server, "end"))
+        video_probe_results = _execute_video_probe_stage(session, run, server)
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
-        if not upload_results and not udp_upload_results and not latency_results:
+        has_live_results = bool(
+            upload_results or udp_upload_results or latency_results or video_probe_results
+        )
+        if not has_live_results:
             add_event(
                 session,
                 run,
@@ -596,21 +736,18 @@ def execute_run(
             for connection in result.get("test_node_connections", [])
         ]
         run.summary = {
-            "validity": (
-                "live-upload"
-                if upload_results or udp_upload_results or latency_results
-                else "simulated"
-            ),
+            "validity": ("live-upload" if has_live_results else "simulated"),
             "warnings": controller_check.warnings,
             "message": (
                 "Run completed with live measured stages."
-                if upload_results or udp_upload_results or latency_results
+                if has_live_results
                 else "MVP run completed using adapter checks and simulated measurements."
             ),
             "test_node_reserved": reservation is not None,
             "latency_results": latency_results,
             "upload_results": upload_results,
             "udp_upload_results": udp_upload_results,
+            "video_probe_results": video_probe_results,
             "telemetry_before": telemetry_before,
             "telemetry_after": telemetry_after,
             "test_node_connections": connections,

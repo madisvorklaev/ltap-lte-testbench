@@ -21,7 +21,7 @@ class TestNodeClient:
         self,
         base_url: str,
         token: str | None = None,
-        timeout_seconds: float = 5.0,
+        timeout_seconds: float = 15.0,
         transport: httpx.BaseTransport | None = None,
     ):
         self.base_url = base_url.rstrip("/")
@@ -61,6 +61,12 @@ class TestNodeClient:
     def run_connections(self, run_id: str) -> list[dict]:
         with self._client() as client:
             response = client.get(f"/api/v1/runs/{run_id}/connections")
+            response.raise_for_status()
+            return response.json()
+
+    def video_frame_stats(self, run_id: str) -> dict:
+        with self._client() as client:
+            response = client.get(f"/api/v1/runs/{run_id}/video-frames")
             response.raise_for_status()
             return response.json()
 

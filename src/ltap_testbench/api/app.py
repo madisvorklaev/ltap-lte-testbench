@@ -42,6 +42,9 @@ class LabRunCreate(BaseModel):
     udp_duration_seconds: int = 60
     udp_bitrate_mbit_s: float = 5.0
     udp_pattern: str = "end"
+    video_resolution: str = "1080p"
+    video_fps: int = 25
+    video_scenario: str = "city"
     antenna: str = ""
 
 
@@ -89,7 +92,14 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
         "name": "Current Lab Test",
         "version": "1",
         "server_slug": "stockbot",
-        "stages": ["preflight", "path-verification", "idle-latency", "short-upload", "udp-upload"],
+        "stages": [
+            "preflight",
+            "path-verification",
+            "idle-latency",
+            "short-upload",
+            "udp-upload",
+            "video-udp-probe",
+        ],
         "latency": {"duration_seconds": 10, "interval_ms": 1000},
         "tcp_upload": {
             "duration_seconds": 120,
@@ -103,6 +113,17 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
             "datagram_bytes": 1200,
             "pattern": payload.udp_pattern,
         },
+        "video_probe": {
+            "enabled": True,
+            "resolution": payload.video_resolution,
+            "codec": "H.265",
+            "scenario": payload.video_scenario,
+            "duration_seconds": payload.udp_duration_seconds,
+            "bitrate_mbit_s": payload.udp_bitrate_mbit_s,
+            "fps": payload.video_fps,
+            "payload_bytes": 1200,
+            "receiver_settle_seconds": 5,
+        },
         "traffic": {"path_concurrency": "parallel"},
         "telemetry": {"controller_interval_seconds": 1, "lte_interval_seconds": 5},
         "temporary_router_changes": {"disable_fasttrack": False, "clear_test_connections": True},
@@ -113,6 +134,9 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
             "udp_duration_seconds": payload.udp_duration_seconds,
             "udp_bitrate_mbit_s": payload.udp_bitrate_mbit_s,
             "udp_pattern": payload.udp_pattern,
+            "video_resolution": payload.video_resolution,
+            "video_fps": payload.video_fps,
+            "video_scenario": payload.video_scenario,
             "antenna": payload.antenna,
         },
     }
@@ -359,6 +383,12 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
         raise HTTPException(status_code=400, detail="UDP bitrate must be 0..50 Mbit/s")
     if payload.udp_pattern not in {"after_each_tcp", "beginning", "end"}:
         raise HTTPException(status_code=400, detail="unsupported UDP pattern")
+    if payload.video_resolution not in {"720p", "1080p", "1440p", "4k"}:
+        raise HTTPException(status_code=400, detail="unsupported video resolution")
+    if payload.video_fps not in {25, 30, 50}:
+        raise HTTPException(status_code=400, detail="unsupported video FPS")
+    if payload.video_scenario not in {"parked", "city", "highway", "rough-road"}:
+        raise HTTPException(status_code=400, detail="unsupported video scenario")
     try:
         _clear_lab_reservations(session)
         _lab_router(session, payload.router_ip)

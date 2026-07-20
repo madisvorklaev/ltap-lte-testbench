@@ -157,6 +157,52 @@ def render_markdown_report(payload: dict) -> str:
     else:
         lines.extend(["No UDP upload results were recorded.", ""])
 
+    video_probe = summary.get("video_probe_results") or {}
+    receiver_summary = video_probe.get("receiver_summary") or {}
+    lines.extend(["## UDP Video Frame Probe", ""])
+    if receiver_summary.get("paths"):
+        lines.extend(
+            [
+                (
+                    "| Path | Source | Frames seen | Complete | Incomplete | "
+                    "p95 frame ms | Max frame ms |"
+                ),
+                "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for path_id, row in sorted(receiver_summary.get("paths", {}).items()):
+            lines.append(
+                (
+                    "| {path} | {source} | {seen} | {complete} | {incomplete} | {p95} | {max_ms} |"
+                ).format(
+                    path=_format_value(path_id),
+                    source=_format_value(row.get("source")),
+                    seen=_format_value(row.get("frames_seen")),
+                    complete=_format_value(row.get("frames_complete")),
+                    incomplete=_format_value(row.get("frames_incomplete")),
+                    p95=_format_float(row.get("frame_completion_ms_p95")),
+                    max_ms=_format_float(row.get("frame_completion_ms_max")),
+                )
+            )
+        winners = receiver_summary.get("first_arrival_winners") or {}
+        lines.extend(
+            [
+                "",
+                (
+                    "- Paired complete frames: "
+                    f"{_format_value(receiver_summary.get('paired_frames_complete'))}"
+                ),
+                f"- First-arrival winners: `{json.dumps(winners, sort_keys=True)}`",
+                (
+                    "- p95 path arrival difference ms: "
+                    f"{_format_float(receiver_summary.get('path_arrival_delta_ms_p95'))}"
+                ),
+                "",
+            ]
+        )
+    else:
+        lines.extend(["No UDP video frame probe results were recorded.", ""])
+
     latency_results = summary.get("latency_results") or []
     lines.extend(["## Latency Results", ""])
     if latency_results:

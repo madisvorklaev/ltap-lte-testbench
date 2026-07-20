@@ -5,6 +5,7 @@ from ltap_testbench.traffic.iperf import build_iperf3_client_command, parse_iper
 from ltap_testbench.traffic.irtt import build_irtt_client_command, parse_irtt_json
 from ltap_testbench.traffic.tcp_upload import run_timed_tcp_upload
 from ltap_testbench.traffic.udp_upload import run_udp_upload
+from ltap_testbench.traffic.video_udp import run_video_udp_probe
 
 
 def test_build_iperf3_command() -> None:
@@ -170,3 +171,55 @@ def test_run_timed_tcp_upload(monkeypatch) -> None:
     assert result.average_mbit_s > 0
     assert result.response_head.startswith("HTTP/1.1 202")
     assert sent[0].startswith(b"PUT /upload/run-test HTTP/1.1")
+
+
+def test_run_video_udp_probe(monkeypatch) -> None:
+    sent = []
+
+    class FakeSocket:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def connect(self, address):
+            self.address = address
+
+        def send(self, payload):
+            sent.append(payload)
+            return len(payload)
+
+    now = 0.0
+
+    def monotonic() -> float:
+        nonlocal now
+        now += 0.02
+        return now
+
+    monkeypatch.setattr("ltap_testbench.traffic.video_udp.time.monotonic", monotonic)
+    monkeypatch.setattr("ltap_testbench.traffic.video_udp.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("ltap_testbench.traffic.video_udp.time.time_ns", lambda: 123)
+    monkeypatch.setattr(
+        "ltap_testbench.traffic.video_udp.socket.socket", lambda *_args: FakeSocket()
+    )
+
+    result = run_video_udp_probe(
+        "198.51.100.10",
+        18080,
+        "run-video",
+        "lte1",
+        duration_seconds=1,
+        bitrate_mbit_s=0.1,
+        fps=25,
+        resolution="1080p",
+        scenario="city",
+    )
+
+    assert result.target_port == 18080
+    assert result.frames_sent > 0
+    assert result.datagrams_sent == len(sent)
+    assert sent[0].startswith(b"LTAPFRAME ")

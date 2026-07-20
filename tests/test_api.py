@@ -36,6 +36,9 @@ def test_lab_plan_keeps_tcp_count_and_udp_pattern() -> None:
                 udp_duration_seconds=4,
                 udp_bitrate_mbit_s=5,
                 udp_pattern="after_each_tcp",
+                video_resolution="1080p",
+                video_fps=25,
+                video_scenario="city",
                 antenna="test placement",
             ),
         )
@@ -45,3 +48,6 @@ def test_lab_plan_keeps_tcp_count_and_udp_pattern() -> None:
         assert plan.definition["udp_upload"]["duration_seconds"] == 4
         assert plan.definition["udp_upload"]["bitrate_mbit_s"] == 5
         assert plan.definition["udp_upload"]["pattern"] == "after_each_tcp"
+        assert plan.definition["video_probe"]["resolution"] == "1080p"
+        assert plan.definition["video_probe"]["fps"] == 25
+        assert plan.definition["video_probe"]["scenario"] == "city"
