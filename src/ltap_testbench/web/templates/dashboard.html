@@ -5,23 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LtAP LTE Testbench</title>
     <style>
-      body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: #f6f7f9; color: #18202a; }
-      header { background: #102033; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; }
-      main { max-width: 1180px; margin: 0 auto; padding: 22px; display: grid; gap: 18px; }
-      section { background: white; border: 1px solid #d9dee7; border-radius: 8px; padding: 16px; }
-      h1, h2 { margin: 0 0 12px; letter-spacing: 0; }
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fa;
+        --surface: #ffffff;
+        --soft: #f8fafc;
+        --text: #1f2933;
+        --muted: #5f6c7b;
+        --line: #d9e0ea;
+        --accent: #166534;
+        --danger: #b91c1c;
+        --info: #075985;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+      header { background: #132238; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+      main { max-width: 1240px; margin: 0 auto; padding: 22px; display: grid; gap: 18px; }
+      section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+      h1, h2, h3 { margin: 0; letter-spacing: 0; }
       h1 { font-size: 20px; }
       h2 { font-size: 16px; }
-      table { border-collapse: collapse; width: 100%; }
-      th, td { border-bottom: 1px solid #e6e9ef; padding: 8px; text-align: left; }
-      th { color: #526071; font-weight: 600; }
-      code { background: #eef1f5; padding: 2px 4px; border-radius: 4px; }
-      a { color: #075985; text-decoration: none; }
+      h3 { font-size: 14px; margin-bottom: 8px; }
+      a { color: var(--info); text-decoration: none; }
       a:hover { text-decoration: underline; }
-      .badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border-radius: 999px; border: 1px solid #d9dee7; font-size: 12px; font-weight: 650; }
-      .badge.completed { color: #166534; border-color: #86efac; background: #f0fdf4; }
-      .badge.failed, .badge.cancelled { color: #b91c1c; border-color: #fecaca; background: #fff1f2; }
-      .badge.running, .badge.preflight, .badge.verifying_paths { color: #075985; border-color: #bae6fd; background: #f0f9ff; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th, td { border-bottom: 1px solid #e6eaf0; padding: 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+      th { color: var(--muted); font-weight: 650; }
+      code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
+      label { display: grid; gap: 4px; color: var(--muted); font-size: 12px; font-weight: 650; }
+      select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--text); font: inherit; }
+      select { min-height: 36px; padding: 6px 8px; }
+      textarea { min-height: 190px; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; resize: vertical; }
+      pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 10px; max-height: 360px; overflow: auto; }
+      button, .button { min-height: 34px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--text); padding: 6px 10px; font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+      button.primary { background: #0f766e; border-color: #0f766e; color: white; }
+      button.danger { color: var(--danger); border-color: #fecaca; background: #fff1f2; }
+      button:hover, .button:hover { filter: brightness(0.98); text-decoration: none; }
+      details { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe; }
+      details + details { margin-top: 10px; }
+      summary { cursor: pointer; font-weight: 650; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+      .topline { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
+      .stack { display: grid; gap: 10px; }
+      .badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
+      .badge.completed { color: var(--accent); border-color: #86efac; background: #f0fdf4; }
+      .badge.failed, .badge.cancelled { color: var(--danger); border-color: #fecaca; background: #fff1f2; }
+      .badge.running, .badge.preflight, .badge.verifying_paths { color: var(--info); border-color: #bae6fd; background: #f0f9ff; }
+      .muted { color: var(--muted); }
+      .output { min-height: 92px; }
+      @media (max-width: 720px) {
+        main { padding: 14px; }
+        th:nth-child(3), td:nth-child(3) { display: none; }
+      }
     </style>
   </head>
   <body>
@@ -31,33 +67,230 @@
     </header>
     <main>
       <section>
-        <h2>Router Profiles</h2>
+        <div class="topline">
+          <h2>Command Center</h2>
+          <button type="button" id="seed-demo">Seed Demo Data</button>
+        </div>
+        <div class="grid">
+          <label>
+            Router
+            <select id="router-select">
+              {% for router in routers %}
+              <option value="{{ router.slug }}">{{ router.slug }} · {{ router.display_name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            Test Plan
+            <select id="plan-select">
+              {% for plan in plans %}
+              <option value="{{ plan.slug }}">{{ plan.slug }} · {{ plan.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+        <div class="toolbar" style="margin-top: 12px;">
+          <button type="button" id="run-preflight">Run Preflight</button>
+          <button type="button" id="start-run" class="primary">Start Run</button>
+          <button type="button" id="refresh-page">Refresh</button>
+        </div>
+        <div class="stack" style="margin-top: 12px;">
+          <h3>Command Output</h3>
+          <pre id="command-output" class="output">Ready.</pre>
+        </div>
+      </section>
+
+      <section>
+        <div class="topline">
+          <h2>Profiles</h2>
+          <span class="muted">{{ routers | length }} routers · {{ plans | length }} plans</span>
+        </div>
+        <div class="grid">
+          <div>
+            <h3>Routers</h3>
+            <table>
+              <tr><th>Slug</th><th>Kind</th><th>Changes</th></tr>
+              {% for router in routers %}
+              <tr>
+                <td><code>{{ router.slug }}</code></td>
+                <td>{{ router.kind.value }}</td>
+                <td>{{ "allowed" if router.allow_configuration_changes else "disabled" }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </div>
+          <div>
+            <h3>Test Plans</h3>
+            <table>
+              <tr><th>Slug</th><th>Version</th><th>Stages</th></tr>
+              {% for plan in plans %}
+              <tr>
+                <td><code>{{ plan.slug }}</code></td>
+                <td>{{ plan.version }}</td>
+                <td>{{ plan.definition.get("stages", []) | join(", ") }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="topline">
+          <h2>Servers</h2>
+          <span class="muted">{{ servers | length }} configured</span>
+        </div>
         <table>
-          <tr><th>Slug</th><th>Name</th><th>Kind</th><th>Changes</th></tr>
-          {% for router in routers %}
+          <tr><th>Slug</th><th>Name</th><th>Control API</th><th>Public Host</th><th>Action</th></tr>
+          {% for server in servers %}
           <tr>
-            <td><code>{{ router.slug }}</code></td>
-            <td>{{ router.display_name }}</td>
-            <td>{{ router.kind.value }}</td>
-            <td>{{ "allowed" if router.allow_configuration_changes else "disabled" }}</td>
+            <td><code>{{ server.slug }}</code></td>
+            <td>{{ server.display_name }}</td>
+            <td>{{ server.control_api_url }}</td>
+            <td>{{ server.public_host or "" }}</td>
+            <td><button type="button" data-server-health="{{ server.slug }}">Health</button></td>
           </tr>
           {% endfor %}
         </table>
       </section>
+
       <section>
-        <h2>Recent Runs</h2>
+        <div class="topline">
+          <h2>Recent Runs</h2>
+          <span class="muted">{{ runs | length }} shown</span>
+        </div>
         <table>
-          <tr><th>Run</th><th>Router</th><th>Plan</th><th>State</th></tr>
+          <tr><th>Run</th><th>Router</th><th>Plan</th><th>State</th><th>Action</th></tr>
           {% for run in runs %}
           <tr>
             <td><a href="/runs/{{ run.run_id }}"><code>{{ run.run_id }}</code></a></td>
             <td>{{ run.router.slug }}</td>
             <td>{{ run.plan_slug }}</td>
             <td><span class="badge {{ run.state.value | lower }}">{{ run.state.value }}</span></td>
+            <td>
+              <a class="button" href="/runs/{{ run.run_id }}">Open</a>
+              <button type="button" class="danger" data-cancel-run="{{ run.run_id }}">Cancel</button>
+            </td>
           </tr>
           {% endfor %}
         </table>
       </section>
+
+      <section>
+        <div class="topline">
+          <h2>Configuration</h2>
+          <span class="muted">Create profiles and plans from JSON</span>
+        </div>
+        <details>
+          <summary>Create Router Profile</summary>
+          <div class="stack" style="margin-top: 10px;">
+            <textarea id="router-json">{
+  "slug": "new-fake-router",
+  "display_name": "New Fake Router",
+  "kind": "fake",
+  "paths": [
+    {"id": "lte1", "label": "LTE 1", "ports": {"start": 18080, "end": 18080}},
+    {"id": "lte2", "label": "LTE 2", "ports": {"start": 18081, "end": 18081}}
+  ]
+}</textarea>
+            <button type="button" data-create-json="router">Create Router</button>
+          </div>
+        </details>
+        <details>
+          <summary>Create Server Profile</summary>
+          <div class="stack" style="margin-top: 10px;">
+            <textarea id="server-json">{
+  "slug": "new-test-node",
+  "display_name": "New Test Node",
+  "control_api_url": "http://192.168.71.8:8088",
+  "public_host": "81.90.121.7"
+}</textarea>
+            <button type="button" data-create-json="server">Create Server</button>
+          </div>
+        </details>
+        <details>
+          <summary>Create Test Plan</summary>
+          <div class="stack" style="margin-top: 10px;">
+            <textarea id="plan-json">{
+  "slug": "stockbot-smoke",
+  "name": "Stockbot Smoke",
+  "server_slug": "stockbot",
+  "stages": ["preflight", "path-verification", "short-upload"],
+  "tcp_upload": {"duration_seconds": 10, "parallel_streams": [1]}
+}</textarea>
+            <button type="button" data-create-json="plan">Create Plan</button>
+          </div>
+        </details>
+      </section>
     </main>
+    <script>
+      const output = document.querySelector("#command-output");
+      const show = (value) => {
+        output.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      };
+      const request = async (url, options = {}) => {
+        const response = await fetch(url, {
+          headers: {"Content-Type": "application/json", ...(options.headers || {})},
+          ...options
+        });
+        const text = await response.text();
+        let payload = text;
+        try { payload = text ? JSON.parse(text) : {}; } catch (_error) {}
+        if (!response.ok) {
+          throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
+        }
+        return payload;
+      };
+      const selectedRouter = () => document.querySelector("#router-select").value;
+      const selectedPlan = () => document.querySelector("#plan-select").value;
+
+      document.querySelector("#seed-demo").addEventListener("click", async () => {
+        try {
+          show(await request("/api/v1/demo/seed", {method: "POST"}));
+          setTimeout(() => location.reload(), 700);
+        } catch (error) { show(error.message); }
+      });
+      document.querySelector("#run-preflight").addEventListener("click", async () => {
+        try { show(await request(`/api/v1/routers/${selectedRouter()}/preflight`, {method: "POST"})); }
+        catch (error) { show(error.message); }
+      });
+      document.querySelector("#start-run").addEventListener("click", async () => {
+        try {
+          const run = await request("/api/v1/runs", {
+            method: "POST",
+            body: JSON.stringify({router_slug: selectedRouter(), plan_slug: selectedPlan(), execute_now: true})
+          });
+          show(run);
+          if (run.run_id) setTimeout(() => { location.href = `/runs/${run.run_id}`; }, 500);
+        } catch (error) { show(error.message); }
+      });
+      document.querySelector("#refresh-page").addEventListener("click", () => location.reload());
+      document.querySelectorAll("[data-server-health]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          try { show(await request(`/api/v1/servers/${button.dataset.serverHealth}/health`, {method: "POST"})); }
+          catch (error) { show(error.message); }
+        });
+      });
+      document.querySelectorAll("[data-cancel-run]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          try {
+            show(await request(`/api/v1/runs/${button.dataset.cancelRun}/cancel`, {method: "POST"}));
+            setTimeout(() => location.reload(), 700);
+          } catch (error) { show(error.message); }
+        });
+      });
+      document.querySelectorAll("[data-create-json]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const kind = button.dataset.createJson;
+          const source = document.querySelector(`#${kind}-json`);
+          const endpoints = {router: "/api/v1/routers", server: "/api/v1/servers", plan: "/api/v1/test-plans"};
+          try {
+            const payload = JSON.parse(source.value);
+            show(await request(endpoints[kind], {method: "POST", body: JSON.stringify(payload)}));
+            setTimeout(() => location.reload(), 700);
+          } catch (error) { show(error.message); }
+        });
+      });
+    </script>
   </body>
 </html>

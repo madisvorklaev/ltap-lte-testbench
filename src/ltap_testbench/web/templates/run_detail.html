@@ -64,6 +64,10 @@
           <div class="metric"><span>Created</span><strong>{{ run.created_at }}</strong></div>
           <div class="metric"><span>Updated</span><strong>{{ run.updated_at }}</strong></div>
         </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button type="button" class="button" id="cancel-run">Cancel Run</button>
+          <a class="button" href="/">Dashboard</a>
+        </div>
       </section>
 
       <section class="band">
@@ -102,6 +106,15 @@
       </section>
 
       <section class="band">
+        <h2>Report Preview</h2>
+        {% if report_markdown %}
+        <pre>{{ report_markdown }}</pre>
+        {% else %}
+        <p class="empty">No Markdown report found for this run.</p>
+        {% endif %}
+      </section>
+
+      <section class="band">
         <h2>Event Timeline</h2>
         {% if run.events %}
         <table>
@@ -119,5 +132,16 @@
         {% endif %}
       </section>
     </main>
+    <script>
+      const cancel = document.querySelector("#cancel-run");
+      cancel.addEventListener("click", async () => {
+        const response = await fetch("/api/v1/runs/{{ run.run_id }}/cancel", {method: "POST"});
+        if (response.ok) {
+          location.reload();
+          return;
+        }
+        alert(await response.text());
+      });
+    </script>
   </body>
 </html>

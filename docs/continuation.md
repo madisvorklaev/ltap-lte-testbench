@@ -49,6 +49,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Test-node upload sink can count and discard uploads, with reservation and health endpoints.
 - Stockbot-compatible fileserver deployment is versioned at `deploy/stockbot-fileserver.py`; it preserves the legacy authenticated file server and adds project-compatible test-node endpoints on the same port.
 - Dashboard links recent runs to `/runs/{run_id}`, which shows summary JSON, artifact download links, and the event timeline.
+- Dashboard command center can seed demo data, run preflight, start runs, check server health, cancel runs, and create router/server/plan records from JSON.
 
 ## Main Gaps
 
@@ -56,7 +57,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Worker currently runs synchronously in-process for the MVP.
 - IRTT/iperf3/HTTP traffic parsers and command builders exist; live traffic stage execution is still not wired into the run engine.
 - SQLite schema is created directly; Alembic migrations are still needed.
-- Web UI is a basic dashboard, not the full test wizard.
+- Web UI has command/control coverage but still needs richer guided forms and historical-result import.
 
 ## Recommended Next Step
 

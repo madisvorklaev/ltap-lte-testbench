@@ -19,6 +19,8 @@ from ltap_testbench.profiles.service import (
     create_test_plan,
 )
 from ltap_testbench.reporting.artifacts import list_run_artifacts, run_artifact_dir
+from ltap_testbench.routers.factory import adapter_for
+from ltap_testbench.telemetry.controller import common_preflight
 from ltap_testbench.testnode.client import TestNodeClient
 
 template_dir = Path(__file__).resolve().parents[1] / "web" / "templates"
@@ -42,11 +44,19 @@ def startup() -> None:
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     routers = session.scalars(select(RouterProfile).order_by(RouterProfile.slug)).all()
+    plans = session.scalars(select(TestPlan).order_by(TestPlan.slug)).all()
+    servers = session.scalars(select(ServerProfile).order_by(ServerProfile.slug)).all()
     runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(10)).all()
     return templates.TemplateResponse(
         request,
         "dashboard.html",
-        {"version": __version__, "routers": routers, "runs": runs},
+        {
+            "version": __version__,
+            "routers": routers,
+            "plans": plans,
+            "servers": servers,
+            "runs": runs,
+        },
     )
 
 
@@ -59,12 +69,15 @@ def run_detail(
     run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
+    report_path = run_artifact_dir(run) / "report.md"
+    report_markdown = report_path.read_text() if report_path.is_file() else None
     return templates.TemplateResponse(
         request,
         "run_detail.html",
         {
             "run": run,
             "artifacts": list_run_artifacts(run),
+            "report_markdown": report_markdown,
         },
     )
 
@@ -110,6 +123,27 @@ def api_create_router(
         "slug": router.slug,
         "display_name": router.display_name,
         "kind": router.kind,
+    }
+
+
+@app.post("/api/v1/routers/{router_slug}/preflight")
+def api_preflight_router(router_slug: str, session: Session = Depends(get_session)) -> dict:
+    router = session.scalar(select(RouterProfile).where(RouterProfile.slug == router_slug))
+    if router is None:
+        raise HTTPException(status_code=404, detail="router not found")
+    controller = common_preflight(router.controller_interface)
+    checks = adapter_for(router).preflight()
+    return {
+        "controller": controller.to_dict(),
+        "router": [
+            {
+                "name": check.name,
+                "ok": check.ok,
+                "message": check.message,
+                "details": check.details,
+            }
+            for check in checks
+        ],
     }
 
 

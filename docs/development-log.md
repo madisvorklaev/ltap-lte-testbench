@@ -23,3 +23,4 @@
 - Added `server_slug` to test-plan config and worker-side test-node reservation/release around runs.
 - Added a versioned stockbot fileserver deployment that preserves the old authenticated upload server and adds test-node API/upload endpoints on the existing listener.
 - Added generated Markdown/JSON run reports and a run detail page with artifact links, summary, and event timeline.
+- Added dashboard command/control UI for demo seed, router preflight, start run, cancel run, server health, and JSON-based router/server/plan creation.
