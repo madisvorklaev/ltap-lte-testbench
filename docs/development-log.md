@@ -16,3 +16,9 @@
 - Added validated service/API creation paths for router profiles and test plans.
 - Added server profile persistence plus controller-side test-node client for health, status, metrics, and reservations.
 - Added CLI list/create commands for routers, servers, and test plans using JSON profile files.
+
+## 2026-07-20
+
+- Fixed stale docs that still said GitHub auth was pending.
+- Added `server_slug` to test-plan config and worker-side test-node reservation/release around runs.
+- Added a versioned stockbot fileserver deployment that preserves the old authenticated upload server and adds test-node API/upload endpoints on the existing listener.

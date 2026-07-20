@@ -52,3 +52,13 @@ def test_test_plan_requires_unique_stages() -> None:
             name="Bad Plan",
             stages=["preflight", "preflight"],
         )
+
+
+def test_test_plan_accepts_server_slug() -> None:
+    plan = TestPlanConfig(
+        slug="server-plan",
+        name="Server Plan",
+        server_slug="stockbot",
+        stages=["tcp-upload"],
+    )
+    assert plan.server_slug == "stockbot"

@@ -94,6 +94,7 @@ class TestPlanConfig(BaseModel):
     slug: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9][a-z0-9_.-]*$")
     name: str = Field(min_length=1, max_length=160)
     version: str = Field(default="1", min_length=1, max_length=40)
+    server_slug: str | None = Field(default=None, min_length=1, max_length=80)
     stages: list[str] = Field(default_factory=list)
     latency: LatencyStageConfig = Field(default_factory=LatencyStageConfig)
     tcp_upload: TcpUploadStageConfig = Field(default_factory=TcpUploadStageConfig)

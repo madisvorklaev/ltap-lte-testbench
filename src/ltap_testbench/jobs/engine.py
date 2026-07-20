@@ -5,7 +5,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ltap_testbench.core.time import utc_now
-from ltap_testbench.db.models import RouterProfile, RunEvent, RunState, TestPlan, TestRun
+from ltap_testbench.db.models import (
+    RouterProfile,
+    RunEvent,
+    RunState,
+    ServerProfile,
+    TestPlan,
+    TestRun,
+)
 from ltap_testbench.jobs.state_machine import (
     TERMINAL_STATES,
     require_transition,
@@ -14,6 +21,7 @@ from ltap_testbench.jobs.state_machine import (
 from ltap_testbench.reporting.artifacts import persist_run_artifacts
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
+from ltap_testbench.testnode.client import TestNodeClient, TestNodeReservation
 
 
 def add_event(
@@ -58,11 +66,67 @@ def create_run(session: Session, router_slug: str, plan_slug: str) -> TestRun:
     return run
 
 
-def execute_run(session: Session, run: TestRun) -> TestRun:
+def _server_for_run(session: Session, run: TestRun) -> ServerProfile | None:
+    server_slug = run.resolved_plan.get("server_slug")
+    if not server_slug:
+        return None
+    server = session.scalar(select(ServerProfile).where(ServerProfile.slug == server_slug))
+    if server is None:
+        raise ValueError(f"Unknown server profile: {server_slug}")
+    return server
+
+
+def _reserve_server(
+    session: Session,
+    run: TestRun,
+    server: ServerProfile | None,
+    client_factory: type[TestNodeClient],
+) -> tuple[TestNodeReservation | None, TestNodeClient | None]:
+    if server is None:
+        add_event(session, run, "server-reservation", "No test node configured for this run.")
+        return None, None
+    client = client_factory(server.control_api_url)
+    reservation = client.create_reservation("ltap-testbench", run_id=run.run_id)
+    add_event(
+        session,
+        run,
+        "server-reservation",
+        f"Reserved test node {server.slug}.",
+        {"server": server.slug, "reservation_id": reservation.id},
+    )
+    return reservation, client
+
+
+def _release_server(
+    session: Session,
+    run: TestRun,
+    reservation: TestNodeReservation | None,
+    client: TestNodeClient | None,
+) -> None:
+    if reservation is None or client is None:
+        return
+    client.release_reservation(reservation.id)
+    add_event(
+        session,
+        run,
+        "server-release",
+        "Released test node reservation.",
+        {"reservation_id": reservation.id},
+    )
+
+
+def execute_run(
+    session: Session,
+    run: TestRun,
+    client_factory: type[TestNodeClient] = TestNodeClient,
+) -> TestRun:
     router = run.router
     adapter = adapter_for(router)
+    reservation: TestNodeReservation | None = None
+    reservation_client: TestNodeClient | None = None
     try:
         transition(session, run, RunState.PREFLIGHT)
+        server = _server_for_run(session, run)
         controller_check = common_preflight(router.controller_interface)
         add_event(
             session,
@@ -88,6 +152,7 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
             return run
 
         transition(session, run, RunState.WARMING_UP)
+        reservation, reservation_client = _reserve_server(session, run, server, client_factory)
         transition(session, run, RunState.RUNNING)
         add_event(
             session,
@@ -102,6 +167,7 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
             "validity": "simulated",
             "warnings": controller_check.warnings,
             "message": "MVP run completed using adapter checks and simulated measurements.",
+            "test_node_reserved": reservation is not None,
         }
         session.add(run)
         session.commit()
@@ -110,6 +176,8 @@ def execute_run(session: Session, run: TestRun) -> TestRun:
     except Exception as exc:
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
+    finally:
+        _release_server(session, run, reservation, reservation_client)
     persist_run_artifacts(run)
     return run
 

@@ -8,8 +8,10 @@ This repository is the new source of truth for the LTE latency and throughput te
 
 - Local controller app scaffold: working.
 - Generic/fake preflight and simulated run flow: working.
+- Test-node profiles, health checks, reservations, and upload-sink accounting: working.
+- Stockbot-compatible test-node fileserver deployment: available under `deploy/`.
 - RouterOS live changes: not implemented in the MVP and not attempted while the router is disconnected.
-- GitHub remote: pending authentication on this host.
+- GitHub remote: private repo synced at `https://github.com/madisvorklaev/ltap-lte-testbench`.
 
 ## Quick Start
 
@@ -28,6 +30,7 @@ Open <http://127.0.0.1:8787>.
 
 ```bash
 ltap-testbench routers list
+ltap-testbench servers list
 ltap-testbench preflight demo-generic --json
 ltap-testbench run demo-generic --plan quick-check --json
 ltap-testbench runs list

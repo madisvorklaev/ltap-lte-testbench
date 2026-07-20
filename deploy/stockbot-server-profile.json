@@ -1,0 +1,12 @@
+{
+  "slug": "stockbot",
+  "display_name": "Stockbot upload test node",
+  "control_api_url": "http://192.168.71.8:8088",
+  "public_host": "81.90.121.7",
+  "metadata": {
+    "lan_host": "192.168.71.8",
+    "lan_port": 8088,
+    "public_ports": [18080, 18081],
+    "notes": "Chateau forwards public ports 18080 and 18081 to stockbot:8088."
+  }
+}

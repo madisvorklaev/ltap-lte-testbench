@@ -6,6 +6,8 @@ import httpx
 
 @dataclass(frozen=True)
 class TestNodeReservation:
+    __test__: ClassVar[bool] = False
+
     id: str
     owner: str
     run_id: str | None
