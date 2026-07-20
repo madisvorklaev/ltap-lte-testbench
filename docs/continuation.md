@@ -54,6 +54,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Plans with TCP upload stages can run server-confirmed HTTP upload tests to the configured stockbot server and attach test-node connection records to the run summary/report.
 - Plans with TCP upload stages can also run stockbot-confirmed timed streams when `tcp_upload.payload_bytes` is omitted.
 - Plans with UDP upload stages can run timed UDP uploads through the configured path ports.
+- TCP and UDP stages run all configured LTE paths concurrently.
 - Live run `run-bcea1fc5bab2` completed against `r1-ltap-live` with latency samples, 1 MiB TCP upload per LTE path, 10 seconds of 2 Mbit/s UDP sender traffic per LTE path, and LTE telemetry snapshots.
 
 ## Main Gaps

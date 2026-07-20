@@ -106,6 +106,7 @@ class TestPlanConfig(BaseModel):
     latency: LatencyStageConfig = Field(default_factory=LatencyStageConfig)
     tcp_upload: TcpUploadStageConfig = Field(default_factory=TcpUploadStageConfig)
     udp_upload: UdpUploadStageConfig = Field(default_factory=UdpUploadStageConfig)
+    traffic: dict = Field(default_factory=dict)
     telemetry: dict = Field(default_factory=dict)
     temporary_router_changes: TemporaryRouterChangesConfig = Field(
         default_factory=TemporaryRouterChangesConfig

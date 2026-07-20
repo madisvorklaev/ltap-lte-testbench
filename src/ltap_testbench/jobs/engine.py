@@ -1,4 +1,5 @@
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from uuid import uuid4
 
@@ -226,6 +227,7 @@ def _execute_http_upload_stage(
         return []
     if not server.public_host:
         raise RuntimeError(f"Server {server.slug} has no public_host for upload tests")
+    public_host = server.public_host
 
     config = _tcp_upload_config(run)
     raw_payload_bytes = config.get("payload_bytes")
@@ -239,25 +241,19 @@ def _execute_http_upload_stage(
         repeats = payload_bytes // len(pattern) + 1
         payload_path.write_bytes((pattern * repeats)[:payload_bytes])
 
-    results = []
-    for path in _router_paths(run):
+    paths = _router_paths(run)
+
+    def run_path(path: dict) -> dict:
         path_id = path.get("id", "path")
         port = _path_port(path)
         if port is None:
-            add_event(
-                session,
-                run,
-                "upload-stage",
-                f"Skipping {path_id}: no TCP port configured.",
-                {"path": path},
-            )
-            continue
+            return {"path_id": path_id, "skipped": True, "reason": "no TCP port configured"}
         upload_run_id = f"{run.run_id}-{path_id}"
         response_path = artifact_dir / f"{upload_run_id}_response.txt"
-        url = f"http://{server.public_host}:{port}/upload/{upload_run_id}"
+        url = f"http://{public_host}:{port}/upload/{upload_run_id}"
         if payload_bytes is None:
             timed = run_timed_tcp_upload(
-                server.public_host,
+                public_host,
                 port,
                 f"/upload/{upload_run_id}",
                 duration_seconds,
@@ -328,7 +324,7 @@ def _execute_http_upload_stage(
         row = {
             "path_id": path_id,
             "url": url,
-            "target_host": server.public_host,
+            "target_host": public_host,
             "target_port": port,
             "mode": "timed" if payload_bytes is None else "payload",
             "curl_exit_code": result.exit_code if result is not None else None,
@@ -340,7 +336,7 @@ def _execute_http_upload_stage(
             "size_upload_bytes": size_upload_bytes,
             "configured_duration_seconds": duration_seconds,
             "configured_payload_bytes": payload_bytes,
-            "remote_ip": summary.remote_ip if summary is not None else server.public_host,
+            "remote_ip": summary.remote_ip if summary is not None else public_host,
             "remote_port": summary.remote_port if summary is not None else port,
             "response_artifact": response_path.name,
             "server_bytes_received": server_bytes,
@@ -349,7 +345,6 @@ def _execute_http_upload_stage(
             "test_node_run_id": upload_run_id,
             "test_node_connections": connections,
         }
-        add_event(session, run, "upload-stage", f"HTTP upload completed for {path_id}.", row)
         expected_server_bytes = payload_bytes if payload_bytes is not None else 1
         server_confirmed = bool(connections) and server_bytes >= expected_server_bytes
         curl_confirmed = (
@@ -358,7 +353,31 @@ def _execute_http_upload_stage(
         timed_confirmed = timed is not None and timed.bytes_sent > 0
         if not server_confirmed and not curl_confirmed and not timed_confirmed:
             raise RuntimeError(f"HTTP upload failed for {path_id}: {row}")
-        results.append(row)
+        return row
+
+    results = []
+    max_workers = max(1, len(paths))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(run_path, path): path for path in paths}
+        for future in as_completed(futures):
+            row = future.result()
+            if row.get("skipped"):
+                add_event(
+                    session,
+                    run,
+                    "upload-stage",
+                    f"Skipping {row['path_id']}: {row['reason']}.",
+                    {"path": futures[future]},
+                )
+                continue
+            add_event(
+                session,
+                run,
+                "upload-stage",
+                f"HTTP upload completed for {row['path_id']}.",
+                row,
+            )
+            results.append(row)
     return results
 
 
@@ -372,26 +391,21 @@ def _execute_udp_upload_stage(
         return []
     if not server.public_host:
         raise RuntimeError(f"Server {server.slug} has no public_host for UDP upload tests")
+    public_host = server.public_host
     config = _udp_upload_config(run)
     duration_seconds = int(config.get("duration_seconds", 30))
     bitrate_mbit_s = float(config.get("bitrate_mbit_s", 2.0))
     datagram_bytes = int(config.get("datagram_bytes", 1200))
-    rows = []
-    for path in _router_paths(run):
+    paths = _router_paths(run)
+
+    def run_path(path: dict) -> dict:
         path_id = path.get("id", "path")
         port = _path_port(path)
         if port is None:
-            add_event(
-                session,
-                run,
-                "udp-upload-stage",
-                f"Skipping {path_id}: no UDP port configured.",
-                {"path": path},
-            )
-            continue
+            return {"path_id": path_id, "skipped": True, "reason": "no UDP port configured"}
         udp_run_id = f"{run.run_id}-{path_id}-udp"
         result = run_udp_upload(
-            server.public_host,
+            public_host,
             port,
             duration_seconds,
             bitrate_mbit_s,
@@ -420,8 +434,31 @@ def _execute_udp_upload_stage(
             "server_confirmation": bool(connections),
             "test_node_connections": connections,
         }
-        add_event(session, run, "udp-upload-stage", f"UDP upload completed for {path_id}.", row)
-        rows.append(row)
+        return row
+
+    rows = []
+    max_workers = max(1, len(paths))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(run_path, path): path for path in paths}
+        for future in as_completed(futures):
+            row = future.result()
+            if row.get("skipped"):
+                add_event(
+                    session,
+                    run,
+                    "udp-upload-stage",
+                    f"Skipping {row['path_id']}: {row['reason']}.",
+                    {"path": futures[future]},
+                )
+                continue
+            add_event(
+                session,
+                run,
+                "udp-upload-stage",
+                f"UDP upload completed for {row['path_id']}.",
+                row,
+            )
+            rows.append(row)
     return rows
 
 
