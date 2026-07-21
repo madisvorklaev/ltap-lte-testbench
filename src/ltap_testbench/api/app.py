@@ -334,6 +334,13 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
             metrics["video_probe"] = client.video_frame_stats(f"{run.run_id}-video")
         except Exception:
             metrics["video_probe"] = {}
+        for path_id, row in (metrics.get("video_probe", {}).get("paths") or {}).items():
+            if path_id in path_metrics_by_id:
+                bytes_received = row.get("bytes_received") or 0
+                path_metrics_by_id[path_id]["phase_uploaded_mb"] = round(
+                    float(bytes_received) / 1024 / 1024,
+                    2,
+                )
     return metrics
 
 

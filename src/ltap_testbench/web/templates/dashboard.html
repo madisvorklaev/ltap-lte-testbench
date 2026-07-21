@@ -198,6 +198,7 @@
     <script>
       const $ = (id) => document.getElementById(id);
       let pollTimer = null;
+      let previousLiveSample = null;
 
       const fmtMbit = (value) => {
         if (value === null || value === undefined || value === "") return "-";
@@ -268,13 +269,45 @@
         return 5;
       };
       const setText = (id, value) => { $(id).textContent = value ?? "-"; };
-      const applyTelemetry = (rows) => {
+      const livePathBytes = (liveMetrics, pathId) => {
+        const path = (liveMetrics?.paths || {})[pathId] || {};
+        const phaseMb = Number(path.phase_uploaded_mb);
+        return Number.isFinite(phaseMb) ? phaseMb * 1024 * 1024 : null;
+      };
+      const liveDeltaRateMbit = (run, pathId) => {
+        const currentBytes = livePathBytes(run.live_metrics || {}, pathId);
+        if (!Number.isFinite(currentBytes)) return null;
+        const nowMs = Date.now();
+        const previous = previousLiveSample;
+        if (!previous || previous.runId !== run.run_id) return null;
+        const previousBytes = previous.bytesByPath[pathId];
+        const elapsedSeconds = (nowMs - previous.timestampMs) / 1000;
+        if (!Number.isFinite(previousBytes) || elapsedSeconds <= 0) return null;
+        const deltaBytes = currentBytes - previousBytes;
+        if (deltaBytes <= 0) return null;
+        return (deltaBytes * 8) / elapsedSeconds / 1000000;
+      };
+      const rememberLiveSample = (run) => {
+        const bytesByPath = {};
+        for (const id of ["lte1", "lte2"]) {
+          const bytes = livePathBytes(run.live_metrics || {}, id);
+          if (Number.isFinite(bytes)) bytesByPath[id] = bytes;
+        }
+        previousLiveSample = {
+          runId: run.run_id,
+          timestampMs: Date.now(),
+          bytesByPath,
+        };
+      };
+      const applyTelemetry = (run) => {
+        const rows = run.telemetry || [];
         for (const row of rows || []) {
           const id = row.path_id;
           if (!["lte1", "lte2"].includes(id)) continue;
           const tx = rateToMbit(row.tx_rate);
           const rx = rateToMbit(row.rx_rate);
-          const displayed = tx && tx > 0 ? tx : rx;
+          const live = liveDeltaRateMbit(run, id);
+          const displayed = tx && tx > 0 ? tx : (rx && rx > 0 ? rx : live);
           setText(`${id}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
           setText(`${id}-band`, row.primary_band || "-");
           setText(`${id}-rsrp`, row.rsrp || "-");
@@ -351,11 +384,12 @@
         setText("progress-label", `${progress}%`);
         $("open-run").href = `/runs/${run.run_id}`;
         $("open-run").style.display = "inline-flex";
-        applyTelemetry(run.telemetry || []);
+        applyTelemetry(run);
         applyAverages(run.summary || {}, run.live_metrics || {});
         applyPhaseUpload(run.live_metrics || {});
         applyLatency(run);
         applyVideoHealth(run.summary || {}, run.live_metrics || {});
+        rememberLiveSample(run);
         $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
         $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
       };
