@@ -24,6 +24,7 @@ from ltap_testbench.db.models import (
     TestRun as DbTestRun,
 )
 from ltap_testbench.jobs.batch_runner import recover_interrupted_batches, run_batch
+from ltap_testbench.jobs.preconditions import StabilityResult
 from ltap_testbench.profiles.defaults import seed_demo_data
 
 
@@ -105,11 +106,33 @@ def _executor(outcomes: list[bool]) -> Callable[[Session, DbTestRun, Event | Non
     return execute
 
 
+def _ok_preconditions(
+    _session: Session,
+    _batch: DbTestBatch,
+    _protocol: BenchmarkProtocol,
+    _cancel_event: Event | None,
+    _sleep: Callable[[float], None],
+) -> StabilityResult:
+    return StabilityResult(
+        ok=True,
+        outcome_code="OK",
+        message="stable",
+        required_seconds=0,
+        observed_stable_seconds=0,
+        samples=[],
+    )
+
+
 def test_batch_stops_after_target_valid_runs_and_preserves_invalid_attempts() -> None:
     session = _session()
     batch = _batch(session, target_valid_runs=2, max_attempts=3)
 
-    run_batch(session, batch, run_executor=_executor([True, False, True]))
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([True, False, True]),
+        precondition_runner=_ok_preconditions,
+    )
 
     assert batch.state == BatchState.COMPLETED
     assert batch.state_reason == "target_reached"
@@ -128,7 +151,12 @@ def test_batch_fails_when_max_attempts_reached_before_valid_target() -> None:
     session = _session()
     batch = _batch(session, target_valid_runs=2, max_attempts=2)
 
-    run_batch(session, batch, run_executor=_executor([False, False]))
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([False, False]),
+        precondition_runner=_ok_preconditions,
+    )
 
     assert batch.state == BatchState.FAILED
     assert batch.state_reason == "max_attempts_reached"
@@ -141,7 +169,12 @@ def test_batch_deadline_stops_without_failure() -> None:
     session = _session()
     batch = _batch(session, target_valid_runs=2, max_attempts=3, deadline=timedelta(seconds=-1))
 
-    run_batch(session, batch, run_executor=_executor([True, True]))
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([True, True]),
+        precondition_runner=_ok_preconditions,
+    )
 
     assert batch.state == BatchState.COMPLETED
     assert batch.state_reason == "deadline_reached"
@@ -161,6 +194,7 @@ def test_batch_cancel_during_cooldown_is_responsive() -> None:
         batch,
         cancel_event=cancel_event,
         run_executor=_executor([True]),
+        precondition_runner=_ok_preconditions,
         sleep=sleep,
     )
 
@@ -174,7 +208,12 @@ def test_batch_runner_links_attempt_to_run() -> None:
     session = _session()
     batch = _batch(session, target_valid_runs=1, max_attempts=1)
 
-    run_batch(session, batch, run_executor=_executor([True]))
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([True]),
+        precondition_runner=_ok_preconditions,
+    )
 
     attempt = session.scalar(select(BatchAttempt))
     assert attempt is not None
@@ -183,6 +222,44 @@ def test_batch_runner_links_attempt_to_run() -> None:
     assert run.batch_id == batch.batch_id
     assert run.batch_attempt_id == attempt.id
     assert run.protocol_hash == batch.protocol_hash
+
+
+def test_batch_precondition_failure_skips_attempt_without_creating_run() -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=1, max_attempts=1)
+
+    def failed_preconditions(
+        _session: Session,
+        _batch: DbTestBatch,
+        _protocol: BenchmarkProtocol,
+        _cancel_event: Event | None,
+        _sleep: Callable[[float], None],
+    ) -> StabilityResult:
+        return StabilityResult(
+            ok=False,
+            outcome_code="MODEM_NOT_REGISTERED",
+            message="not stable",
+            required_seconds=120,
+            observed_stable_seconds=0,
+            samples=[{"paths": []}],
+        )
+
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([True]),
+        precondition_runner=failed_preconditions,
+    )
+
+    attempt = session.scalar(select(BatchAttempt))
+    assert attempt is not None
+    assert batch.state == BatchState.FAILED
+    assert batch.state_reason == "max_attempts_reached"
+    assert batch.failed_attempt_count == 1
+    assert attempt.state == BatchAttemptState.SKIPPED
+    assert attempt.outcome_code == "MODEM_NOT_REGISTERED"
+    assert attempt.run_id is None
+    assert session.scalar(select(DbTestRun)) is None
 
 
 def test_recover_interrupted_batch_marks_active_attempt_failed_and_pauses() -> None:

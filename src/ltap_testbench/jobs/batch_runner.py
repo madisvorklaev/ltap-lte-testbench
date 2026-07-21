@@ -13,15 +13,22 @@ from ltap_testbench.db.models import (
     BatchAttemptState,
     BatchState,
     BenchmarkProtocol,
+    RouterProfile,
     RunState,
     TestBatch,
     TestPlan,
     TestRun,
 )
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run
+from ltap_testbench.jobs.preconditions import StabilityResult, wait_for_stable_paths
 from ltap_testbench.profiles.schemas import TestPlanConfig
+from ltap_testbench.routers.factory import adapter_for
 
 RunExecutor = Callable[[Session, TestRun, Event | None], TestRun]
+PreconditionRunner = Callable[
+    [Session, TestBatch, BenchmarkProtocol, Event | None, Callable[[float], None]],
+    StabilityResult,
+]
 TERMINAL_BATCH_STATES = {BatchState.CANCELLED, BatchState.COMPLETED, BatchState.FAILED}
 TERMINAL_RUN_STATES = {
     RunState.COMPLETED,
@@ -168,12 +175,62 @@ def _finish_attempt(
         batch.consecutive_failure_count += 1
 
 
+def _run_preconditions(
+    session: Session,
+    batch: TestBatch,
+    protocol: BenchmarkProtocol,
+    cancel_event: Event | None,
+    sleep: Callable[[float], None],
+) -> StabilityResult:
+    router = session.scalar(select(RouterProfile).where(RouterProfile.slug == batch.router_slug))
+    if router is None:
+        return StabilityResult(
+            ok=False,
+            outcome_code="ROUTER_UNREACHABLE",
+            message=f"Router profile {batch.router_slug} is missing.",
+            required_seconds=0,
+            observed_stable_seconds=0,
+            samples=[],
+        )
+    stabilization = protocol.definition_json.get("stabilization") or {}
+    adapter = adapter_for(router)
+    return wait_for_stable_paths(
+        adapter,
+        required_seconds=int(stabilization.get("required_registered_seconds") or 0),
+        timeout_seconds=int(stabilization.get("timeout_seconds") or 1),
+        poll_interval_seconds=int(stabilization.get("poll_interval_seconds") or 5),
+        cancel_check=lambda: bool(cancel_event is not None and cancel_event.is_set()),
+        sleep=sleep,
+    )
+
+
+def _finish_precondition_failure(
+    session: Session,
+    batch: TestBatch,
+    attempt: BatchAttempt,
+    result: StabilityResult,
+) -> None:
+    attempt.finished_at = utc_now()
+    attempt.comparison_eligible = False
+    attempt.outcome_code = result.outcome_code
+    attempt.outcome_details_json = {"preconditions": result.to_dict()}
+    if result.outcome_code == "USER_CANCELLED":
+        attempt.state = BatchAttemptState.CANCELLED
+    else:
+        attempt.state = BatchAttemptState.SKIPPED
+        batch.failed_attempt_count += 1
+        batch.consecutive_failure_count += 1
+    session.add_all([batch, attempt])
+    session.commit()
+
+
 def run_batch(
     session: Session,
     batch: TestBatch,
     *,
     cancel_event: Event | None = None,
     run_executor: RunExecutor | None = None,
+    precondition_runner: PreconditionRunner | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> TestBatch:
     if batch.state not in {BatchState.DRAFT, BatchState.SCHEDULED, BatchState.RUNNING}:
@@ -186,6 +243,7 @@ def run_batch(
         _finish_batch(session, batch, BatchState.FAILED, "benchmark protocol not found")
         return batch
     plan = ensure_batch_plan(session, protocol)
+    preconditions = precondition_runner or _run_preconditions
     batch.state = BatchState.RUNNING
     batch.started_at = batch.started_at or utc_now()
     session.add(batch)
@@ -216,10 +274,24 @@ def run_batch(
         attempt = BatchAttempt(
             batch=batch,
             sequence_number=batch.attempt_count,
-            state=BatchAttemptState.RUNNING,
+            state=BatchAttemptState.CHECKING_PRECONDITIONS,
             started_at=utc_now(),
         )
         session.add_all([batch, attempt])
+        session.commit()
+        stability = preconditions(session, batch, protocol, cancel_event, sleep)
+        if not stability.ok:
+            _finish_precondition_failure(session, batch, attempt, stability)
+            if stability.outcome_code == "USER_CANCELLED":
+                _finish_batch(session, batch, BatchState.CANCELLED, "user_cancelled")
+                return batch
+            if batch.attempt_count >= batch.max_attempts:
+                _finish_batch(session, batch, BatchState.FAILED, "max_attempts_reached")
+                return batch
+            continue
+        attempt.state = BatchAttemptState.RUNNING
+        attempt.outcome_details_json = {"preconditions": stability.to_dict()}
+        session.add(attempt)
         session.commit()
         run = create_run(session, batch.router_slug, plan.slug)
         run.benchmark_protocol_id = protocol.id
