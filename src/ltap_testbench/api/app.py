@@ -915,6 +915,29 @@ def create_test_batch(
     return _batch_row(batch, protocol)
 
 
+@app.get("/api/v1/test-batches/active")
+def active_test_batch(session: Session = Depends(get_session)) -> dict[str, Any]:
+    batch = session.scalar(
+        select(TestBatch)
+        .where(
+            TestBatch.state.in_(
+                [
+                    BatchState.RUNNING,
+                    BatchState.PAUSE_REQUESTED,
+                    BatchState.CANCEL_REQUESTED,
+                ]
+            )
+        )
+        .order_by(TestBatch.id.desc())
+    )
+    if batch is None:
+        return {"active": False, "batch": None}
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    return {"active": True, "batch": _batch_row(batch, protocol)}
+
+
 @app.get("/api/v1/test-batches/{batch_id}")
 def test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
     batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
@@ -1063,6 +1086,42 @@ def analytics_runs(
         },
         "summary": cohort_summary(rows),
         "runs": rows,
+    }
+
+
+@app.get("/api/v1/runs/{run_id}/live")
+def run_live(run_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    events = [
+        {
+            "timestamp": event.timestamp.isoformat(),
+            "type": event.event_type,
+            "message": event.message,
+            "details": event.details,
+        }
+        for event in run.events
+    ]
+    return {
+        "active": run.state not in TERMINAL_RUN_STATES,
+        "run": {
+            "run_id": run.run_id,
+            "state": run.state.value,
+            "router_name": run.router.display_name,
+            "router_ip": run.router.management_host,
+            "plan": run.plan_slug,
+            "batch_id": run.batch_id,
+            "batch_attempt_id": run.batch_attempt_id,
+            "protocol_hash": run.protocol_hash,
+            "comparison_eligible": run.comparison_eligible,
+            "exclusion_reasons": run.exclusion_reasons_json,
+            "environment_snapshot_hash": run.environment_snapshot_hash,
+            "integrity": run.integrity_json,
+            "summary": run.summary,
+            "events": events,
+            "artifacts": list_run_artifacts(run),
+        },
     }
 
 

@@ -19,15 +19,18 @@ from ltap_testbench.api.app import (
 from ltap_testbench.benchmarks.defaults import seed_benchmark_protocols
 from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
+    BatchState,
     RouterKind,
     RouterProfile,
     RunEvent,
     RunState,
     ServerProfile,
+    TestBatch,
 )
 from ltap_testbench.db.models import (
     TestRun as DbTestRun,
 )
+from ltap_testbench.profiles.defaults import seed_demo_data
 
 
 def test_health() -> None:
@@ -571,6 +574,7 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
     with session_factory() as session:
+        seed_demo_data(session)
         seed_benchmark_protocols(session)
 
     def override_session():
@@ -644,6 +648,47 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert payload["target_valid_runs"] == 5
         assert payload["max_attempts"] == 7
         assert payload["estimated_attempt_seconds"] > 900
+
+        active = client.get("/api/v1/test-batches/active")
+        assert active.status_code == 200
+        assert active.json()["active"] is False
+
+        with session_factory() as session:
+            stored_batch = session.scalar(
+                select(TestBatch).where(TestBatch.batch_id == payload["batch_id"])
+            )
+            assert stored_batch is not None
+            stored_batch.state = BatchState.RUNNING
+            session.add(stored_batch)
+            session.commit()
+
+        active = client.get("/api/v1/test-batches/active")
+        assert active.status_code == 200
+        assert active.json()["active"] is True
+        assert active.json()["batch"]["batch_id"] == payload["batch_id"]
+
+        with session_factory() as session:
+            router = session.scalar(
+                select(RouterProfile).where(RouterProfile.slug == "demo-generic")
+            )
+            assert router is not None
+            run = DbTestRun(
+                run_id="run-live",
+                router_id=router.id,
+                plan_slug="quick-check",
+                state=RunState.COMPLETED,
+                protocol_hash="aaa",
+                comparison_eligible=True,
+                summary={"comparison_eligible": True},
+                environment_snapshot_hash="hash-live",
+            )
+            session.add(run)
+            session.commit()
+
+        live = client.get("/api/v1/runs/run-live/live")
+        assert live.status_code == 200
+        assert live.json()["active"] is False
+        assert live.json()["run"]["environment_snapshot_hash"] == "hash-live"
 
         dashboard = client.get("/")
         assert dashboard.status_code == 200
