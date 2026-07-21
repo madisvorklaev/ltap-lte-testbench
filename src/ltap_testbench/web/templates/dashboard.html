@@ -331,14 +331,15 @@
         const total = Object.values(paths).reduce((sum, row) => sum + Number(row.phase_uploaded_mb || 0), 0);
         setText("phase-uploaded", fmtMb(total));
       };
-      const latencyRows = (run) => {
+      const latencyRows = (run, liveMetrics) => {
+        if ((liveMetrics?.latency_results || []).length) return liveMetrics.latency_results;
         if ((run.summary?.latency_results || []).length) return run.summary.latency_results;
         const latency = latestEvent(run, "latency-stage");
         return latency?.details?.results || [];
       };
-      const applyLatency = (run) => {
+      const applyLatency = (run, liveMetrics) => {
         for (const id of ["lte1", "lte2"]) {
-          const row = latencyRows(run).find((item) => item.path_id === id);
+          const row = latencyRows(run, liveMetrics).find((item) => item.path_id === id);
           setText(`${id}-lat-avg`, fmtMs(row?.avg_ms));
           setText(`${id}-lat-min`, fmtMs(row?.min_ms));
           setText(`${id}-lat-max`, fmtMs(row?.max_ms));
@@ -398,7 +399,7 @@
         applyTelemetry(run);
         applyAverages(run.summary || {}, run.live_metrics || {});
         applyPhaseUpload(run.live_metrics || {});
-        applyLatency(run);
+        applyLatency(run, run.live_metrics || {});
         applyVideoHealth(run.summary || {}, run.live_metrics || {});
         rememberLiveSample(run);
         $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";

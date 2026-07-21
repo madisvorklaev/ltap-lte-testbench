@@ -1,3 +1,4 @@
+import time
 from contextlib import suppress
 from pathlib import Path
 from threading import Event, Lock, Thread
@@ -56,6 +57,7 @@ class LabRecoveryError(RuntimeError):
 LAB_LOCK = Lock()
 LAB_ACTIVE_RUN_ID: str | None = None
 LAB_CANCEL_EVENTS: dict[str, Event] = {}
+LAB_LIVE_LATENCY_CACHE: dict[str, Any] = {"run_id": None, "timestamp": 0.0, "results": []}
 LAB_RESERVATION_OWNER = "ltap-testbench"
 TCP_FILE_SIZE_OPTIONS_MB = [5, 10, 25, 50, 100]
 TERMINAL_RUN_STATES = {
@@ -428,6 +430,25 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
     return metrics
 
 
+def _live_latency_results(session: Session, run: TestRun, adapter: Any) -> list[dict]:
+    now = time.monotonic()
+    cached_run_id = LAB_LIVE_LATENCY_CACHE.get("run_id")
+    cached_at = float(LAB_LIVE_LATENCY_CACHE.get("timestamp") or 0.0)
+    if cached_run_id == run.run_id and now - cached_at < 5:
+        return list(LAB_LIVE_LATENCY_CACHE.get("results") or [])
+    try:
+        server = _stockbot(session)
+        if not server.public_host:
+            return []
+        results = adapter.measure_latency(server.public_host, count=1)
+    except Exception:
+        results = []
+    LAB_LIVE_LATENCY_CACHE.update(
+        {"run_id": run.run_id, "timestamp": time.monotonic(), "results": results}
+    )
+    return results
+
+
 @app.on_event("startup")
 def startup() -> None:
     init_db()
@@ -549,12 +570,16 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
     if run is None:
         return {"active": False, "run": None}
     active = run.state not in TERMINAL_RUN_STATES
+    adapter = adapter_for(run.router)
     telemetry = []
     if active:
         try:
-            telemetry = adapter_for(run.router).collect_path_telemetry()
+            telemetry = adapter.collect_path_telemetry()
         except Exception:
             telemetry = []
+    live_metrics = _live_lab_metrics(session, run) if active else {}
+    if active:
+        live_metrics["latency_results"] = _live_latency_results(session, run, adapter)
     events = [
         {
             "timestamp": event.timestamp.isoformat(),
@@ -577,7 +602,7 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
             "summary": run.summary,
             "events": events,
             "telemetry": telemetry,
-            "live_metrics": _live_lab_metrics(session, run) if active else {},
+            "live_metrics": live_metrics,
             "artifacts": list_run_artifacts(run),
         },
     }

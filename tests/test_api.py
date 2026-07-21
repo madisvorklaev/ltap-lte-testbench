@@ -4,9 +4,11 @@ from sqlalchemy.orm import sessionmaker
 
 from ltap_testbench.api import app as api_app
 from ltap_testbench.api.app import (
+    LAB_LIVE_LATENCY_CACHE,
     LabRecoveryError,
     LabRunCreate,
     _live_lab_metrics,
+    _live_latency_results,
     _recover_orphaned_lab_reservations,
     _upsert_lab_plan,
     app,
@@ -140,6 +142,61 @@ def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
 
         assert metrics["paths"]["lte1"]["phase_uploaded_mb"] == 5.0
         assert metrics["paths"]["lte2"]["phase_uploaded_mb"] == 7.5
+
+
+def test_live_latency_results_are_cached() -> None:
+    class FakeAdapter:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def measure_latency(self, target_host: str, count: int = 5) -> list[dict]:
+            self.calls += 1
+            return [
+                {
+                    "path_id": "lte1",
+                    "target_host": target_host,
+                    "sent": count,
+                    "received": count,
+                    "avg_ms": 24.0,
+                }
+            ]
+
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    LAB_LIVE_LATENCY_CACHE.update({"run_id": None, "timestamp": 0.0, "results": []})
+    with session_factory() as session:
+        router = RouterProfile(slug="r1-ltap-live", display_name="R1", kind=RouterKind.FAKE)
+        session.add_all(
+            [
+                router,
+                ServerProfile(
+                    slug="stockbot",
+                    display_name="Stockbot",
+                    control_api_url="http://stockbot",
+                    public_host="198.51.100.10",
+                ),
+            ]
+        )
+        session.flush()
+        run = DbTestRun(
+            run_id="run-live",
+            router=router,
+            plan_slug="lab-current",
+            state=RunState.RUNNING,
+            resolved_plan={},
+            summary={},
+        )
+        session.add(run)
+        session.commit()
+        adapter = FakeAdapter()
+
+        first = _live_latency_results(session, run, adapter)
+        second = _live_latency_results(session, run, adapter)
+
+        assert first == second
+        assert first[0]["avg_ms"] == 24.0
+        assert adapter.calls == 1
 
 
 def test_recover_orphaned_lab_reservation_only_releases_owned_lab_run(monkeypatch) -> None:

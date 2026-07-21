@@ -319,14 +319,25 @@ class MikroTikRouterAdapter(RouterAdapter):
         results = []
         count = max(1, min(count, 50))
         with self._api() as api:
+            addresses = _path_source_addresses(api)
             for path in self._paths():
                 path_id = path.get("id")
+                interface = path.get("interface") or path_id
                 routing_table = path.get("routing_table")
                 rows: list[dict[str, str]] = []
                 routed = False
                 route_parameter = None
                 error = None
-                if routing_table:
+                source_address = addresses.get(str(interface))
+                if source_address:
+                    rows, route_parameter, error = _source_ping_rows(
+                        api,
+                        target_host,
+                        count,
+                        source_address,
+                    )
+                    routed = bool(rows)
+                if not rows and routing_table:
                     rows, route_parameter, error = _routed_ping_rows(
                         api,
                         target_host,
@@ -342,10 +353,12 @@ class MikroTikRouterAdapter(RouterAdapter):
                 results.append(
                     {
                         "path_id": path_id,
+                        "interface": interface,
                         "target_host": target_host,
                         "routing_table": routing_table,
                         "routing_table_used": routed,
                         "route_parameter": route_parameter,
+                        "source_address": source_address,
                         "validity": "path-routed" if routed else "invalid",
                         "error": None if routed else error or "routed ping returned no rows",
                         "sent": sent,
@@ -358,6 +371,41 @@ class MikroTikRouterAdapter(RouterAdapter):
                     }
                 )
         return results
+
+
+def _path_source_addresses(api: RouterOsApi) -> dict[str, str]:
+    addresses = {}
+    rows = api.rows(api.command(["/ip/address/print"]))
+    for row in rows:
+        interface = row.get("actual-interface") or row.get("interface")
+        address = (row.get("address") or "").split("/", 1)[0]
+        if interface and address and row.get("disabled") != "true" and row.get("invalid") != "true":
+            addresses[interface] = address
+    return addresses
+
+
+def _source_ping_rows(
+    api: RouterOsApi,
+    target_host: str,
+    count: int,
+    source_address: str,
+) -> tuple[list[dict[str, str]], str | None, str | None]:
+    try:
+        rows = api.rows(
+            api.command(
+                [
+                    "/tool/ping",
+                    f"=address={target_host}",
+                    f"=count={count}",
+                    f"=src-address={source_address}",
+                ]
+            )
+        )
+    except RouterOsApiError as exc:
+        return [], "src-address", str(exc)
+    if not rows:
+        return [], "src-address", "source-address ping returned no rows"
+    return rows, "src-address", None
 
 
 def _routed_ping_rows(

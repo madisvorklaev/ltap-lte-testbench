@@ -1,6 +1,12 @@
 import pytest
 
-from ltap_testbench.routers.mikrotik import RouterOsApi, RouterOsApiError, _routed_ping_rows
+from ltap_testbench.routers.mikrotik import (
+    RouterOsApi,
+    RouterOsApiError,
+    _path_source_addresses,
+    _routed_ping_rows,
+    _source_ping_rows,
+)
 
 
 class FragmentedSocket:
@@ -51,6 +57,75 @@ def test_routeros_api_raises_on_trap() -> None:
 
     with pytest.raises(RuntimeError, match="no such route"):
         api.command(["/ping"])
+
+
+def test_path_source_addresses_returns_active_lte_addresses() -> None:
+    class FakeApi:
+        def command(self, _words: list[str]) -> list[list[str]]:
+            return [
+                [
+                    "!re",
+                    "=address=10.64.250.101/32",
+                    "=interface=lte1",
+                    "=actual-interface=lte1",
+                    "=invalid=false",
+                    "=disabled=false",
+                ],
+                [
+                    "!re",
+                    "=address=10.209.36.201/32",
+                    "=interface=lte2",
+                    "=actual-interface=lte2",
+                    "=invalid=false",
+                    "=disabled=false",
+                ],
+                ["!done"],
+            ]
+
+        def rows(self, replies: list[list[str]]) -> list[dict[str, str]]:
+            return RouterOsApi.rows(replies)
+
+    assert _path_source_addresses(FakeApi()) == {
+        "lte1": "10.64.250.101",
+        "lte2": "10.209.36.201",
+    }
+
+
+def test_source_ping_uses_tool_ping_with_src_address() -> None:
+    class FakeApi:
+        def __init__(self) -> None:
+            self.commands = []
+
+        def command(self, words: list[str]) -> list[list[str]]:
+            self.commands.append(words)
+            return [
+                [
+                    "!re",
+                    "=sent=1",
+                    "=received=1",
+                    "=avg-rtt=24ms",
+                ],
+                ["!done"],
+            ]
+
+        def rows(self, replies: list[list[str]]) -> list[dict[str, str]]:
+            return RouterOsApi.rows(replies)
+
+    api = FakeApi()
+
+    rows, parameter, error = _source_ping_rows(api, "198.51.100.10", 1, "10.64.250.101")
+
+    assert parameter == "src-address"
+    assert error is None
+    assert rows == [{"sent": "1", "received": "1", "avg-rtt": "24ms"}]
+    assert api.commands == [
+        [
+            "/tool/ping",
+            "=address=198.51.100.10",
+            "=count=1",
+            "=src-address=10.64.250.101",
+        ]
+    ]
 
 
 def test_routed_ping_falls_back_to_routing_mark() -> None:
