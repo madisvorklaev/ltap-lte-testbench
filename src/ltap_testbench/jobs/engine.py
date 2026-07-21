@@ -75,9 +75,11 @@ def create_run(session: Session, router_slug: str, plan_slug: str) -> TestRun:
     if plan is None:
         raise ValueError(f"Unknown test plan: {plan_slug}")
     resolved_plan = _normalize_plan_definition(plan.definition)
-    resolved_plan.setdefault("metadata", {}).setdefault("protocol", {}).update(
-        protocol_metadata(resolved_plan)
-    )
+    protocol = resolved_plan.setdefault("metadata", {}).setdefault("protocol", {})
+    existing_hash = protocol.get("protocol_hash") if isinstance(protocol, dict) else None
+    protocol.update(protocol_metadata(resolved_plan))
+    if existing_hash:
+        protocol["protocol_hash"] = existing_hash
     run = TestRun(
         run_id=f"run-{uuid4().hex[:12]}",
         router_id=router.id,
@@ -964,26 +966,19 @@ def execute_run(
             for result in upload_results
             for connection in result.get("test_node_connections", [])
         ]
+        protocol_info = run.resolved_plan.get("metadata", {}).get("protocol", {})
+        comparable_protocol_ids = {"comparable-benchmark", "comparable-v1"}
+        comparison_eligible = bool(
+            has_live_results and protocol_info.get("protocol_id") in comparable_protocol_ids
+        )
         run.summary = {
             "validity": ("live-upload" if has_live_results else "simulated"),
             "result_schema_version": run.resolved_plan.get("result_schema_version", 2),
-            "protocol": run.resolved_plan.get("metadata", {}).get("protocol", {}),
-            "comparison_eligible": bool(
-                has_live_results
-                and run.resolved_plan.get("metadata", {})
-                .get("protocol", {})
-                .get("protocol_id")
-                == "comparable-benchmark"
-            ),
+            "protocol": protocol_info,
+            "comparison_eligible": comparison_eligible,
             "exclusion_reasons": (
                 []
-                if (
-                    has_live_results
-                    and run.resolved_plan.get("metadata", {})
-                    .get("protocol", {})
-                    .get("protocol_id")
-                    == "comparable-benchmark"
-                )
+                if comparison_eligible
                 else ["exploratory_or_legacy_protocol"]
             ),
             "warnings": controller_check.warnings,

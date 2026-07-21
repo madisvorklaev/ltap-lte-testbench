@@ -19,6 +19,7 @@ from ltap_testbench.benchmarks.defaults import protocol_duration_seconds, seed_b
 from ltap_testbench.db.base import SessionLocal, get_session, init_db
 from ltap_testbench.db.models import (
     AntennaProfile,
+    BatchAttempt,
     BatchState,
     BenchmarkProtocol,
     GainSource,
@@ -29,6 +30,7 @@ from ltap_testbench.db.models import (
     TestPlan,
     TestRun,
 )
+from ltap_testbench.jobs.batch_runner import run_batch
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.protocols import (
@@ -121,6 +123,7 @@ class LabRecoveryError(RuntimeError):
 LAB_LOCK = Lock()
 LAB_ACTIVE_RUN_ID: str | None = None
 LAB_CANCEL_EVENTS: dict[str, Event] = {}
+BATCH_CANCEL_EVENTS: dict[str, Event] = {}
 LAB_LIVE_LATENCY_CACHE: dict[str, Any] = {"run_id": None, "timestamp": 0.0, "results": []}
 LAB_RESERVATION_OWNER = "ltap-testbench"
 TCP_FILE_SIZE_OPTIONS_MB = [5, 10, 25, 50, 100]
@@ -483,6 +486,17 @@ def _run_lab_background(run_id: str, cancel_event: Event) -> None:
             if run_id == LAB_ACTIVE_RUN_ID:
                 LAB_ACTIVE_RUN_ID = None
             LAB_CANCEL_EVENTS.pop(run_id, None)
+
+
+def _run_batch_background(batch_id: str, cancel_event: Event) -> None:
+    try:
+        with SessionLocal() as session:
+            batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+            if batch is None:
+                return
+            run_batch(session, batch, cancel_event=cancel_event)
+    finally:
+        BATCH_CANCEL_EVENTS.pop(batch_id, None)
 
 
 def _latest_lab_run(session: Session) -> TestRun | None:
@@ -894,6 +908,95 @@ def test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[s
         select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
     )
     return _batch_row(batch, protocol)
+
+
+@app.post("/api/v1/test-batches/{batch_id}/start")
+def start_test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    if batch.state not in {BatchState.DRAFT, BatchState.SCHEDULED, BatchState.PAUSED}:
+        raise HTTPException(status_code=409, detail=f"batch is {batch.state.value}")
+    if BATCH_CANCEL_EVENTS:
+        raise HTTPException(status_code=409, detail="batch worker is already active")
+    active_batch = session.scalar(
+        select(TestBatch).where(
+            TestBatch.state.in_(
+                [
+                    BatchState.RUNNING,
+                    BatchState.PAUSE_REQUESTED,
+                    BatchState.CANCEL_REQUESTED,
+                ]
+            )
+        )
+    )
+    if active_batch is not None and active_batch.batch_id != batch_id:
+        raise HTTPException(status_code=409, detail=f"batch {active_batch.batch_id} is active")
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    if protocol is None:
+        raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    cancel_event = Event()
+    BATCH_CANCEL_EVENTS[batch_id] = cancel_event
+    batch.state = BatchState.RUNNING
+    batch.started_at = batch.started_at or datetime.now().astimezone()
+    batch.state_reason = None
+    session.add(batch)
+    session.commit()
+    Thread(target=_run_batch_background, args=(batch_id, cancel_event), daemon=True).start()
+    return _batch_row(batch, protocol)
+
+
+@app.post("/api/v1/test-batches/{batch_id}/cancel")
+def cancel_test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    cancel_event = BATCH_CANCEL_EVENTS.get(batch_id)
+    if cancel_event is not None:
+        cancel_event.set()
+    if batch.state not in {
+        BatchState.CANCELLED,
+        BatchState.COMPLETED,
+        BatchState.FAILED,
+    }:
+        batch.state = BatchState.CANCEL_REQUESTED
+        batch.state_reason = "user_cancelled"
+        session.add(batch)
+        session.commit()
+    return _batch_row(batch, protocol)
+
+
+@app.get("/api/v1/test-batches/{batch_id}/attempts")
+def test_batch_attempts(
+    batch_id: str,
+    session: Session = Depends(get_session),
+) -> list[dict[str, Any]]:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    attempts = session.scalars(
+        select(BatchAttempt)
+        .where(BatchAttempt.batch_pk == batch.id)
+        .order_by(BatchAttempt.sequence_number)
+    ).all()
+    return [
+        {
+            "sequence_number": attempt.sequence_number,
+            "state": attempt.state.value,
+            "run_id": attempt.run_id,
+            "comparison_eligible": attempt.comparison_eligible,
+            "outcome_code": attempt.outcome_code,
+            "outcome_details": attempt.outcome_details_json,
+            "started_at": attempt.started_at.isoformat() if attempt.started_at else None,
+            "finished_at": attempt.finished_at.isoformat() if attempt.finished_at else None,
+        }
+        for attempt in attempts
+    ]
 
 
 @app.get("/api/v1/analytics/runs")
