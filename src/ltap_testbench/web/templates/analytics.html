@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analytics · LtAP LTE Testbench</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --text: #18212f;
+        --muted: #617083;
+        --line: #d7dee8;
+        --green: #0f766e;
+        --blue: #075985;
+        --red: #b91c1c;
+        --amber: #a16207;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+      header { background: #172033; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      main { max-width: 1280px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+      section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+      h1, h2, h3 { margin: 0; letter-spacing: 0; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; margin-bottom: 10px; }
+      h3 { font-size: 14px; margin-bottom: 6px; }
+      a { color: inherit; text-decoration: none; }
+      label { display: grid; gap: 4px; color: var(--muted); font-size: 12px; font-weight: 650; }
+      input, select { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; color: var(--text); background: #fff; width: 100%; }
+      button, .button { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; font: inherit; background: #fff; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+      button.primary { background: var(--green); color: #fff; border-color: var(--green); }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th, td { border-bottom: 1px solid #e8edf3; text-align: left; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
+      th { color: var(--muted); font-weight: 650; }
+      canvas { display: block; width: 100%; height: 260px; border: 1px solid var(--line); border-radius: 6px; background: #fbfcfe; }
+      code { background: #edf2f7; padding: 2px 4px; border-radius: 4px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+      .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+      .metric { background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-height: 68px; }
+      .metric span { color: var(--muted); font-size: 12px; display: block; }
+      .metric strong { display: block; font-size: 18px; margin-top: 3px; }
+      .legend { display: flex; gap: 12px; color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .swatch { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 4px; }
+      .muted { color: var(--muted); }
+      @media (max-width: 720px) {
+        main { padding: 12px; }
+        canvas { height: 220px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LtAP Analytics</h1>
+      <div class="toolbar">
+        <a class="button" href="/">Dashboard</a>
+        <span>v{{ version }}</span>
+      </div>
+    </header>
+    <main>
+      <section>
+        <h2>Filters</h2>
+        <div class="toolbar">
+          <label>Antenna
+            <select id="antenna-filter">
+              <option value="">All antenna placements</option>
+              {% for value in antenna_options %}
+              <option value="{{ value }}">{{ value }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>State
+            <select id="state-filter">
+              <option value="COMPLETED" selected>Completed</option>
+              <option value="ALL">All states</option>
+              <option value="FAILED">Failed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </label>
+          <label>Runs
+            <input id="limit-filter" type="number" min="1" max="500" value="30">
+          </label>
+          <button id="apply" class="primary" type="button">Apply</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Overview</h2>
+        <div class="metrics">
+          <div class="metric"><span>Runs</span><strong id="run-count">0</strong></div>
+          <div class="metric"><span>Best TCP</span><strong id="best-tcp">-</strong></div>
+          <div class="metric"><span>Best UDP</span><strong id="best-udp">-</strong></div>
+          <div class="metric"><span>Best video success</span><strong id="best-video">-</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Charts</h2>
+        <div class="grid">
+          <div>
+            <h3>TCP Upload</h3>
+            <canvas id="chart-tcp" width="760" height="260"></canvas>
+          </div>
+          <div>
+            <h3>UDP Delivered</h3>
+            <canvas id="chart-udp" width="760" height="260"></canvas>
+          </div>
+          <div>
+            <h3>Latency</h3>
+            <canvas id="chart-latency" width="760" height="260"></canvas>
+          </div>
+          <div>
+            <h3>Video Success</h3>
+            <canvas id="chart-video" width="760" height="260"></canvas>
+          </div>
+        </div>
+        <div class="legend">
+          <span><span class="swatch" style="background:#075985;"></span>lte1</span>
+          <span><span class="swatch" style="background:#b91c1c;"></span>lte2</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Runs</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 170px;">Run</th>
+              <th>Antenna</th>
+              <th style="width: 105px;">lte1 TCP</th>
+              <th style="width: 105px;">lte2 TCP</th>
+              <th style="width: 105px;">lte1 UDP</th>
+              <th style="width: 105px;">lte2 UDP</th>
+              <th style="width: 105px;">lte1 Lat</th>
+              <th style="width: 105px;">lte2 Lat</th>
+              <th style="width: 105px;">Video</th>
+            </tr>
+          </thead>
+          <tbody id="runs-body"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const colors = {lte1: "#075985", lte2: "#b91c1c"};
+      const fmt = (value, suffix = "") => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(1)}${suffix}` : "-";
+      };
+      const request = async (url) => {
+        const response = await fetch(url);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(JSON.stringify(payload));
+        return payload;
+      };
+      const pathValue = (run, path, key) => run.paths?.[path]?.[key] ?? null;
+      const allValues = (runs, key) => runs.flatMap((run) => ["lte1", "lte2"].map((path) => pathValue(run, path, key))).filter((value) => Number.isFinite(Number(value)));
+      const setMetric = (id, value, suffix = "") => { $(id).textContent = fmt(value, suffix); };
+      const maxValue = (values, floor = 1) => Math.max(floor, ...values.map(Number));
+      const drawChart = (id, runs, key, suffix, invert = false) => {
+        const canvas = $(id);
+        const ctx = canvas.getContext("2d");
+        const width = canvas.width;
+        const height = canvas.height;
+        const pad = {left: 44, right: 16, top: 18, bottom: 34};
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#fbfcfe";
+        ctx.fillRect(0, 0, width, height);
+        const values = allValues(runs, key);
+        const max = maxValue(values, key.includes("percent") ? 100 : 1);
+        const min = invert ? 0 : 0;
+        ctx.strokeStyle = "#d7dee8";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top);
+        ctx.lineTo(pad.left, height - pad.bottom);
+        ctx.lineTo(width - pad.right, height - pad.bottom);
+        ctx.stroke();
+        ctx.fillStyle = "#617083";
+        ctx.font = "12px system-ui";
+        ctx.fillText(`${max.toFixed(0)}${suffix}`, 6, pad.top + 4);
+        ctx.fillText(`${min}${suffix}`, 16, height - pad.bottom + 4);
+        if (!runs.length || !values.length) {
+          ctx.fillText("No data", pad.left + 10, pad.top + 22);
+          return;
+        }
+        for (const path of ["lte1", "lte2"]) {
+          ctx.strokeStyle = colors[path];
+          ctx.fillStyle = colors[path];
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          let started = false;
+          runs.forEach((run, index) => {
+            const raw = Number(pathValue(run, path, key));
+            if (!Number.isFinite(raw)) return;
+            const x = pad.left + (runs.length === 1 ? 0 : index * (width - pad.left - pad.right) / (runs.length - 1));
+            const y = height - pad.bottom - (raw / max) * (height - pad.top - pad.bottom);
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+          runs.forEach((run, index) => {
+            const raw = Number(pathValue(run, path, key));
+            if (!Number.isFinite(raw)) return;
+            const x = pad.left + (runs.length === 1 ? 0 : index * (width - pad.left - pad.right) / (runs.length - 1));
+            const y = height - pad.bottom - (raw / max) * (height - pad.top - pad.bottom);
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      };
+      const renderTable = (runs) => {
+        $("runs-body").innerHTML = runs.map((run) => {
+          const video = Math.max(
+            Number(pathValue(run, "lte1", "video_success_percent") || 0),
+            Number(pathValue(run, "lte2", "video_success_percent") || 0),
+          );
+          return `<tr>
+            <td><a href="/runs/${run.run_id}"><code>${run.run_id}</code></a><br><span class="muted">${new Date(run.created_at).toLocaleString()}</span></td>
+            <td>${run.antenna || "-"}</td>
+            <td>${fmt(pathValue(run, "lte1", "tcp_mbit_s"))}</td>
+            <td>${fmt(pathValue(run, "lte2", "tcp_mbit_s"))}</td>
+            <td>${fmt(pathValue(run, "lte1", "udp_mbit_s"))}</td>
+            <td>${fmt(pathValue(run, "lte2", "udp_mbit_s"))}</td>
+            <td>${fmt(pathValue(run, "lte1", "latency_avg_ms"), " ms")}</td>
+            <td>${fmt(pathValue(run, "lte2", "latency_avg_ms"), " ms")}</td>
+            <td>${Number.isFinite(video) && video > 0 ? fmt(video, "%") : "-"}</td>
+          </tr>`;
+        }).join("");
+      };
+      const load = async () => {
+        const params = new URLSearchParams();
+        const antenna = $("antenna-filter").value;
+        if (antenna) params.set("antenna", antenna);
+        params.set("state", $("state-filter").value);
+        params.set("limit", $("limit-filter").value);
+        const data = await request(`/api/v1/analytics/runs?${params}`);
+        const runs = data.runs || [];
+        $("run-count").textContent = runs.length;
+        setMetric("best-tcp", Math.max(0, ...allValues(runs, "tcp_mbit_s")), " Mbit/s");
+        setMetric("best-udp", Math.max(0, ...allValues(runs, "udp_mbit_s")), " Mbit/s");
+        setMetric("best-video", Math.max(0, ...allValues(runs, "video_success_percent")), "%");
+        drawChart("chart-tcp", runs, "tcp_mbit_s", "");
+        drawChart("chart-udp", runs, "udp_mbit_s", "");
+        drawChart("chart-latency", runs, "latency_avg_ms", " ms");
+        drawChart("chart-video", runs, "video_success_percent", "%");
+        renderTable(runs);
+      };
+      $("apply").addEventListener("click", load);
+      load().catch((error) => { $("runs-body").innerHTML = `<tr><td colspan="9">${error.message}</td></tr>`; });
+    </script>
+  </body>
+</html>

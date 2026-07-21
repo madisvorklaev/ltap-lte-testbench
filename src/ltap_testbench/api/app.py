@@ -449,6 +449,125 @@ def _live_latency_results(session: Session, run: TestRun, adapter: Any) -> list[
     return results
 
 
+def _float_value(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number else None
+
+
+def _mean(values: list[float | None]) -> float | None:
+    clean = [value for value in values if value is not None]
+    return sum(clean) / len(clean) if clean else None
+
+
+def _lab_metadata(run: TestRun) -> dict[str, Any]:
+    if not run.resolved_plan:
+        return {}
+    return run.resolved_plan.get("metadata", {}).get("lab", {}) or run.resolved_plan.get("lab", {})
+
+
+def _known_path_ids(run: TestRun) -> list[str]:
+    path_ids = []
+    for path in run.router.metadata_json.get("paths", []) if run.router.metadata_json else []:
+        path_id = path.get("id")
+        if path_id:
+            path_ids.append(str(path_id))
+    for key in ("latency_results", "upload_results", "udp_upload_results"):
+        for row in run.summary.get(key, []) if run.summary else []:
+            path_id = row.get("path_id")
+            if path_id and str(path_id) not in path_ids:
+                path_ids.append(str(path_id))
+    video_paths = (
+        (run.summary.get("video_probe_results") or {}).get("paths", {})
+        if run.summary
+        else {}
+    )
+    for path_id in video_paths:
+        if str(path_id) not in path_ids:
+            path_ids.append(str(path_id))
+    return path_ids or ["lte1", "lte2"]
+
+
+def _analytics_run_row(run: TestRun) -> dict[str, Any]:
+    lab = _lab_metadata(run)
+    summary = run.summary or {}
+    paths: dict[str, dict[str, Any]] = {
+        path_id: {
+            "tcp_mbit_s": None,
+            "udp_mbit_s": None,
+            "latency_avg_ms": None,
+            "latency_loss_percent": None,
+            "video_success_percent": None,
+            "video_not_decodable": None,
+        }
+        for path_id in _known_path_ids(run)
+    }
+    for path_id in paths:
+        tcp_rows = [
+            row for row in summary.get("upload_results", []) if str(row.get("path_id")) == path_id
+        ]
+        udp_rows = [
+            row
+            for row in summary.get("udp_upload_results", [])
+            if str(row.get("path_id")) == path_id
+        ]
+        latency_rows = [
+            row for row in summary.get("latency_results", []) if str(row.get("path_id")) == path_id
+        ]
+        paths[path_id]["tcp_mbit_s"] = _mean(
+            [
+                _float_value(row.get("server_average_mbit_s") or row.get("speed_upload_mbit_s"))
+                for row in tcp_rows
+            ]
+        )
+        paths[path_id]["udp_mbit_s"] = _mean(
+            [
+                _float_value(row.get("server_average_mbit_s") or row.get("average_mbit_s"))
+                for row in udp_rows
+            ]
+        )
+        if latency_rows:
+            latest_latency = latency_rows[-1]
+            paths[path_id]["latency_avg_ms"] = _float_value(latest_latency.get("avg_ms"))
+            paths[path_id]["latency_loss_percent"] = _float_value(
+                latest_latency.get("loss_percent")
+            )
+    for path_id, row in (summary.get("video_probe_results") or {}).get("paths", {}).items():
+        path = paths.setdefault(
+            str(path_id),
+            {
+                "tcp_mbit_s": None,
+                "udp_mbit_s": None,
+                "latency_avg_ms": None,
+                "latency_loss_percent": None,
+                "video_success_percent": None,
+                "video_not_decodable": None,
+            },
+        )
+        path["video_success_percent"] = _float_value(row.get("frame_success_percent"))
+        path["video_not_decodable"] = _float_value(row.get("frames_not_decodable"))
+    return {
+        "run_id": run.run_id,
+        "state": run.state.value,
+        "router": run.router.slug,
+        "created_at": run.created_at.isoformat() if run.created_at else None,
+        "updated_at": run.updated_at.isoformat() if run.updated_at else None,
+        "antenna": lab.get("antenna") or "",
+        "tcp_file_size_mb": lab.get("tcp_file_size_mb"),
+        "tcp_upload_count": lab.get("tcp_upload_count"),
+        "udp_duration_seconds": lab.get("udp_duration_seconds"),
+        "udp_bitrate_mbit_s": lab.get("udp_bitrate_mbit_s"),
+        "udp_pattern": lab.get("udp_pattern"),
+        "video_resolution": lab.get("video_resolution"),
+        "video_fps": lab.get("video_fps"),
+        "video_scenario": lab.get("video_scenario"),
+        "validity": summary.get("validity"),
+        "paths": paths,
+    }
+
+
 @app.on_event("startup")
 def startup() -> None:
     init_db()
@@ -472,6 +591,18 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "servers": servers,
             "runs": runs,
             "tcp_file_size_options_mb": TCP_FILE_SIZE_OPTIONS_MB,
+            "antenna_options": _antenna_options(session),
+        },
+    )
+
+
+@app.get("/analytics", response_class=HTMLResponse)
+def analytics(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "analytics.html",
+        {
+            "version": __version__,
             "antenna_options": _antenna_options(session),
         },
     )
@@ -502,6 +633,42 @@ def run_detail(
 @app.get("/api/v1/health")
 def health() -> dict:
     return {"ok": True, "version": __version__}
+
+
+@app.get("/api/v1/analytics/runs")
+def analytics_runs(
+    antenna: str | None = None,
+    state: str = "COMPLETED",
+    limit: int = 30,
+    session: Session = Depends(get_session),
+) -> dict:
+    limit = max(1, min(limit, 500))
+    normalized_state = state.upper()
+    runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(500)).all()
+    rows = []
+    antenna_values = []
+    for run in runs:
+        lab = _lab_metadata(run)
+        run_antenna = str(lab.get("antenna") or "")
+        if run_antenna and run_antenna not in antenna_values:
+            antenna_values.append(run_antenna)
+        if antenna is not None and run_antenna != antenna:
+            continue
+        if normalized_state != "ALL" and run.state.value != normalized_state:
+            continue
+        rows.append(_analytics_run_row(run))
+        if len(rows) >= limit:
+            break
+    rows.reverse()
+    return {
+        "filters": {
+            "antenna": antenna,
+            "state": normalized_state,
+            "limit": limit,
+            "antenna_options": antenna_values[:50],
+        },
+        "runs": rows,
+    }
 
 
 @app.post("/api/v1/lab/start")

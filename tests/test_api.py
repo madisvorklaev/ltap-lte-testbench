@@ -7,6 +7,7 @@ from ltap_testbench.api.app import (
     LAB_LIVE_LATENCY_CACHE,
     LabRecoveryError,
     LabRunCreate,
+    _analytics_run_row,
     _live_lab_metrics,
     _live_latency_results,
     _recover_orphaned_lab_reservations,
@@ -75,6 +76,60 @@ def test_lab_plan_keeps_tcp_count_and_udp_pattern() -> None:
         assert plan.definition["video_probe"]["fps"] == 25
         assert plan.definition["video_probe"]["scenario"] == "city"
         assert plan.definition["metadata"]["lab"]["antenna"] == "test placement"
+
+
+def test_analytics_run_row_extracts_path_metrics() -> None:
+    router = RouterProfile(
+        slug="r1-ltap-live",
+        display_name="R1",
+        kind=RouterKind.FAKE,
+        metadata_json={"paths": [{"id": "lte1"}, {"id": "lte2"}]},
+    )
+    run = DbTestRun(
+        run_id="run-analytics",
+        router=router,
+        plan_slug="lab-current",
+        state=RunState.COMPLETED,
+        resolved_plan={
+            "metadata": {
+                "lab": {
+                    "antenna": "window panel",
+                    "tcp_upload_count": 2,
+                    "udp_bitrate_mbit_s": 5,
+                }
+            }
+        },
+        summary={
+            "validity": "live-upload",
+            "latency_results": [
+                {"path_id": "lte1", "avg_ms": 24.0, "loss_percent": 0.0},
+                {"path_id": "lte2", "avg_ms": 36.0, "loss_percent": 1.0},
+            ],
+            "upload_results": [
+                {"path_id": "lte1", "server_average_mbit_s": 40.0},
+                {"path_id": "lte1", "server_average_mbit_s": 50.0},
+                {"path_id": "lte2", "server_average_mbit_s": 30.0},
+            ],
+            "udp_upload_results": [
+                {"path_id": "lte1", "server_average_mbit_s": 4.8},
+                {"path_id": "lte2", "server_average_mbit_s": 4.4},
+            ],
+            "video_probe_results": {
+                "paths": {
+                    "lte1": {"frame_success_percent": 98.0, "frames_not_decodable": 2},
+                    "lte2": {"frame_success_percent": 94.0, "frames_not_decodable": 6},
+                }
+            },
+        },
+    )
+
+    row = _analytics_run_row(run)
+
+    assert row["antenna"] == "window panel"
+    assert row["paths"]["lte1"]["tcp_mbit_s"] == 45.0
+    assert row["paths"]["lte2"]["udp_mbit_s"] == 4.4
+    assert row["paths"]["lte1"]["latency_avg_ms"] == 24.0
+    assert row["paths"]["lte2"]["video_success_percent"] == 94.0
 
 
 def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
