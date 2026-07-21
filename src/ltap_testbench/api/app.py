@@ -26,6 +26,7 @@ from ltap_testbench.db.models import (
     Experiment,
     ExperimentVariant,
     GainSource,
+    MetricSample,
     RouterProfile,
     RunState,
     ServerProfile,
@@ -310,6 +311,21 @@ def _variant_row(variant: ExperimentVariant) -> dict[str, Any]:
         "antenna_mapping": variant.antenna_mapping_json,
         "configuration": variant.configuration_json,
         "created_at": variant.created_at.isoformat() if variant.created_at else None,
+    }
+
+
+def _metric_sample_row(sample: MetricSample) -> dict[str, Any]:
+    return {
+        "timestamp": sample.timestamp.isoformat() if sample.timestamp else None,
+        "offset_ms": sample.offset_ms,
+        "path_id": sample.path_id,
+        "phase": sample.phase,
+        "phase_instance": sample.phase_instance,
+        "metric_name": sample.metric_name,
+        "value": sample.value,
+        "unit": sample.unit,
+        "validity": sample.validity,
+        "details": sample.details_json,
     }
 
 
@@ -1304,6 +1320,39 @@ def analytics_runs(
     }
 
 
+@app.get("/api/v1/analytics/timeseries")
+def analytics_timeseries(
+    run_id: str,
+    metric_name: str | None = None,
+    path_id: str | None = None,
+    phase: str | None = None,
+    limit: int = 1000,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    limit = max(1, min(limit, 10000))
+    query = select(MetricSample).where(MetricSample.run_pk == run.id)
+    if metric_name:
+        query = query.where(MetricSample.metric_name == metric_name)
+    if path_id:
+        query = query.where(MetricSample.path_id == path_id)
+    if phase:
+        query = query.where(MetricSample.phase == phase)
+    samples = session.scalars(query.order_by(MetricSample.offset_ms).limit(limit)).all()
+    return {
+        "run_id": run.run_id,
+        "filters": {
+            "metric_name": metric_name,
+            "path_id": path_id,
+            "phase": phase,
+            "limit": limit,
+        },
+        "samples": [_metric_sample_row(sample) for sample in samples],
+    }
+
+
 @app.get("/api/v1/runs/{run_id}/live")
 def run_live(run_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
     run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
@@ -1318,6 +1367,12 @@ def run_live(run_id: str, session: Session = Depends(get_session)) -> dict[str, 
         }
         for event in run.events
     ]
+    recent_samples = session.scalars(
+        select(MetricSample)
+        .where(MetricSample.run_pk == run.id)
+        .order_by(MetricSample.offset_ms.desc(), MetricSample.id.desc())
+        .limit(200)
+    ).all()
     return {
         "active": run.state not in TERMINAL_RUN_STATES,
         "run": {
@@ -1335,6 +1390,9 @@ def run_live(run_id: str, session: Session = Depends(get_session)) -> dict[str, 
             "integrity": run.integrity_json,
             "summary": run.summary,
             "events": events,
+            "recent_metric_samples": [
+                _metric_sample_row(sample) for sample in reversed(recent_samples)
+            ],
             "artifacts": list_run_artifacts(run),
         },
     }

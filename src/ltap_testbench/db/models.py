@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ltap_testbench.core.time import utc_now
@@ -324,6 +324,10 @@ class TestRun(Base):
         back_populates="run",
         cascade="all, delete-orphan",
     )
+    metric_samples: Mapped[list["MetricSample"]] = relationship(
+        back_populates="run",
+        cascade="all, delete-orphan",
+    )
 
 
 class RunEvent(Base):
@@ -337,3 +341,22 @@ class RunEvent(Base):
     details: Mapped[dict] = mapped_column(JSON, default=dict)
 
     run: Mapped[TestRun] = relationship(back_populates="events")
+
+
+class MetricSample(Base):
+    __tablename__ = "metric_samples"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_pk: Mapped[int] = mapped_column(ForeignKey("test_runs.id"), index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    offset_ms: Mapped[int] = mapped_column(Integer, index=True)
+    path_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    phase: Mapped[str] = mapped_column(String(80), index=True)
+    phase_instance: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    metric_name: Mapped[str] = mapped_column(String(120), index=True)
+    value: Mapped[float] = mapped_column(Float)
+    unit: Mapped[str] = mapped_column(String(40))
+    validity: Mapped[str] = mapped_column(String(40), default="valid")
+    details_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    run: Mapped[TestRun] = relationship(back_populates="metric_samples")

@@ -20,6 +20,7 @@ from ltap_testbench.benchmarks.defaults import seed_benchmark_protocols
 from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
     BatchState,
+    MetricSample,
     RouterKind,
     RouterProfile,
     RunEvent,
@@ -728,12 +729,44 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
                 environment_snapshot_hash="hash-live",
             )
             session.add(run)
+            session.flush()
+            session.add_all(
+                [
+                    MetricSample(
+                        run_pk=run.id,
+                        offset_ms=1000,
+                        path_id="lte1",
+                        phase="tcp",
+                        metric_name="latency_rtt_ms",
+                        value=42.0,
+                        unit="ms",
+                    ),
+                    MetricSample(
+                        run_pk=run.id,
+                        offset_ms=2000,
+                        path_id="lte2",
+                        phase="tcp",
+                        metric_name="latency_rtt_ms",
+                        value=55.0,
+                        unit="ms",
+                    ),
+                ]
+            )
             session.commit()
+
+        timeseries = client.get(
+            "/api/v1/analytics/timeseries",
+            params={"run_id": "run-live", "path_id": "lte1", "metric_name": "latency_rtt_ms"},
+        )
+        assert timeseries.status_code == 200
+        assert len(timeseries.json()["samples"]) == 1
+        assert timeseries.json()["samples"][0]["value"] == 42.0
 
         live = client.get("/api/v1/runs/run-live/live")
         assert live.status_code == 200
         assert live.json()["active"] is False
         assert live.json()["run"]["environment_snapshot_hash"] == "hash-live"
+        assert len(live.json()["run"]["recent_metric_samples"]) == 2
 
         dashboard = client.get("/")
         assert dashboard.status_code == 200
