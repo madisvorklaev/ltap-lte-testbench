@@ -728,6 +728,9 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     plans = session.scalars(select(TestPlan).order_by(TestPlan.slug)).all()
     servers = session.scalars(select(ServerProfile).order_by(ServerProfile.slug)).all()
     runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(10)).all()
+    protocols = session.scalars(select(BenchmarkProtocol).order_by(BenchmarkProtocol.slug)).all()
+    antenna_profiles = session.scalars(select(AntennaProfile).order_by(AntennaProfile.slug)).all()
+    batches = session.scalars(select(TestBatch).order_by(TestBatch.id.desc()).limit(10)).all()
     return templates.TemplateResponse(
         request,
         "dashboard.html",
@@ -739,6 +742,9 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "runs": runs,
             "tcp_file_size_options_mb": TCP_FILE_SIZE_OPTIONS_MB,
             "antenna_options": _antenna_options(session),
+            "benchmark_protocols": protocols,
+            "antenna_profiles": antenna_profiles,
+            "batches": batches,
         },
     )
 

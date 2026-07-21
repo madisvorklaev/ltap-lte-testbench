@@ -158,6 +158,72 @@
       </section>
 
       <section>
+        <h2>Test Series</h2>
+        <div class="grid">
+          <label>Series name
+            <input id="batch-name" value="Overnight benchmark">
+          </label>
+          <label>Benchmark protocol
+            <select id="batch-protocol">
+              {% for protocol in benchmark_protocols %}
+              <option value="{{ protocol.slug }}">{{ protocol.name }} · {{ protocol.version }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Antenna profile
+            <select id="batch-antenna">
+              <option value="">Choose profile</option>
+              {% for profile in antenna_profiles %}
+              <option value="{{ profile.id }}">{{ profile.manufacturer }} {{ profile.model }} · {{ profile.mounting_location }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Target valid runs
+            <input id="batch-target-valid" type="number" min="1" max="100" value="10">
+          </label>
+          <label>Maximum attempts
+            <input id="batch-max-attempts" type="number" min="1" max="150" value="15">
+          </label>
+          <label>Inter-run cooldown
+            <input id="batch-cooldown" type="number" min="0" max="3600" value="120">
+          </label>
+          <label>Max consecutive failures
+            <input id="batch-max-failures" type="number" min="1" max="20" value="3">
+          </label>
+          <label>Deadline
+            <input id="batch-deadline" type="datetime-local">
+          </label>
+        </div>
+        <div class="toolbar" style="margin-top: 12px;">
+          <button id="create-batch" class="primary" type="button">Create Series</button>
+          <button id="refresh-batches" type="button">Refresh Series</button>
+        </div>
+        <div class="muted" id="batch-message" style="margin-top:8px;">
+          Standard series require a structured antenna profile.
+        </div>
+        <div style="margin-top:14px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Series</th><th>State</th><th>Progress</th><th>Estimate</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="batch-table">
+              {% for batch in batches %}
+              <tr>
+                <td>{{ batch.name }}<br><span class="muted">{{ batch.batch_id }}</span></td>
+                <td>{{ batch.state.value }}{% if batch.state_reason %}<br><span class="muted">{{ batch.state_reason }}</span>{% endif %}</td>
+                <td>{{ batch.valid_run_count }}/{{ batch.target_valid_runs }} valid<br>{{ batch.attempt_count }}/{{ batch.max_attempts }} attempts</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
         <h2>Running Test</h2>
         <div class="grid">
           <div class="metric">
@@ -413,6 +479,103 @@
           ? `Paired complete frames: ${paired}. Corrected winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}, ties ${ties}. p95 corrected difference: ${delta}.`
           : (finalMode ? "No paired complete video frames yet." : "Live values are receiver-side only; final sent/lost comparison appears after video finalization.");
       };
+      const fmtDuration = (seconds) => {
+        const n = Number(seconds);
+        if (!Number.isFinite(n) || n <= 0) return "-";
+        const minutes = Math.floor(n / 60);
+        const rem = Math.round(n % 60);
+        return minutes ? `${minutes}m ${rem}s` : `${rem}s`;
+      };
+      const batchDeadlineIso = () => {
+        const value = $("batch-deadline").value;
+        return value ? new Date(value).toISOString() : null;
+      };
+      const renderBatches = async () => {
+        const rows = await request("/api/v1/test-batches");
+        const tbody = $("batch-table");
+        tbody.innerHTML = "";
+        if (!rows.length) {
+          tbody.innerHTML = "<tr><td colspan=\"5\" class=\"muted\">No test series yet.</td></tr>";
+          return;
+        }
+        for (const row of rows) {
+          const tr = document.createElement("tr");
+          const progress = `${row.valid_run_count}/${row.target_valid_runs} valid<br>${row.attempt_count}/${row.max_attempts} attempts`;
+          const state = `${row.state}${row.state_reason ? `<br><span class="muted">${row.state_reason}</span>` : ""}`;
+          const estimate = `${fmtDuration(row.estimated_attempt_seconds)} attempt<br><span class="muted">${fmtDuration(row.estimated_cycle_seconds)} cycle</span>`;
+          const canStart = ["DRAFT", "SCHEDULED", "PAUSED"].includes(row.state);
+          const canCancel = !["CANCELLED", "COMPLETED", "FAILED"].includes(row.state);
+          tr.innerHTML = `
+            <td>${row.name}<br><span class="muted">${row.batch_id}</span></td>
+            <td>${state}</td>
+            <td>${progress}</td>
+            <td>${estimate}</td>
+            <td>
+              <div class="toolbar">
+                <button type="button" data-batch-start="${row.batch_id}" ${canStart ? "" : "disabled"}>Start</button>
+                <button type="button" class="danger" data-batch-cancel="${row.batch_id}" ${canCancel ? "" : "disabled"}>Cancel</button>
+                <button type="button" data-batch-attempts="${row.batch_id}">Attempts</button>
+              </div>
+            </td>`;
+          tbody.appendChild(tr);
+        }
+      };
+      const showBatchAttempts = async (batchId) => {
+        const rows = await request(`/api/v1/test-batches/${batchId}/attempts`);
+        $("batch-message").textContent = rows.length
+          ? rows.map((row) => `${row.sequence_number}: ${row.state} ${row.outcome_code || ""} ${row.run_id || ""}`).join(" · ")
+          : "No attempts yet.";
+      };
+      const createBatch = async () => {
+        const payload = {
+          name: $("batch-name").value.trim() || "Benchmark series",
+          protocol_slug: $("batch-protocol").value,
+          antenna_profile_id: $("batch-antenna").value ? Number($("batch-antenna").value) : null,
+          target_valid_runs: Number($("batch-target-valid").value),
+          max_attempts: Number($("batch-max-attempts").value),
+          inter_run_cooldown_seconds: Number($("batch-cooldown").value),
+          max_consecutive_failures: Number($("batch-max-failures").value),
+          deadline: batchDeadlineIso(),
+        };
+        const row = await request("/api/v1/test-batches", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        $("batch-message").textContent = `Created ${row.batch_id}`;
+        await renderBatches();
+      };
+      $("create-batch").addEventListener("click", async () => {
+        $("create-batch").disabled = true;
+        try { await createBatch(); }
+        catch (error) { $("batch-message").textContent = error.message; }
+        finally { $("create-batch").disabled = false; }
+      });
+      $("refresh-batches").addEventListener("click", async () => {
+        try { await renderBatches(); }
+        catch (error) { $("batch-message").textContent = error.message; }
+      });
+      $("batch-table").addEventListener("click", async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const startId = target.getAttribute("data-batch-start");
+        const cancelId = target.getAttribute("data-batch-cancel");
+        const attemptsId = target.getAttribute("data-batch-attempts");
+        try {
+          if (startId) {
+            await request(`/api/v1/test-batches/${startId}/start`, {method: "POST"});
+            $("batch-message").textContent = `Started ${startId}`;
+            await renderBatches();
+          } else if (cancelId) {
+            await request(`/api/v1/test-batches/${cancelId}/cancel`, {method: "POST"});
+            $("batch-message").textContent = `Cancel requested for ${cancelId}`;
+            await renderBatches();
+          } else if (attemptsId) {
+            await showBatchAttempts(attemptsId);
+          }
+        } catch (error) {
+          $("batch-message").textContent = error.message;
+        }
+      });
       const render = (data) => {
         if (!data.run) return;
         const run = data.run;
@@ -475,6 +638,7 @@
       });
       $("refresh-status").addEventListener("click", poll);
       poll();
+      renderBatches().catch((error) => { $("batch-message").textContent = error.message; });
       pollTimer = setInterval(poll, 2500);
     </script>
   </body>

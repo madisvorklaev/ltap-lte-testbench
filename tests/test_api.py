@@ -621,5 +621,11 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert payload["target_valid_runs"] == 5
         assert payload["max_attempts"] == 7
         assert payload["estimated_attempt_seconds"] > 900
+
+        dashboard = client.get("/")
+        assert dashboard.status_code == 200
+        assert "Test Series" in dashboard.text
+        assert "batch-table" in dashboard.text
+        assert "Create Series" in dashboard.text
     finally:
         app.dependency_overrides.clear()
