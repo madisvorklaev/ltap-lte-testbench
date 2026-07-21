@@ -9,7 +9,7 @@ from threading import Event
 from uuid import uuid4
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from ltap_testbench import __version__
 from ltap_testbench.core.time import utc_now
@@ -32,6 +32,7 @@ from ltap_testbench.reporting.artifacts import persist_run_artifacts, run_artifa
 from ltap_testbench.routers.base import RouterAdapter
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
+from ltap_testbench.telemetry.sampler import RunMetricSampler
 from ltap_testbench.testnode.client import TestNodeClient, TestNodeReservation
 from ltap_testbench.traffic.commands import run_command
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
@@ -349,6 +350,40 @@ def _safe_router_telemetry(
         {"label": label, "paths": rows},
     )
     return rows
+
+
+def _metric_sampler_for_run(
+    session: Session,
+    run: TestRun,
+    server: ServerProfile | None,
+) -> RunMetricSampler | None:
+    bind = session.get_bind()
+    bind_url = getattr(bind, "url", None)
+    database = getattr(bind_url, "database", None)
+    if bind.dialect.name == "sqlite" and database in {
+        None,
+        "",
+        ":memory:",
+    }:
+        return None
+    latency = _latency_config(run)
+    telemetry = run.resolved_plan.get("telemetry", {})
+    telemetry = telemetry if isinstance(telemetry, dict) else {}
+    latency_interval_seconds = max(0.1, int(latency.get("interval_ms", 1000)) / 1000)
+    radio_interval_seconds = float(
+        telemetry.get("lte_interval_seconds")
+        or telemetry.get("interval_seconds")
+        or telemetry.get("radio_interval_seconds")
+        or 5
+    )
+    factory = sessionmaker(bind=bind, expire_on_commit=False, future=True)
+    return RunMetricSampler(
+        factory,
+        run.run_id,
+        target_host=server.public_host if server is not None else None,
+        latency_interval_seconds=latency_interval_seconds,
+        radio_interval_seconds=radio_interval_seconds,
+    )
 
 
 def _is_cancel_requested(session: Session, run: TestRun, cancel_event: Event | None) -> bool:
@@ -949,6 +984,7 @@ def execute_run(
     adapter = adapter_for(router)
     reservation: TestNodeReservation | None = None
     reservation_client: TestNodeClient | None = None
+    metric_sampler: RunMetricSampler | None = None
     try:
         transition(session, run, RunState.PREFLIGHT)
         server = _server_for_run(session, run)
@@ -991,6 +1027,10 @@ def execute_run(
         transition(session, run, RunState.RUNNING)
         _raise_if_cancelled(session, run, cancel_event)
         telemetry_before = _safe_router_telemetry(session, run, adapter, "before-traffic")
+        metric_sampler = _metric_sampler_for_run(session, run, server)
+        if metric_sampler is not None:
+            metric_sampler.set_phase("idle", "idle-latency")
+            metric_sampler.start()
         latency_results = _execute_latency_stage(session, run, adapter, server)
         _raise_if_cancelled(session, run, cancel_event)
         upload_results = []
@@ -998,12 +1038,16 @@ def execute_run(
         tcp_rounds = _tcp_upload_count(run)
         udp_pattern = _udp_pattern(run)
         if udp_pattern == "beginning":
+            if metric_sampler is not None:
+                metric_sampler.set_phase("udp", "beginning")
             udp_upload_results.extend(
                 _execute_udp_upload_stage(session, run, server, "beginning", cancel_event)
             )
             _raise_if_cancelled(session, run, cancel_event)
         for round_index in range(1, tcp_rounds + 1):
             _raise_if_cancelled(session, run, cancel_event)
+            if metric_sampler is not None:
+                metric_sampler.set_phase("tcp", f"round-{round_index}")
             upload_results.extend(
                 _execute_http_upload_stage(
                     session,
@@ -1017,6 +1061,8 @@ def execute_run(
             )
             _raise_if_cancelled(session, run, cancel_event)
             if udp_pattern == "after_each_tcp":
+                if metric_sampler is not None:
+                    metric_sampler.set_phase("udp", f"after-tcp-{round_index}")
                 udp_upload_results.extend(
                     _execute_udp_upload_stage(
                         session, run, server, f"after-tcp-{round_index}", cancel_event
@@ -1024,12 +1070,18 @@ def execute_run(
                 )
                 _raise_if_cancelled(session, run, cancel_event)
         if udp_pattern == "end":
+            if metric_sampler is not None:
+                metric_sampler.set_phase("udp", "end")
             udp_upload_results.extend(
                 _execute_udp_upload_stage(session, run, server, "end", cancel_event)
             )
             _raise_if_cancelled(session, run, cancel_event)
+        if metric_sampler is not None:
+            metric_sampler.set_phase("video", "video-probe")
         video_probe_results = _execute_video_probe_stage(session, run, server, cancel_event)
         _raise_if_cancelled(session, run, cancel_event)
+        if metric_sampler is not None:
+            metric_sampler.set_phase("final_recovery", "after-traffic")
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
         has_video_sender_traffic = any(
             int(row.get("bytes_sent") or 0) > 0
@@ -1111,6 +1163,8 @@ def execute_run(
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
     finally:
+        if metric_sampler is not None:
+            metric_sampler.stop()
         try:
             _release_server(session, run, reservation, reservation_client)
         except Exception as exc:
