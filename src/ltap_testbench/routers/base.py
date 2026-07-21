@@ -27,5 +27,18 @@ class RouterAdapter(ABC):
     def collect_path_telemetry(self) -> list[dict]:
         return []
 
+    def collect_environment_snapshot(self) -> dict:
+        return {
+            "router": {
+                "slug": self.profile.slug,
+                "display_name": self.profile.display_name,
+                "kind": self.profile.kind.value,
+                "management_host": self.profile.management_host,
+            },
+            "paths": self.profile.metadata_json.get("paths", [])
+            if self.profile.metadata_json
+            else [],
+        }
+
     def measure_latency(self, target_host: str, count: int = 5) -> list[dict]:
         return []

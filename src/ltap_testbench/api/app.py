@@ -30,7 +30,7 @@ from ltap_testbench.db.models import (
     TestPlan,
     TestRun,
 )
-from ltap_testbench.jobs.batch_runner import run_batch
+from ltap_testbench.jobs.batch_runner import recover_interrupted_batches, run_batch
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.protocols import (
@@ -717,6 +717,7 @@ def startup() -> None:
     init_db()
     with SessionLocal() as session:
         seed_benchmark_protocols(session)
+        recover_interrupted_batches(session)
         with suppress(LabRecoveryError):
             _recover_orphaned_lab_reservations(session)
 

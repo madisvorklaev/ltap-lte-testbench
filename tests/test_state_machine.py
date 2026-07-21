@@ -1,5 +1,8 @@
+from collections.abc import Callable
 from threading import Event
+from typing import cast
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -14,7 +17,7 @@ from ltap_testbench.jobs.engine import (
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.schemas import ServerProfileConfig, TestPlanConfig
 from ltap_testbench.profiles.service import create_server_profile, create_test_plan
-from ltap_testbench.testnode.client import TestNodeReservation
+from ltap_testbench.testnode.client import TestNodeClient, TestNodeReservation
 from ltap_testbench.traffic.tcp_upload import TcpTimedUploadResult
 
 
@@ -55,6 +58,10 @@ def test_fake_run_completes() -> None:
         run = execute_run(session, run)
         assert run.state == RunState.COMPLETED
         assert run.events
+        assert run.environment_snapshot_hash
+        assert run.environment_snapshot_json["router"]["slug"] == "demo-fake-ltap"
+        assert run.application_version
+        assert run.integrity_json["environment_snapshot_complete"] is True
 
 
 def test_generic_run_completes() -> None:
@@ -68,8 +75,8 @@ def test_generic_run_completes() -> None:
         assert run.state == RunState.COMPLETED
 
 
-def test_tcp_upload_stage_invokes_timed_sender(monkeypatch) -> None:
-    calls = []
+def test_tcp_upload_stage_invokes_timed_sender(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, int, str, int, int, Callable[[], bool] | None]] = []
 
     def fake_timed_upload(
         host: str,
@@ -77,7 +84,7 @@ def test_tcp_upload_stage_invokes_timed_sender(monkeypatch) -> None:
         path: str,
         duration_seconds: int,
         chunk_bytes: int = 64 * 1024,
-        should_cancel=None,
+        should_cancel: Callable[[], bool] | None = None,
     ) -> TcpTimedUploadResult:
         calls.append((host, port, path, duration_seconds, chunk_bytes, should_cancel))
         return TcpTimedUploadResult(host, port, path, duration_seconds, 1.0, 1024, 0.008, "")
@@ -99,17 +106,23 @@ def test_tcp_upload_stage_invokes_timed_sender(monkeypatch) -> None:
         )
         create_test_plan(
             session,
-            TestPlanConfig(
-                slug="tcp-only",
-                name="TCP Only",
-                server_slug="stockbot",
-                stages=["preflight", "path-verification", "tcp-upload"],
-                tcp_upload={"duration_seconds": 1},
+            TestPlanConfig.model_validate(
+                {
+                    "slug": "tcp-only",
+                    "name": "TCP Only",
+                    "server_slug": "stockbot",
+                    "stages": ["preflight", "path-verification", "tcp-upload"],
+                    "tcp_upload": {"duration_seconds": 1},
+                }
             ),
         )
 
         run = create_run(session, "demo-fake-ltap", "tcp-only")
-        run = execute_run(session, run, client_factory=ConfirmingTestNodeClient)
+        run = execute_run(
+            session,
+            run,
+            client_factory=cast(type[TestNodeClient], ConfirmingTestNodeClient),
+        )
 
         assert calls
         assert len(run.summary["upload_results"]) == 2

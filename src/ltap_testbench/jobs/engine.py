@@ -1,13 +1,17 @@
+import hashlib
 import json
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
+from pathlib import Path
 from threading import Event
 from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ltap_testbench import __version__
 from ltap_testbench.core.time import utc_now
 from ltap_testbench.db.models import (
     RouterProfile,
@@ -67,6 +71,27 @@ def transition(session: Session, run: TestRun, state: RunState, reason: str | No
     add_event(session, run, "state", f"State changed to {state}", {"reason": reason})
 
 
+def _stable_hash(data: dict) -> str:
+    payload = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _application_git_commit() -> str | None:
+    repo_root = Path(__file__).resolve().parents[3]
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except Exception:
+        return None
+    return result.stdout.strip() or None
+
+
 def create_run(session: Session, router_slug: str, plan_slug: str) -> TestRun:
     router = session.scalar(select(RouterProfile).where(RouterProfile.slug == router_slug))
     if router is None:
@@ -85,11 +110,79 @@ def create_run(session: Session, router_slug: str, plan_slug: str) -> TestRun:
         router_id=router.id,
         plan_slug=plan.slug,
         resolved_plan=resolved_plan,
+        protocol_hash=protocol.get("protocol_hash"),
+        result_schema_version=int(protocol.get("result_schema_version") or 1),
+        application_version=__version__,
+        application_git_commit=_application_git_commit(),
     )
     session.add(run)
     session.commit()
     add_event(session, run, "created", "Run created.", {"router": router.slug, "plan": plan.slug})
     return run
+
+
+def _capture_environment_snapshot(
+    session: Session,
+    run: TestRun,
+    adapter: RouterAdapter,
+    server: ServerProfile | None,
+    client_factory: type[TestNodeClient],
+) -> None:
+    snapshot: dict = {
+        "schema_version": 1,
+        "captured_at": utc_now().isoformat(),
+        "application": {
+            "version": __version__,
+            "git_commit": run.application_git_commit or _application_git_commit(),
+        },
+        "test_node": {},
+    }
+    if server is not None:
+        snapshot["test_node"] = {
+            "slug": server.slug,
+            "url": server.control_api_url,
+        }
+        try:
+            health = client_factory(server.control_api_url).health()
+            snapshot["test_node"]["health"] = health
+            snapshot["test_node"]["version"] = health.get("version")
+            run.test_node_version = str(health.get("version")) if health.get("version") else None
+        except Exception as exc:
+            snapshot["test_node"]["health_error"] = {
+                "type": type(exc).__name__,
+                "message": str(exc),
+            }
+    try:
+        snapshot.update(adapter.collect_environment_snapshot())
+        snapshot_complete = True
+    except Exception as exc:
+        snapshot["router_snapshot_error"] = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+        }
+        snapshot_complete = False
+    run.environment_snapshot_json = snapshot
+    run.environment_snapshot_hash = _stable_hash(snapshot)
+    run.application_version = __version__
+    run.application_git_commit = snapshot["application"]["git_commit"]
+    run.integrity_json = {
+        **(run.integrity_json or {}),
+        "environment_snapshot_complete": snapshot_complete,
+        "test_node_version_verified": bool(run.test_node_version),
+    }
+    session.add(run)
+    session.commit()
+    add_event(
+        session,
+        run,
+        "environment-snapshot",
+        "Environment snapshot captured.",
+        {
+            "snapshot_hash": run.environment_snapshot_hash,
+            "complete": snapshot_complete,
+            "test_node_version": run.test_node_version,
+        },
+    )
 
 
 def _normalize_plan_definition(definition: dict) -> dict:
@@ -860,6 +953,8 @@ def execute_run(
         transition(session, run, RunState.PREFLIGHT)
         server = _server_for_run(session, run)
         _raise_if_cancelled(session, run, cancel_event)
+        _capture_environment_snapshot(session, run, adapter, server, client_factory)
+        _raise_if_cancelled(session, run, cancel_event)
         controller_check = common_preflight(router.controller_interface)
         add_event(
             session,
@@ -995,6 +1090,16 @@ def execute_run(
             "telemetry_before": telemetry_before,
             "telemetry_after": telemetry_after,
             "test_node_connections": connections,
+        }
+        run.protocol_hash = protocol_info.get("protocol_hash")
+        run.result_schema_version = int(protocol_info.get("result_schema_version") or 1)
+        run.comparison_eligible = comparison_eligible
+        run.exclusion_reasons_json = run.summary["exclusion_reasons"]
+        run.integrity_json = {
+            **(run.integrity_json or {}),
+            "protocol_hash_verified": bool(run.protocol_hash),
+            "traffic_receiver_confirmed": has_live_results,
+            "comparison_eligible": comparison_eligible,
         }
         session.add(run)
         session.commit()

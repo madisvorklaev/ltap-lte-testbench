@@ -23,7 +23,7 @@ from ltap_testbench.db.models import (
 from ltap_testbench.db.models import (
     TestRun as DbTestRun,
 )
-from ltap_testbench.jobs.batch_runner import run_batch
+from ltap_testbench.jobs.batch_runner import recover_interrupted_batches, run_batch
 from ltap_testbench.profiles.defaults import seed_demo_data
 
 
@@ -168,3 +168,55 @@ def test_batch_cancel_during_cooldown_is_responsive() -> None:
     assert batch.state_reason == "user_cancelled"
     assert batch.attempt_count == 1
     assert batch.valid_run_count == 1
+
+
+def test_batch_runner_links_attempt_to_run() -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=1, max_attempts=1)
+
+    run_batch(session, batch, run_executor=_executor([True]))
+
+    attempt = session.scalar(select(BatchAttempt))
+    assert attempt is not None
+    run = session.scalar(select(DbTestRun).where(DbTestRun.run_id == attempt.run_id))
+    assert run is not None
+    assert run.batch_id == batch.batch_id
+    assert run.batch_attempt_id == attempt.id
+    assert run.protocol_hash == batch.protocol_hash
+
+
+def test_recover_interrupted_batch_marks_active_attempt_failed_and_pauses() -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=2, max_attempts=3)
+    batch.state = BatchState.RUNNING
+    batch.attempt_count = 1
+    session.add(batch)
+    session.commit()
+    run = DbTestRun(
+        run_id="run-active",
+        router_id=1,
+        plan_slug="quick-check",
+        state=RunState.RUNNING,
+        batch_id=batch.batch_id,
+    )
+    session.add(run)
+    session.commit()
+    attempt = BatchAttempt(
+        batch=batch,
+        sequence_number=1,
+        state=BatchAttemptState.RUNNING,
+        run_id=run.run_id,
+    )
+    session.add(attempt)
+    session.commit()
+
+    recovered = recover_interrupted_batches(session)
+
+    assert [item.batch_id for item in recovered] == [batch.batch_id]
+    assert batch.state == BatchState.PAUSED
+    assert batch.state_reason == "worker_restarted"
+    assert batch.failed_attempt_count == 1
+    assert batch.consecutive_failure_count == 1
+    assert attempt.state == BatchAttemptState.FAILED
+    assert attempt.outcome_code == "WORKER_RESTARTED"
+    assert run.state == RunState.INTERRUPTED

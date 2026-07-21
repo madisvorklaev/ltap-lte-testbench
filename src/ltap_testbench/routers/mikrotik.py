@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import socket
@@ -156,6 +157,63 @@ class MikroTikRouterAdapter(RouterAdapter):
     def _paths(self) -> list[dict]:
         paths = self.profile.metadata_json.get("paths", [])
         return paths if isinstance(paths, list) else []
+
+    def _identity_hash(self, value: object) -> str | None:
+        if value in (None, ""):
+            return None
+        salt = os.environ.get("LTAP_TESTBENCH_IDENTITY_SALT") or self.profile.slug
+        return hashlib.sha256(f"{salt}:{value}".encode()).hexdigest()
+
+    def _redact_lte_identity(self, row: dict) -> dict:
+        redacted = dict(row)
+        for key in list(redacted):
+            normalized = key.replace("-", "_").lower()
+            if normalized in {"imei", "imsi", "iccid", "serial_number", "serial"}:
+                redacted[f"{normalized}_hash"] = self._identity_hash(redacted.pop(key))
+        return redacted
+
+    def collect_environment_snapshot(self) -> dict:
+        with self._api() as api:
+            identity = api.rows(api.command(["/system/identity/print"]))
+            resource = api.rows(api.command(["/system/resource/print"]))
+            routerboard = api.rows(api.command(["/system/routerboard/print"]))
+            packages = api.rows(api.command(["/system/package/print"]))
+            lte_rows = api.rows(api.command(["/interface/lte/print", "=detail="]))
+            monitors = {}
+            for path in self._paths():
+                interface = path.get("interface") or path.get("id")
+                rows = api.rows(
+                    api.command(["/interface/lte/monitor", f"=numbers={interface}", "=once="])
+                )
+                monitors[interface] = rows[0] if rows else {}
+        lte_by_name = {row.get("name"): self._redact_lte_identity(row) for row in lte_rows}
+        path_snapshots = []
+        for path in self._paths():
+            interface = path.get("interface") or path.get("id")
+            monitor = monitors.get(interface, {})
+            path_snapshots.append(
+                {
+                    "path_id": path.get("id"),
+                    "interface": interface,
+                    "routing_table": path.get("routing_table"),
+                    "source_address": path.get("source_address"),
+                    "expected_public_ip": path.get("expected_public_ip"),
+                    "lte": lte_by_name.get(interface, {}),
+                    "monitor": self._redact_lte_identity(monitor),
+                }
+            )
+        return {
+            "router": {
+                "slug": self.profile.slug,
+                "display_name": self.profile.display_name,
+                "management_host": self.profile.management_host,
+                "identity": identity[0] if identity else {},
+                "resource": resource[0] if resource else {},
+                "routerboard": routerboard[0] if routerboard else {},
+                "packages": packages,
+            },
+            "paths": path_snapshots,
+        }
 
     def preflight(self) -> list[RouterCheck]:
         if not self.profile.management_host:

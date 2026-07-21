@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ltap_testbench.core.time import utc_now
@@ -230,6 +230,19 @@ class TestRun(Base):
     state_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolved_plan: Mapped[dict] = mapped_column(JSON, default=dict)
     summary: Mapped[dict] = mapped_column(JSON, default=dict)
+    benchmark_protocol_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    protocol_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    result_schema_version: Mapped[int] = mapped_column(default=1)
+    batch_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    batch_attempt_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    comparison_eligible: Mapped[bool] = mapped_column(Boolean, default=False)
+    exclusion_reasons_json: Mapped[list] = mapped_column(JSON, default=list)
+    environment_snapshot_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    environment_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    integrity_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    application_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    application_git_commit: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    test_node_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 

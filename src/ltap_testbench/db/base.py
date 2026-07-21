@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from ltap_testbench.core.config import get_settings
@@ -28,6 +28,35 @@ def init_db() -> None:
     from ltap_testbench.db import models  # noqa: F401
 
     Base.metadata.create_all(bind=ENGINE)
+    _migrate_sqlite(ENGINE)
+
+
+def _migrate_sqlite(engine: Engine) -> None:
+    if engine.dialect.name != "sqlite":
+        return
+    columns = {
+        "benchmark_protocol_id": "INTEGER",
+        "protocol_hash": "VARCHAR(64)",
+        "result_schema_version": "INTEGER DEFAULT 1",
+        "batch_id": "VARCHAR(80)",
+        "batch_attempt_id": "INTEGER",
+        "comparison_eligible": "BOOLEAN DEFAULT 0",
+        "exclusion_reasons_json": "JSON DEFAULT '[]'",
+        "environment_snapshot_json": "JSON DEFAULT '{}'",
+        "environment_snapshot_hash": "VARCHAR(64)",
+        "integrity_json": "JSON DEFAULT '{}'",
+        "application_version": "VARCHAR(80)",
+        "application_git_commit": "VARCHAR(80)",
+        "test_node_version": "VARCHAR(80)",
+    }
+    with engine.begin() as connection:
+        existing = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(test_runs)")).fetchall()
+        }
+        for name, definition in columns.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE test_runs ADD COLUMN {name} {definition}"))
 
 
 def get_session() -> Generator[Session, None, None]:

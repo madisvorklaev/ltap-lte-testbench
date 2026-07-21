@@ -18,10 +18,18 @@ from ltap_testbench.db.models import (
     TestPlan,
     TestRun,
 )
-from ltap_testbench.jobs.engine import create_run, execute_run
+from ltap_testbench.jobs.engine import add_event, create_run, execute_run
 from ltap_testbench.profiles.schemas import TestPlanConfig
 
 RunExecutor = Callable[[Session, TestRun, Event | None], TestRun]
+TERMINAL_BATCH_STATES = {BatchState.CANCELLED, BatchState.COMPLETED, BatchState.FAILED}
+TERMINAL_RUN_STATES = {
+    RunState.COMPLETED,
+    RunState.FAILED,
+    RunState.CANCELLED,
+    RunState.INTERRUPTED,
+    RunState.RECOVERY_REQUIRED,
+}
 
 
 def benchmark_plan_definition(protocol: BenchmarkProtocol, server_slug: str = "stockbot") -> dict:
@@ -214,8 +222,13 @@ def run_batch(
         session.add_all([batch, attempt])
         session.commit()
         run = create_run(session, batch.router_slug, plan.slug)
+        run.benchmark_protocol_id = protocol.id
+        run.protocol_hash = protocol.protocol_hash
+        run.result_schema_version = protocol.result_schema_version
+        run.batch_id = batch.batch_id
+        run.batch_attempt_id = attempt.id
         attempt.run_id = run.run_id
-        session.add(attempt)
+        session.add_all([attempt, run])
         session.commit()
         run = executor(session, run, cancel_event)
         _finish_attempt(session, batch, attempt, run)
@@ -240,3 +253,66 @@ def run_batch(
                     _finish_batch(session, batch, BatchState.COMPLETED, "deadline_reached")
                     return batch
                 sleep(min(0.25, deadline - time.monotonic()))
+
+
+def recover_interrupted_batches(session: Session) -> list[TestBatch]:
+    batches = session.scalars(select(TestBatch).order_by(TestBatch.id)).all()
+    recovered: list[TestBatch] = []
+    for batch in batches:
+        if batch.state in TERMINAL_BATCH_STATES:
+            continue
+        if batch.state == BatchState.DRAFT:
+            continue
+        active_attempt = session.scalar(
+            select(BatchAttempt)
+            .where(
+                BatchAttempt.batch_pk == batch.id,
+                BatchAttempt.state.in_(
+                    [
+                        BatchAttemptState.CHECKING_PRECONDITIONS,
+                        BatchAttemptState.RUNNING,
+                        BatchAttemptState.WAITING_FOR_START,
+                    ]
+                ),
+            )
+            .order_by(BatchAttempt.sequence_number.desc())
+        )
+        if batch.state == BatchState.CANCEL_REQUESTED:
+            if active_attempt is not None:
+                active_attempt.state = BatchAttemptState.CANCELLED
+                active_attempt.outcome_code = "USER_CANCELLED"
+                active_attempt.finished_at = utc_now()
+                session.add(active_attempt)
+            _finish_batch(session, batch, BatchState.CANCELLED, "user_cancelled")
+            recovered.append(batch)
+            continue
+        if active_attempt is not None and active_attempt.run_id:
+            run = session.scalar(select(TestRun).where(TestRun.run_id == active_attempt.run_id))
+            if run is not None and run.state == RunState.COMPLETED:
+                _finish_attempt(session, batch, active_attempt, run)
+                session.add_all([batch, active_attempt])
+            else:
+                if run is not None and run.state not in TERMINAL_RUN_STATES:
+                    run.state = RunState.INTERRUPTED
+                    run.state_reason = "interrupted by batch worker restart"
+                    run.updated_at = utc_now()
+                    add_event(
+                        session,
+                        run,
+                        "batch-worker-recovery",
+                        "Marked run interrupted after batch worker restart.",
+                        {"batch_id": batch.batch_id, "attempt": active_attempt.sequence_number},
+                    )
+                    session.add(run)
+                active_attempt.state = BatchAttemptState.FAILED
+                active_attempt.outcome_code = "WORKER_RESTARTED"
+                active_attempt.finished_at = utc_now()
+                batch.failed_attempt_count += 1
+                batch.consecutive_failure_count += 1
+                session.add_all([batch, active_attempt])
+        batch.state = BatchState.PAUSED
+        batch.state_reason = "worker_restarted"
+        session.add(batch)
+        session.commit()
+        recovered.append(batch)
+    return recovered
