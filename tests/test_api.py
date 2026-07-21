@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from ltap_testbench.analytics import cohort_summary
+from ltap_testbench.analytics import cohort_summary, compare_cohorts
 from ltap_testbench.api import app as api_app
 from ltap_testbench.api.app import (
     LAB_LIVE_LATENCY_CACHE,
@@ -222,6 +222,37 @@ def test_cohort_summary_requires_minimum_evidence_and_reports_variability() -> N
     assert summary["metrics"]["lte1"]["tcp_mbit_s"]["median"] == 30
     assert summary["metrics"]["lte1"]["tcp_mbit_s"]["p25"] == 20
     assert summary["metrics"]["lte1"]["tcp_mbit_s"]["p75"] == 40
+
+
+def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> None:
+    baseline_rows = [
+        {
+            "run_id": f"baseline-{index}",
+            "protocol_hash": "aaa",
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([10, 11, 12, 13, 14], start=1)
+    ]
+    candidate_rows = [
+        {
+            "run_id": f"candidate-{index}",
+            "protocol_hash": "aaa",
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([20, 21, 22, 23, 24], start=1)
+    ]
+
+    comparison = compare_cohorts(
+        baseline_rows,
+        candidate_rows,
+        metric_name="tcp_mbit_s",
+        path_id="lte1",
+    )
+
+    assert comparison["baseline"]["n"] == 5
+    assert comparison["candidate"]["n"] == 5
+    assert comparison["conclusion"]["status"] == "LIKELY_IMPROVEMENT"
+    assert comparison["conclusion"]["delta"] == 10.0
 
 
 def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
@@ -791,5 +822,103 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert antennas_page.status_code == 200
         assert "Antenna Profiles" in antennas_page.text
         assert "Create Profile" in antennas_page.text
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_analytics_compare_endpoint_compares_variant_cohorts() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        seed_demo_data(session)
+        seed_benchmark_protocols(session)
+
+    def override_session():
+        with session_factory() as session:
+            yield session
+
+    app.dependency_overrides[api_app.get_session] = override_session
+    try:
+        client = TestClient(app)
+        site = client.post("/api/v1/test-sites", json={"slug": "lab", "name": "Lab"})
+        assert site.status_code == 200
+        experiment = client.post(
+            "/api/v1/experiments",
+            json={
+                "name": "Firmware A/B",
+                "comparison_dimension": "firmware",
+                "protocol_slug": "comparable-v1",
+                "site_id": site.json()["id"],
+            },
+        )
+        assert experiment.status_code == 200
+        protocol_hash = experiment.json()["protocol_hash"]
+        baseline = client.post(
+            f"/api/v1/experiments/{experiment.json()['id']}/variants",
+            json={"label": "baseline"},
+        )
+        candidate = client.post(
+            f"/api/v1/experiments/{experiment.json()['id']}/variants",
+            json={"label": "candidate"},
+        )
+        assert baseline.status_code == 200
+        assert candidate.status_code == 200
+        baseline_id = baseline.json()["id"]
+        candidate_id = candidate.json()["id"]
+        with session_factory() as session:
+            router = session.scalar(
+                select(RouterProfile).where(RouterProfile.slug == "demo-generic")
+            )
+            assert router is not None
+            for variant_id, prefix, values in [
+                (baseline_id, "baseline", [10, 11, 12, 13, 14]),
+                (candidate_id, "candidate", [20, 21, 22, 23, 24]),
+            ]:
+                for index, value in enumerate(values, start=1):
+                    session.add(
+                        DbTestRun(
+                            run_id=f"run-{prefix}-{index}",
+                            router_id=router.id,
+                            plan_slug="quick-check",
+                            state=RunState.COMPLETED,
+                            protocol_hash=protocol_hash,
+                            variant_id=variant_id,
+                            comparison_eligible=True,
+                            summary={
+                                "comparison_eligible": True,
+                                "exclusion_reasons": [],
+                                "protocol": {
+                                    "protocol_hash": protocol_hash,
+                                    "protocol_id": "comparable-v1",
+                                    "result_schema_version": 2,
+                                },
+                                "upload_results": [
+                                    {"path_id": "lte1", "server_average_mbit_s": value}
+                                ],
+                            },
+                        )
+                    )
+            session.commit()
+
+        response = client.get(
+            "/api/v1/analytics/compare",
+            params={
+                "baseline_variant_id": baseline_id,
+                "candidate_variant_id": candidate_id,
+                "metric_name": "tcp_mbit_s",
+                "path_id": "lte1",
+            },
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["baseline"]["n"] == 5
+        assert payload["candidate"]["median"] == 22
+        assert payload["conclusion"]["status"] == "LIKELY_IMPROVEMENT"
     finally:
         app.dependency_overrides.clear()

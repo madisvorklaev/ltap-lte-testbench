@@ -186,6 +186,9 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
         "protocol_version": protocol.get("protocol_version"),
         "protocol_hash": protocol.get("protocol_hash"),
         "result_schema_version": protocol.get("result_schema_version"),
+        "experiment_id": run.experiment_id,
+        "variant_id": run.variant_id,
+        "batch_id": run.batch_id,
         "comparison_eligible": comparison_eligible,
         "exclusion_reasons": exclusion_reasons,
         "antenna": lab.get("antenna") or "",
@@ -205,6 +208,96 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
         "validity": summary.get("validity"),
         "dual_video": dual_video,
         "paths": paths,
+    }
+
+
+def _path_metric(row: dict[str, Any], metric_name: str, path_id: str) -> float | None:
+    return float_value(row.get("paths", {}).get(path_id, {}).get(metric_name))
+
+
+def _metric_policy(metric_name: str) -> dict[str, Any]:
+    if metric_name in {"latency_avg_ms"}:
+        return {"higher_is_better": False, "absolute_threshold": 10.0, "relative_threshold": 0.15}
+    if metric_name in {"udp_loss_percent"}:
+        return {"higher_is_better": False, "absolute_threshold": 0.2, "relative_threshold": 0.0}
+    return {"higher_is_better": True, "absolute_threshold": 0.0, "relative_threshold": 0.10}
+
+
+def compare_cohorts(
+    baseline_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    *,
+    metric_name: str,
+    path_id: str,
+    min_runs: int = 5,
+) -> dict[str, Any]:
+    baseline_hashes = {
+        str(row.get("protocol_hash")) for row in baseline_rows if row.get("protocol_hash")
+    }
+    candidate_hashes = {
+        str(row.get("protocol_hash")) for row in candidate_rows if row.get("protocol_hash")
+    }
+    hashes = sorted(baseline_hashes | candidate_hashes)
+    baseline_values = [_path_metric(row, metric_name, path_id) for row in baseline_rows]
+    candidate_values = [_path_metric(row, metric_name, path_id) for row in candidate_rows]
+    baseline = aggregate(baseline_values)
+    candidate = aggregate(candidate_values)
+    policy = _metric_policy(metric_name)
+    conclusion: dict[str, Any] = {
+        "status": "INCONCLUSIVE",
+        "reason": "minimum sample count was not met",
+    }
+    if not baseline_rows or not candidate_rows:
+        conclusion = {"status": "NO_DATA", "reason": "one or both cohorts are empty"}
+    elif len(hashes) != 1:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": "baseline and candidate use different protocol hashes",
+        }
+    elif int(baseline.get("n") or 0) < min_runs or int(candidate.get("n") or 0) < min_runs:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": f"fewer than {min_runs} metric-bearing runs per cohort",
+        }
+    elif baseline.get("median") is not None and candidate.get("median") is not None:
+        baseline_median = float(baseline["median"])
+        candidate_median = float(candidate["median"])
+        delta = candidate_median - baseline_median
+        relative_delta = delta / baseline_median if baseline_median else None
+        threshold = max(
+            float(policy["absolute_threshold"]),
+            abs(baseline_median) * float(policy["relative_threshold"]),
+        )
+        beneficial_delta = delta if policy["higher_is_better"] else -delta
+        if beneficial_delta >= threshold:
+            conclusion = {
+                "status": "LIKELY_IMPROVEMENT",
+                "reason": "median delta exceeds the practical threshold",
+            }
+        elif beneficial_delta <= -threshold:
+            conclusion = {
+                "status": "LIKELY_REGRESSION",
+                "reason": "median delta exceeds the practical threshold in the negative direction",
+            }
+        else:
+            conclusion = {
+                "status": "INCONCLUSIVE",
+                "reason": "median delta is below the practical threshold",
+            }
+        conclusion["delta"] = delta
+        conclusion["relative_delta"] = relative_delta
+        conclusion["practical_threshold"] = threshold
+    return {
+        "metric": metric_name,
+        "path_id": path_id,
+        "min_runs": min_runs,
+        "protocol_hashes": hashes,
+        "baseline": baseline,
+        "candidate": candidate,
+        "policy": policy,
+        "conclusion": conclusion,
+        "baseline_run_ids": [row.get("run_id") for row in baseline_rows],
+        "candidate_run_ids": [row.get("run_id") for row in candidate_rows],
     }
 
 

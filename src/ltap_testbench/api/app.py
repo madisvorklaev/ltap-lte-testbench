@@ -14,7 +14,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ltap_testbench import __version__
-from ltap_testbench.analytics import analytics_run_row, cohort_summary, lab_metadata
+from ltap_testbench.analytics import (
+    analytics_run_row,
+    cohort_summary,
+    compare_cohorts,
+    lab_metadata,
+)
 from ltap_testbench.benchmarks.defaults import protocol_duration_seconds, seed_benchmark_protocols
 from ltap_testbench.db.base import SessionLocal, get_session, init_db
 from ltap_testbench.db.models import (
@@ -1373,6 +1378,48 @@ def analytics_timeseries(
             "limit": limit,
         },
         "samples": [_metric_sample_row(sample) for sample in samples],
+    }
+
+
+@app.get("/api/v1/analytics/compare")
+def analytics_compare(
+    baseline_variant_id: int,
+    candidate_variant_id: int,
+    metric_name: str = "tcp_mbit_s",
+    path_id: str = "lte1",
+    protocol_hash: str | None = None,
+    min_runs: int = 5,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    if baseline_variant_id == candidate_variant_id:
+        raise HTTPException(status_code=400, detail="baseline and candidate must differ")
+    baseline_variant = session.get(ExperimentVariant, baseline_variant_id)
+    candidate_variant = session.get(ExperimentVariant, candidate_variant_id)
+    if baseline_variant is None or candidate_variant is None:
+        raise HTTPException(status_code=404, detail="experiment variant not found")
+    min_runs = max(1, min(min_runs, 100))
+    runs = session.scalars(
+        select(TestRun).where(
+            TestRun.state == RunState.COMPLETED,
+            TestRun.comparison_eligible.is_(True),
+            TestRun.variant_id.in_([baseline_variant_id, candidate_variant_id]),
+        )
+    ).all()
+    rows = [_analytics_run_row(run) for run in runs]
+    if protocol_hash:
+        rows = [row for row in rows if row.get("protocol_hash") == protocol_hash]
+    baseline_rows = [row for row in rows if row.get("variant_id") == baseline_variant_id]
+    candidate_rows = [row for row in rows if row.get("variant_id") == candidate_variant_id]
+    return {
+        "baseline_variant": _variant_row(baseline_variant),
+        "candidate_variant": _variant_row(candidate_variant),
+        **compare_cohorts(
+            baseline_rows,
+            candidate_rows,
+            metric_name=metric_name,
+            path_id=path_id,
+            min_runs=min_runs,
+        ),
     }
 
 
