@@ -152,7 +152,7 @@
           <div>
             <h3>Live Speed</h3>
             <table>
-              <tr><th>Modem</th><th>Current TX</th><th>Average TCP</th><th>Average UDP</th></tr>
+              <tr><th>Modem</th><th>Test receiver rate</th><th>Average TCP</th><th>Average UDP</th></tr>
               <tr><td>lte1</td><td id="lte1-current">-</td><td id="lte1-tcp">-</td><td id="lte1-udp">-</td></tr>
               <tr><td>lte2</td><td id="lte2-current">-</td><td id="lte2-tcp">-</td><td id="lte2-udp">-</td></tr>
             </table>
@@ -177,7 +177,7 @@
         <div style="margin-top:14px;">
           <h3>Video Health</h3>
           <table>
-            <tr><th>Modem</th><th>Sent</th><th>Complete</th><th>Lost</th><th>Not decodable</th><th>Success</th><th>p95 fragment span</th></tr>
+            <tr><th>Modem</th><th id="video-frames-heading">Frames seen</th><th>Complete</th><th>Lost</th><th id="video-incomplete-heading">Partial</th><th id="video-success-heading">Complete among seen</th><th>p95 fragment span</th></tr>
             <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-lost">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-success">-</td><td id="lte1-video-p95">-</td></tr>
             <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-lost">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-success">-</td><td id="lte2-video-p95">-</td></tr>
           </table>
@@ -199,6 +199,7 @@
       const $ = (id) => document.getElementById(id);
       let pollTimer = null;
       let previousLiveSample = null;
+      let pollInFlight = false;
 
       const fmtMbit = (value) => {
         if (value === null || value === undefined || value === "") return "-";
@@ -304,10 +305,9 @@
         for (const row of rows || []) {
           const id = row.path_id;
           if (!["lte1", "lte2"].includes(id)) continue;
-          const tx = rateToMbit(row.tx_rate);
-          const rx = rateToMbit(row.rx_rate);
           const live = liveDeltaRateMbit(run, id);
-          const displayed = tx && tx > 0 ? tx : (rx && rx > 0 ? rx : live);
+          const tx = rateToMbit(row.tx_rate);
+          const displayed = Number.isFinite(live) && live > 0 ? live : tx;
           setText(`${id}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
           setText(`${id}-band`, row.primary_band || "-");
           setText(`${id}-rsrp`, row.rsrp || "-");
@@ -350,18 +350,20 @@
         const liveVideo = liveMetrics?.video_probe || {};
         const video = videoResults.receiver_summary || liveVideo || {};
         const paths = videoResults.paths || {};
+        const finalMode = Object.keys(paths).length > 0;
+        setText("video-frames-heading", finalMode ? "Sent" : "Frames seen");
+        setText("video-incomplete-heading", finalMode ? "Not decodable" : "Partial");
+        setText("video-success-heading", finalMode ? "End-to-end success" : "Complete among seen");
         for (const id of ["lte1", "lte2"]) {
           const liveRow = (liveVideo.paths || {})[id] || {};
           const row = paths[id] || liveRow;
           const receiver = row.receiver || liveRow || {};
           const complete = row.frames_complete ?? receiver.frames_complete;
-          const sentOrSeen = row.frames_sent ?? receiver.frames_seen;
+          const sentOrSeen = finalMode ? row.frames_sent : receiver.frames_seen;
           const notDecodable = row.frames_not_decodable ?? receiver.frames_incomplete ?? receiver.frames_partial;
-          const successPercent = row.frame_success_percent ?? (
-            Number(sentOrSeen) > 0 && Number.isFinite(Number(complete))
-              ? Number(complete) / Number(sentOrSeen) * 100
-              : null
-          );
+          const successPercent = finalMode
+            ? row.frame_success_percent
+            : receiver.completion_among_seen_percent;
           const fragmentSpanP95 = receiver.fragment_arrival_span_ms_p95 ?? receiver.frame_completion_ms_p95;
           setText(`${id}-video-frames`, sentOrSeen ?? "-");
           setText(`${id}-video-complete`, complete ?? "-");
@@ -378,7 +380,7 @@
         );
         $("video-compare").textContent = paired
           ? `Paired complete frames: ${paired}. Corrected winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}, ties ${ties}. p95 corrected difference: ${delta}.`
-          : "No paired complete video frames yet.";
+          : (finalMode ? "No paired complete video frames yet." : "Live values are receiver-side only; final sent/lost comparison appears after video finalization.");
       };
       const render = (data) => {
         if (!data.run) return;
@@ -403,8 +405,11 @@
         $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
       };
       const poll = async () => {
+        if (pollInFlight) return;
+        pollInFlight = true;
         try { render(await request("/api/v1/lab/status")); }
         catch (error) { $("backend-log").textContent = error.message; }
+        finally { pollInFlight = false; }
       };
       $("start-lab").addEventListener("click", async () => {
         $("start-lab").disabled = true;

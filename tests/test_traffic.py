@@ -1,7 +1,9 @@
 import json
+import sys
 
 import pytest
 
+from ltap_testbench.traffic.commands import run_command
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
 from ltap_testbench.traffic.iperf import build_iperf3_client_command, parse_iperf3_json
 from ltap_testbench.traffic.irtt import build_irtt_client_command, parse_irtt_json
@@ -101,6 +103,17 @@ def test_parse_curl_write_out() -> None:
     assert summary.time_connect_seconds == 0.123
     assert summary.speed_upload_mbit_s == 10
     assert summary.remote_port == 18080
+
+
+def test_run_command_can_cancel_subprocess() -> None:
+    result = run_command(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        timeout_seconds=30,
+        should_cancel=lambda: True,
+    )
+
+    assert result.exit_code == 130
+    assert "cancelled" in result.stderr
 
 
 def test_run_udp_upload(monkeypatch) -> None:

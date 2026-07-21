@@ -202,6 +202,50 @@ def _prune_video_frames(path: dict) -> None:
         _finalize_video_frame(path, int(oldest_id), frames.pop(oldest_id))
 
 
+def _live_video_summary_locked(run_id: str) -> dict:
+    raw = VIDEO_FRAMES.get(run_id, {"paths": {}})
+    path_summaries = {}
+    for path_id, path in raw.get("paths", {}).items():
+        frames = path.get("frames", {})
+        stats = path.get("stats", {})
+        active_complete = 0
+        active_partial = 0
+        for frame in frames.values():
+            fragment_count = int(frame.get("fragment_count") or 0)
+            received = len(frame.get("fragments") or [])
+            if fragment_count and received >= fragment_count:
+                active_complete += 1
+            else:
+                active_partial += 1
+        frames_seen = int(stats.get("frames_seen") or 0)
+        frames_complete = int(stats.get("frames_complete") or 0) + active_complete
+        frames_partial = int(stats.get("frames_partial") or 0) + active_partial
+        path_summaries[path_id] = {
+            "path_id": path_id,
+            "source": path.get("source"),
+            "destination_port": path.get("destination_port"),
+            "first_seen_at": path.get("first_seen_at"),
+            "last_seen_at": path.get("last_seen_at"),
+            "bytes_received": path.get("bytes_received", 0),
+            "datagrams_received": path.get("datagrams_received", 0),
+            "frames_seen": frames_seen,
+            "frames_complete": frames_complete,
+            "frames_partial": frames_partial,
+            "frames_incomplete": frames_partial,
+            "completion_among_seen_percent": (
+                frames_complete / frames_seen * 100 if frames_seen else None
+            ),
+        }
+    return {
+        "run_id": run_id,
+        "summary_mode": "live",
+        "paths": path_summaries,
+        "paired_frames_complete": None,
+        "first_arrival_winners": {},
+        "first_arrival_ties": None,
+    }
+
+
 def record_video_frame_datagram(header: dict, source: str, port: int, size: int) -> None:
     run_id = str(header.get("run_id") or "")
     path_id = str(header.get("path_id") or "")
@@ -256,6 +300,8 @@ def record_video_frame_datagram(header: dict, source: str, port: int, size: int)
 
 def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = False) -> dict:
     with RUNS_LOCK:
+        if not finalize and not delete:
+            return _live_video_summary_locked(run_id)
         raw = VIDEO_FRAMES.get(run_id, {"paths": {}})
         paths = raw.get("paths", {})
         path_summaries = {}
@@ -343,6 +389,7 @@ def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = F
                     winners[winner] = winners.get(winner, 0) + 1
         summary = {
             "run_id": run_id,
+            "summary_mode": "final" if finalize else "full",
             "paths": path_summaries,
             "paired_frames_complete": len(paired_diffs),
             "first_arrival_winners": winners,

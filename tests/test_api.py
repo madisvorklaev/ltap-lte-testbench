@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 from ltap_testbench.api import app as api_app
 from ltap_testbench.api.app import (
+    LabRecoveryError,
     LabRunCreate,
     _live_lab_metrics,
     _recover_orphaned_lab_reservations,
@@ -230,3 +231,131 @@ def test_recover_orphaned_lab_reservation_only_releases_owned_lab_run(monkeypatc
         assert other_run.state == RunState.RUNNING
         assert orphan_run is not None
         assert orphan_run.state == RunState.INTERRUPTED
+
+
+def test_recover_orphaned_lab_reservation_releases_missing_and_terminal_runs(
+    monkeypatch,
+) -> None:
+    released: list[str] = []
+
+    class FakeTestNodeClient:
+        def __init__(self, _base_url: str):
+            pass
+
+        def status(self) -> dict:
+            return {
+                "active_reservations": [
+                    {
+                        "id": "res-terminal",
+                        "owner": "ltap-testbench",
+                        "run_id": "run-terminal",
+                    },
+                    {
+                        "id": "res-missing",
+                        "owner": "ltap-testbench",
+                        "run_id": "run-missing",
+                    },
+                    {
+                        "id": "res-no-run",
+                        "owner": "ltap-testbench",
+                    },
+                ]
+            }
+
+        def release_reservation(self, reservation_id: str) -> None:
+            released.append(reservation_id)
+
+    monkeypatch.setattr(api_app, "TestNodeClient", FakeTestNodeClient)
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        router = RouterProfile(slug="r1-ltap-live", display_name="R1", kind=RouterKind.FAKE)
+        session.add_all(
+            [
+                router,
+                ServerProfile(
+                    slug="stockbot",
+                    display_name="Stockbot",
+                    control_api_url="http://stockbot",
+                ),
+            ]
+        )
+        session.flush()
+        session.add(
+            DbTestRun(
+                run_id="run-terminal",
+                router=router,
+                plan_slug="lab-current",
+                state=RunState.COMPLETED,
+                resolved_plan={},
+                summary={},
+            )
+        )
+        session.commit()
+
+        _recover_orphaned_lab_reservations(session)
+
+        assert released == ["res-terminal", "res-missing", "res-no-run"]
+
+
+def test_recover_orphaned_lab_reservation_failure_marks_recovery_required(
+    monkeypatch,
+) -> None:
+    class FakeTestNodeClient:
+        def __init__(self, _base_url: str):
+            pass
+
+        def status(self) -> dict:
+            return {
+                "active_reservations": [
+                    {
+                        "id": "res-lab",
+                        "owner": "ltap-testbench",
+                        "run_id": "run-lab",
+                    },
+                ]
+            }
+
+        def release_reservation(self, _reservation_id: str) -> None:
+            raise RuntimeError("stockbot delete failed")
+
+    monkeypatch.setattr(api_app, "TestNodeClient", FakeTestNodeClient)
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        router = RouterProfile(slug="r1-ltap-live", display_name="R1", kind=RouterKind.FAKE)
+        session.add_all(
+            [
+                router,
+                ServerProfile(
+                    slug="stockbot",
+                    display_name="Stockbot",
+                    control_api_url="http://stockbot",
+                ),
+            ]
+        )
+        session.flush()
+        session.add(
+            DbTestRun(
+                run_id="run-lab",
+                router=router,
+                plan_slug="lab-current",
+                state=RunState.RUNNING,
+                resolved_plan={},
+                summary={},
+            )
+        )
+        session.commit()
+
+        try:
+            _recover_orphaned_lab_reservations(session)
+        except LabRecoveryError:
+            pass
+        else:
+            raise AssertionError("expected LabRecoveryError")
+
+        lab_run = session.scalar(select(DbTestRun).where(DbTestRun.run_id == "run-lab"))
+        assert lab_run is not None
+        assert lab_run.state == RunState.RECOVERY_REQUIRED

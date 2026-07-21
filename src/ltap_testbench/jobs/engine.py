@@ -388,8 +388,9 @@ def _execute_http_upload_stage(
                     url,
                 ],
                 timeout_seconds=timeout_seconds,
+                should_cancel=cancel_event.is_set if cancel_event is not None else None,
             )
-            summary = parse_curl_write_out(result.stdout)
+            summary = parse_curl_write_out(result.stdout) if result.stdout.strip() else None
             timed = None
         connections = client.run_connections(upload_run_id)
         server_bytes = sum(int(connection.get("bytes_received") or 0) for connection in connections)
@@ -458,6 +459,15 @@ def _execute_http_upload_stage(
             row["validity"] = "sender-only"
         else:
             row["validity"] = "failed"
+        if (
+            not server_confirmed
+            and not curl_confirmed
+            and not timed_confirmed
+            and cancel_event is not None
+            and cancel_event.is_set()
+        ):
+            row["validity"] = "cancelled"
+            return row
         if not server_confirmed and not curl_confirmed and not timed_confirmed:
             raise RuntimeError(f"HTTP upload failed for {path_id}: {row}")
         return row

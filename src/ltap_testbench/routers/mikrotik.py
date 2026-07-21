@@ -367,7 +367,9 @@ def _routed_ping_rows(
     routing_table: str,
 ) -> tuple[list[dict[str, str]], str | None, str | None]:
     errors = []
+    last_parameter = None
     for parameter in ("routing-table", "routing-mark"):
+        last_parameter = parameter
         try:
             rows = api.rows(
                 api.command(
@@ -379,13 +381,15 @@ def _routed_ping_rows(
                     ]
                 )
             )
-            return rows, parameter, None
+            if rows:
+                return rows, parameter, None
+            errors.append(f"{parameter}: routed ping returned no rows")
         except RouterOsApiError as exc:
             message = str(exc)
             errors.append(f"{parameter}: {message}")
             if "unknown parameter" not in message.lower():
                 return [], parameter, message
-    return [], None, "; ".join(errors)
+    return [], last_parameter, "; ".join(errors)
 
 
 def _routeros_duration_to_ms(value: str | None) -> float | None:

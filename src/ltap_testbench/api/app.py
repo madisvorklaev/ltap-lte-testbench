@@ -1,3 +1,4 @@
+from contextlib import suppress
 from pathlib import Path
 from threading import Event, Lock, Thread
 from typing import Any
@@ -46,6 +47,10 @@ class LabRunCreate(BaseModel):
     video_fps: int = 25
     video_scenario: str = "city"
     antenna: str = ""
+
+
+class LabRecoveryError(RuntimeError):
+    pass
 
 
 LAB_LOCK = Lock()
@@ -177,42 +182,61 @@ def _recover_orphaned_lab_reservations(session: Session) -> None:
     except Exception:
         return
     reserved_lab_run_ids = set()
+    failures = []
     for reservation in status.get("active_reservations", []):
         if reservation.get("owner") != LAB_RESERVATION_OWNER:
             continue
         reservation_id = reservation.get("id")
         run_id = reservation.get("run_id")
-        if not reservation_id or not run_id:
+        if not reservation_id:
             continue
-        reserved_lab_run_ids.add(str(run_id))
-        run = session.scalar(select(TestRun).where(TestRun.run_id == str(run_id)))
+        run = (
+            session.scalar(select(TestRun).where(TestRun.run_id == str(run_id)))
+            if run_id
+            else None
+        )
+        if run is not None and run.plan_slug == "lab-current":
+            reserved_lab_run_ids.add(str(run_id))
         if (
-            run is None
-            or run.plan_slug != "lab-current"
-            or run.state in TERMINAL_RUN_STATES
+            run is not None
+            and run.plan_slug != "lab-current"
+            and run.state not in TERMINAL_RUN_STATES
         ):
             continue
         try:
             client.release_reservation(str(reservation_id))
         except Exception as exc:
+            failures.append(str(reservation_id))
+            if run is not None and run.plan_slug == "lab-current":
+                run.state = RunState.RECOVERY_REQUIRED
+                run.state_reason = "failed to release orphaned lab reservation"
+                add_event(
+                    session,
+                    run,
+                    "server-release-failed",
+                    "Failed to release orphaned lab reservation.",
+                    {
+                        "reservation_id": reservation_id,
+                        "type": type(exc).__name__,
+                        "error": str(exc),
+                    },
+                )
+            continue
+        if (
+            run is not None
+            and run.plan_slug == "lab-current"
+            and run.state not in TERMINAL_RUN_STATES
+        ):
+            run.state = RunState.INTERRUPTED
+            run.state_reason = "interrupted by web service restart"
             add_event(
                 session,
                 run,
-                "server-release-failed",
-                "Failed to release orphaned lab reservation.",
-                {"reservation_id": reservation_id, "type": type(exc).__name__, "error": str(exc)},
+                "server-release",
+                "Released orphaned lab reservation after worker restart.",
+                {"reservation_id": reservation_id},
             )
-            continue
-        run.state = RunState.INTERRUPTED
-        run.state_reason = "interrupted by web service restart"
-        add_event(
-            session,
-            run,
-            "server-release",
-            "Released orphaned lab reservation after worker restart.",
-            {"reservation_id": reservation_id},
-        )
-        session.add(run)
+            session.add(run)
     stale_lab_runs = session.scalars(
         select(TestRun).where(
             TestRun.plan_slug == "lab-current",
@@ -232,6 +256,10 @@ def _recover_orphaned_lab_reservations(session: Session) -> None:
         )
         session.add(run)
     session.commit()
+    if failures:
+        raise LabRecoveryError(
+            "failed to release orphaned lab reservation(s): " + ", ".join(failures)
+        )
 
 
 def _run_lab_background(run_id: str, cancel_event: Event) -> None:
@@ -403,7 +431,7 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
 @app.on_event("startup")
 def startup() -> None:
     init_db()
-    with SessionLocal() as session:
+    with SessionLocal() as session, suppress(LabRecoveryError):
         _recover_orphaned_lab_reservations(session)
 
 
@@ -496,6 +524,8 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
             LAB_CANCEL_EVENTS[run.run_id] = cancel_event
     except HTTPException:
         raise
+    except LabRecoveryError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         with LAB_LOCK:
             previous_active_run_id = active_run_id if "active_run_id" in locals() else None
@@ -518,11 +548,13 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
     run = _latest_lab_run(session)
     if run is None:
         return {"active": False, "run": None}
+    active = run.state not in TERMINAL_RUN_STATES
     telemetry = []
-    try:
-        telemetry = adapter_for(run.router).collect_path_telemetry()
-    except Exception:
-        telemetry = []
+    if active:
+        try:
+            telemetry = adapter_for(run.router).collect_path_telemetry()
+        except Exception:
+            telemetry = []
     events = [
         {
             "timestamp": event.timestamp.isoformat(),
@@ -533,13 +565,7 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
         for event in run.events
     ]
     return {
-        "active": run.state
-        not in {
-            RunState.COMPLETED,
-            RunState.FAILED,
-            RunState.CANCELLED,
-            RunState.INTERRUPTED,
-        },
+        "active": active,
         "run": {
             "run_id": run.run_id,
             "state": run.state,
@@ -551,7 +577,7 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
             "summary": run.summary,
             "events": events,
             "telemetry": telemetry,
-            "live_metrics": _live_lab_metrics(session, run),
+            "live_metrics": _live_lab_metrics(session, run) if active else {},
             "artifacts": list_run_artifacts(run),
         },
     }

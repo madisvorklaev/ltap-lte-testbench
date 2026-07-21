@@ -41,7 +41,7 @@ def test_video_receiver_corrects_sender_skew_and_ignores_duplicates(monkeypatch:
     stockbot.record_video_frame_datagram(frame_header("lte2", 1, 0, 1, 105_000_000), "b", 2, 1200)
     stockbot.record_video_frame_datagram(frame_header("lte1", 1, 0, 1, 100_000_000), "a", 1, 1200)
 
-    summary = stockbot.summarize_video_frames("run-video")
+    summary = stockbot.summarize_video_frames("run-video", finalize=True)
 
     assert summary["first_arrival_ties"] == 1
     assert summary["first_arrival_winners"] == {}
@@ -72,6 +72,24 @@ def test_video_live_summary_does_not_finalize_partial_frame(monkeypatch: Any) ->
     stockbot.record_video_frame_datagram(frame_header("lte1", 7, 1, 2, 100_000_000), "a", 1, 1200)
     final = stockbot.summarize_video_frames("run-video", finalize=True, delete=True)
 
+    assert live["summary_mode"] == "live"
     assert live["paths"]["lte1"]["frames_partial"] == 1
+    assert live["paired_frames_complete"] is None
     assert final["paths"]["lte1"]["frames_complete"] == 1
     assert stockbot.summarize_video_frames("run-video")["paths"] == {}
+
+
+def test_video_live_summary_skips_heavy_percentiles(monkeypatch: Any) -> None:
+    stockbot = load_stockbot_module()
+    stockbot.VIDEO_FRAMES.clear()
+    stockbot.record_video_frame_datagram(frame_header("lte1", 1, 0, 1, 100_000_000), "a", 1, 1200)
+
+    def fail_percentile(_values: list[float], _pct: float) -> float:
+        raise AssertionError("live summary should not calculate full-history percentiles")
+
+    monkeypatch.setattr(stockbot, "percentile", fail_percentile)
+
+    live = stockbot.summarize_video_frames("run-video")
+
+    assert live["summary_mode"] == "live"
+    assert live["paths"]["lte1"]["frames_seen"] == 1
