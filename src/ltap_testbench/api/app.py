@@ -22,6 +22,9 @@ from ltap_testbench.db.models import (
     BatchAttempt,
     BatchState,
     BenchmarkProtocol,
+    ComparisonDimension,
+    Experiment,
+    ExperimentVariant,
     GainSource,
     RouterProfile,
     RunState,
@@ -29,6 +32,7 @@ from ltap_testbench.db.models import (
     TestBatch,
     TestPlan,
     TestRun,
+    TestSite,
 )
 from ltap_testbench.jobs.batch_runner import recover_interrupted_batches, run_batch
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
@@ -102,10 +106,43 @@ class AntennaProfileCreate(BaseModel):
     notes: str = ""
 
 
+class TestSiteCreate(BaseModel):
+    slug: str
+    name: str
+    latitude: float | None = None
+    longitude: float | None = None
+    location_description: str = ""
+    indoor_outdoor: str = ""
+    notes: str = ""
+
+
+class ExperimentCreate(BaseModel):
+    name: str
+    comparison_dimension: str = "general_repeatability"
+    protocol_slug: str = "comparable-v1"
+    site_id: int | None = None
+    hypothesis: str = ""
+    primary_metrics: list[str] = Field(default_factory=list)
+    practical_thresholds: dict[str, Any] = Field(default_factory=dict)
+    random_seed: int | None = None
+
+
+class ExperimentVariantCreate(BaseModel):
+    label: str
+    expected_routeros_version: str | None = None
+    expected_routerboot_version: str | None = None
+    expected_modem_snapshot_hash: str | None = None
+    antenna_mapping: dict[str, Any] = Field(default_factory=dict)
+    configuration: dict[str, Any] = Field(default_factory=dict)
+
+
 class TestBatchCreate(BaseModel):
     name: str
     protocol_slug: str = "comparable-v1"
     router_slug: str = "r1-ltap-live"
+    experiment_id: int | None = None
+    variant_id: int | None = None
+    site_id: int | None = None
     antenna_profile_id: int | None = None
     target_valid_runs: int = 10
     max_attempts: int = 15
@@ -228,6 +265,54 @@ def _antenna_row(profile: AntennaProfile) -> dict[str, Any]:
     }
 
 
+def _site_row(site: TestSite) -> dict[str, Any]:
+    return {
+        "id": site.id,
+        "slug": site.slug,
+        "name": site.name,
+        "latitude": site.latitude,
+        "longitude": site.longitude,
+        "location_description": site.location_description,
+        "indoor_outdoor": site.indoor_outdoor,
+        "notes": site.notes,
+        "created_at": site.created_at.isoformat() if site.created_at else None,
+    }
+
+
+def _experiment_row(
+    experiment: Experiment,
+    protocol: BenchmarkProtocol | None = None,
+) -> dict[str, Any]:
+    return {
+        "id": experiment.id,
+        "name": experiment.name,
+        "comparison_dimension": experiment.comparison_dimension.value,
+        "protocol_id": experiment.protocol_id,
+        "protocol_slug": protocol.slug if protocol is not None else None,
+        "protocol_hash": protocol.protocol_hash if protocol is not None else None,
+        "site_id": experiment.site_id,
+        "hypothesis": experiment.hypothesis,
+        "primary_metrics": experiment.primary_metrics_json,
+        "practical_thresholds": experiment.practical_thresholds_json,
+        "random_seed": experiment.random_seed,
+        "created_at": experiment.created_at.isoformat() if experiment.created_at else None,
+    }
+
+
+def _variant_row(variant: ExperimentVariant) -> dict[str, Any]:
+    return {
+        "id": variant.id,
+        "experiment_id": variant.experiment_id,
+        "label": variant.label,
+        "expected_routeros_version": variant.expected_routeros_version,
+        "expected_routerboot_version": variant.expected_routerboot_version,
+        "expected_modem_snapshot_hash": variant.expected_modem_snapshot_hash,
+        "antenna_mapping": variant.antenna_mapping_json,
+        "configuration": variant.configuration_json,
+        "created_at": variant.created_at.isoformat() if variant.created_at else None,
+    }
+
+
 def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> dict[str, Any]:
     estimated_attempt_seconds = (
         protocol_duration_seconds(protocol.definition_json) if protocol is not None else 0
@@ -240,6 +325,9 @@ def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> d
         "protocol_slug": batch.protocol_slug,
         "protocol_hash": batch.protocol_hash,
         "router_slug": batch.router_slug,
+        "experiment_id": batch.experiment_id,
+        "variant_id": batch.variant_id,
+        "site_id": batch.site_id,
         "antenna_profile_id": batch.antenna_profile_id,
         "target_valid_runs": batch.target_valid_runs,
         "max_attempts": batch.max_attempts,
@@ -857,6 +945,113 @@ def create_antenna_profile(
     return _antenna_row(profile)
 
 
+@app.get("/api/v1/test-sites")
+def test_sites(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    sites = session.scalars(select(TestSite).order_by(TestSite.slug)).all()
+    return [_site_row(site) for site in sites]
+
+
+@app.post("/api/v1/test-sites")
+def create_test_site(
+    payload: TestSiteCreate,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    existing = session.scalar(select(TestSite).where(TestSite.slug == payload.slug))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="test site already exists")
+    site = TestSite(
+        slug=payload.slug,
+        name=payload.name,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        location_description=payload.location_description,
+        indoor_outdoor=payload.indoor_outdoor,
+        notes=payload.notes,
+    )
+    session.add(site)
+    session.commit()
+    return _site_row(site)
+
+
+@app.get("/api/v1/experiments")
+def experiments(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    protocols = {
+        protocol.id: protocol for protocol in session.scalars(select(BenchmarkProtocol)).all()
+    }
+    rows = session.scalars(select(Experiment).order_by(Experiment.id.desc())).all()
+    return [_experiment_row(row, protocols.get(row.protocol_id or 0)) for row in rows]
+
+
+@app.post("/api/v1/experiments")
+def create_experiment(
+    payload: ExperimentCreate,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    try:
+        comparison_dimension = ComparisonDimension(payload.comparison_dimension)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="unsupported comparison dimension") from exc
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.slug == payload.protocol_slug)
+    )
+    if protocol is None:
+        raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    if payload.site_id is not None and session.get(TestSite, payload.site_id) is None:
+        raise HTTPException(status_code=404, detail="test site not found")
+    experiment = Experiment(
+        name=payload.name,
+        comparison_dimension=comparison_dimension,
+        protocol_id=protocol.id,
+        site_id=payload.site_id,
+        hypothesis=payload.hypothesis,
+        primary_metrics_json=payload.primary_metrics,
+        practical_thresholds_json=payload.practical_thresholds,
+        random_seed=payload.random_seed,
+    )
+    session.add(experiment)
+    session.commit()
+    return _experiment_row(experiment, protocol)
+
+
+@app.get("/api/v1/experiments/{experiment_id}")
+def experiment(experiment_id: int, session: Session = Depends(get_session)) -> dict[str, Any]:
+    row = session.get(Experiment, experiment_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="experiment not found")
+    protocol = session.get(BenchmarkProtocol, row.protocol_id) if row.protocol_id else None
+    payload = _experiment_row(row, protocol)
+    variants = session.scalars(
+        select(ExperimentVariant)
+        .where(ExperimentVariant.experiment_id == row.id)
+        .order_by(ExperimentVariant.id)
+    ).all()
+    payload["variants"] = [_variant_row(variant) for variant in variants]
+    return payload
+
+
+@app.post("/api/v1/experiments/{experiment_id}/variants")
+def create_experiment_variant(
+    experiment_id: int,
+    payload: ExperimentVariantCreate,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    experiment = session.get(Experiment, experiment_id)
+    if experiment is None:
+        raise HTTPException(status_code=404, detail="experiment not found")
+    variant = ExperimentVariant(
+        experiment_id=experiment.id,
+        label=payload.label,
+        expected_routeros_version=payload.expected_routeros_version,
+        expected_routerboot_version=payload.expected_routerboot_version,
+        expected_modem_snapshot_hash=payload.expected_modem_snapshot_hash,
+        antenna_mapping_json=payload.antenna_mapping,
+        configuration_json=payload.configuration,
+    )
+    session.add(variant)
+    session.commit()
+    return _variant_row(variant)
+
+
 @app.get("/api/v1/test-batches")
 def test_batches(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
     batches = session.scalars(select(TestBatch).order_by(TestBatch.id.desc()).limit(100)).all()
@@ -883,6 +1078,23 @@ def create_test_batch(
     )
     if protocol is None:
         raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    experiment = session.get(Experiment, payload.experiment_id) if payload.experiment_id else None
+    if payload.experiment_id is not None and experiment is None:
+        raise HTTPException(status_code=404, detail="experiment not found")
+    if experiment is not None and experiment.protocol_id != protocol.id:
+        raise HTTPException(status_code=400, detail="experiment protocol does not match batch")
+    variant = session.get(ExperimentVariant, payload.variant_id) if payload.variant_id else None
+    if payload.variant_id is not None and variant is None:
+        raise HTTPException(status_code=404, detail="experiment variant not found")
+    if variant is not None and experiment is None:
+        raise HTTPException(status_code=400, detail="experiment_id is required with variant_id")
+    if variant is not None and variant.experiment_id != payload.experiment_id:
+        raise HTTPException(status_code=400, detail="variant does not belong to experiment")
+    site_id = payload.site_id
+    if experiment is not None and site_id is None:
+        site_id = experiment.site_id
+    if site_id is not None and session.get(TestSite, site_id) is None:
+        raise HTTPException(status_code=404, detail="test site not found")
     if payload.antenna_profile_id is None:
         raise HTTPException(status_code=400, detail="antenna_profile_id is required")
     antenna = session.get(AntennaProfile, payload.antenna_profile_id)
@@ -900,6 +1112,9 @@ def create_test_batch(
         protocol_slug=protocol.slug,
         protocol_hash=protocol.protocol_hash,
         router_slug=payload.router_slug,
+        experiment_id=experiment.id if experiment is not None else None,
+        variant_id=variant.id if variant is not None else None,
+        site_id=site_id,
         antenna_profile_id=antenna.id,
         state=BatchState.DRAFT,
         target_valid_runs=payload.target_valid_runs,

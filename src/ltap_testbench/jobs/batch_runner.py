@@ -297,6 +297,8 @@ def run_batch(
         run.benchmark_protocol_id = protocol.id
         run.protocol_hash = protocol.protocol_hash
         run.result_schema_version = protocol.result_schema_version
+        run.experiment_id = batch.experiment_id
+        run.variant_id = batch.variant_id
         run.batch_id = batch.batch_id
         run.batch_attempt_id = attempt.id
         attempt.run_id = run.run_id

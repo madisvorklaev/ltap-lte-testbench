@@ -34,10 +34,12 @@ def init_db() -> None:
 def _migrate_sqlite(engine: Engine) -> None:
     if engine.dialect.name != "sqlite":
         return
-    columns = {
+    run_columns = {
         "benchmark_protocol_id": "INTEGER",
         "protocol_hash": "VARCHAR(64)",
         "result_schema_version": "INTEGER DEFAULT 1",
+        "experiment_id": "INTEGER",
+        "variant_id": "INTEGER",
         "batch_id": "VARCHAR(80)",
         "batch_attempt_id": "INTEGER",
         "comparison_eligible": "BOOLEAN DEFAULT 0",
@@ -49,14 +51,28 @@ def _migrate_sqlite(engine: Engine) -> None:
         "application_git_commit": "VARCHAR(80)",
         "test_node_version": "VARCHAR(80)",
     }
+    batch_columns = {
+        "experiment_id": "INTEGER",
+        "variant_id": "INTEGER",
+        "site_id": "INTEGER",
+    }
     with engine.begin() as connection:
         existing = {
             row[1]
             for row in connection.execute(text("PRAGMA table_info(test_runs)")).fetchall()
         }
-        for name, definition in columns.items():
+        for name, definition in run_columns.items():
             if name not in existing:
                 connection.execute(text(f"ALTER TABLE test_runs ADD COLUMN {name} {definition}"))
+        existing_batches = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(test_batches)")).fetchall()
+        }
+        for name, definition in batch_columns.items():
+            if name not in existing_batches:
+                connection.execute(
+                    text(f"ALTER TABLE test_batches ADD COLUMN {name} {definition}")
+                )
 
 
 def get_session() -> Generator[Session, None, None]:

@@ -48,6 +48,15 @@ class GainSource(StrEnum):
     UNKNOWN = "unknown"
 
 
+class ComparisonDimension(StrEnum):
+    FIRMWARE = "firmware"
+    ROUTERBOOT = "routerboot"
+    MODEM_MODEL = "modem_model"
+    MODEM_FIRMWARE = "modem_firmware"
+    ANTENNA = "antenna"
+    GENERAL_REPEATABILITY = "general_repeatability"
+
+
 class BatchState(StrEnum):
     DRAFT = "DRAFT"
     SCHEDULED = "SCHEDULED"
@@ -110,6 +119,62 @@ class AntennaProfile(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class TestSite(Base):
+    __tablename__ = "test_sites"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    latitude: Mapped[float | None] = mapped_column(nullable=True)
+    longitude: Mapped[float | None] = mapped_column(nullable=True)
+    location_description: Mapped[str] = mapped_column(Text, default="")
+    indoor_outdoor: Mapped[str] = mapped_column(String(40), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class Experiment(Base):
+    __tablename__ = "experiments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    comparison_dimension: Mapped[ComparisonDimension] = mapped_column(
+        Enum(ComparisonDimension),
+        default=ComparisonDimension.GENERAL_REPEATABILITY,
+    )
+    protocol_id: Mapped[int | None] = mapped_column(
+        ForeignKey("benchmark_protocols.id"),
+        nullable=True,
+    )
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("test_sites.id"), nullable=True)
+    hypothesis: Mapped[str] = mapped_column(Text, default="")
+    primary_metrics_json: Mapped[list] = mapped_column(JSON, default=list)
+    practical_thresholds_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    random_seed: Mapped[int | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    variants: Mapped[list["ExperimentVariant"]] = relationship(
+        back_populates="experiment",
+        cascade="all, delete-orphan",
+    )
+
+
+class ExperimentVariant(Base):
+    __tablename__ = "experiment_variants"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), index=True)
+    label: Mapped[str] = mapped_column(String(120))
+    expected_routeros_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    expected_routerboot_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    expected_modem_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    antenna_mapping_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    configuration_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    experiment: Mapped[Experiment] = relationship(back_populates="variants")
+
+
 class TestBatch(Base):
     __tablename__ = "test_batches"
 
@@ -119,6 +184,12 @@ class TestBatch(Base):
     protocol_slug: Mapped[str] = mapped_column(String(80), index=True)
     protocol_hash: Mapped[str] = mapped_column(String(64), index=True)
     router_slug: Mapped[str] = mapped_column(String(80))
+    experiment_id: Mapped[int | None] = mapped_column(ForeignKey("experiments.id"), nullable=True)
+    variant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("experiment_variants.id"),
+        nullable=True,
+    )
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("test_sites.id"), nullable=True)
     antenna_profile_id: Mapped[int | None] = mapped_column(
         ForeignKey("antenna_profiles.id"), nullable=True
     )
@@ -233,6 +304,8 @@ class TestRun(Base):
     benchmark_protocol_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     protocol_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     result_schema_version: Mapped[int] = mapped_column(default=1)
+    experiment_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    variant_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     batch_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
     batch_attempt_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     comparison_eligible: Mapped[bool] = mapped_column(Boolean, default=False)

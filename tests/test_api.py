@@ -621,6 +621,46 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         antenna_id = antenna.json()["id"]
         assert antenna.json()["effective_gain_dbi"] == 5.5
 
+        site = client.post(
+            "/api/v1/test-sites",
+            json={
+                "slug": "workshop-window",
+                "name": "Workshop window",
+                "location_description": "Fixed indoor test location",
+                "indoor_outdoor": "indoor",
+            },
+        )
+        assert site.status_code == 200
+        site_id = site.json()["id"]
+
+        experiment = client.post(
+            "/api/v1/experiments",
+            json={
+                "name": "Antenna repeatability",
+                "comparison_dimension": "antenna",
+                "protocol_slug": "comparable-v1",
+                "site_id": site_id,
+                "primary_metrics": ["tcp_median_mbit_s", "video_either_success_percent"],
+            },
+        )
+        assert experiment.status_code == 200
+        experiment_id = experiment.json()["id"]
+        assert experiment.json()["protocol_slug"] == "comparable-v1"
+
+        variant = client.post(
+            f"/api/v1/experiments/{experiment_id}/variants",
+            json={
+                "label": "roof panel",
+                "antenna_mapping": {"lte1": antenna_id, "lte2": antenna_id},
+            },
+        )
+        assert variant.status_code == 200
+        variant_id = variant.json()["id"]
+
+        experiment_detail = client.get(f"/api/v1/experiments/{experiment_id}")
+        assert experiment_detail.status_code == 200
+        assert experiment_detail.json()["variants"][0]["id"] == variant_id
+
         bad_batch = client.post(
             "/api/v1/test-batches",
             json={
@@ -636,6 +676,8 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
             "/api/v1/test-batches",
             json={
                 "name": "Overnight baseline",
+                "experiment_id": experiment_id,
+                "variant_id": variant_id,
                 "antenna_profile_id": antenna_id,
                 "target_valid_runs": 5,
                 "max_attempts": 7,
@@ -647,6 +689,9 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert payload["state"] == "DRAFT"
         assert payload["target_valid_runs"] == 5
         assert payload["max_attempts"] == 7
+        assert payload["experiment_id"] == experiment_id
+        assert payload["variant_id"] == variant_id
+        assert payload["site_id"] == site_id
         assert payload["estimated_attempt_seconds"] > 900
 
         active = client.get("/api/v1/test-batches/active")

@@ -14,6 +14,9 @@ from ltap_testbench.db.models import (
     BatchAttemptState,
     BatchState,
     BenchmarkProtocol,
+    ComparisonDimension,
+    Experiment,
+    ExperimentVariant,
     GainSource,
     RunState,
 )
@@ -89,6 +92,23 @@ def _batch(
     return batch
 
 
+def _experiment(
+    session: Session,
+    protocol: BenchmarkProtocol,
+) -> tuple[Experiment, ExperimentVariant]:
+    experiment = Experiment(
+        name="Repeatability",
+        comparison_dimension=ComparisonDimension.GENERAL_REPEATABILITY,
+        protocol_id=protocol.id,
+    )
+    session.add(experiment)
+    session.flush()
+    variant = ExperimentVariant(experiment_id=experiment.id, label="baseline")
+    session.add(variant)
+    session.commit()
+    return experiment, variant
+
+
 def _executor(outcomes: list[bool]) -> Callable[[Session, DbTestRun, Event | None], DbTestRun]:
     remaining = iter(outcomes)
 
@@ -145,6 +165,32 @@ def test_batch_stops_after_target_valid_runs_and_preserves_invalid_attempts() ->
         BatchAttemptState.INVALID,
         BatchAttemptState.VALID,
     ]
+
+
+def test_batch_runner_links_experiment_and_variant_to_runs() -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=1, max_attempts=1)
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.slug == "comparable-v1")
+    )
+    assert protocol is not None
+    experiment, variant = _experiment(session, protocol)
+    batch.experiment_id = experiment.id
+    batch.variant_id = variant.id
+    session.add(batch)
+    session.commit()
+
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([True]),
+        precondition_runner=_ok_preconditions,
+    )
+
+    run = session.scalar(select(DbTestRun).where(DbTestRun.batch_id == batch.batch_id))
+    assert run is not None
+    assert run.experiment_id == experiment.id
+    assert run.variant_id == variant.id
 
 
 def test_batch_fails_when_max_attempts_reached_before_valid_target() -> None:
