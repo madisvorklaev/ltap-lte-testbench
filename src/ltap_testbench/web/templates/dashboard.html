@@ -356,17 +356,26 @@
           const receiver = row.receiver || liveRow || {};
           const complete = row.frames_complete ?? receiver.frames_complete;
           const sentOrSeen = row.frames_sent ?? receiver.frames_seen;
+          const notDecodable = row.frames_not_decodable ?? receiver.frames_incomplete ?? receiver.frames_partial;
+          const successPercent = row.frame_success_percent ?? (
+            Number(sentOrSeen) > 0 && Number.isFinite(Number(complete))
+              ? Number(complete) / Number(sentOrSeen) * 100
+              : null
+          );
+          const fragmentSpanP95 = receiver.fragment_arrival_span_ms_p95 ?? receiver.frame_completion_ms_p95;
           setText(`${id}-video-frames`, sentOrSeen ?? "-");
           setText(`${id}-video-complete`, complete ?? "-");
           setText(`${id}-video-lost`, row.frames_fully_lost ?? "-");
-          setText(`${id}-video-incomplete`, row.frames_not_decodable ?? receiver.frames_partial ?? "-");
-          setText(`${id}-video-success`, fmtPct(row.frame_success_percent));
-          setText(`${id}-video-p95`, fmtMs(receiver.fragment_arrival_span_ms_p95));
+          setText(`${id}-video-incomplete`, notDecodable ?? "-");
+          setText(`${id}-video-success`, fmtPct(successPercent));
+          setText(`${id}-video-p95`, fmtMs(fragmentSpanP95));
         }
         const winners = video.first_arrival_winners || {};
         const ties = video.first_arrival_ties || 0;
         const paired = video.paired_frames_complete ?? 0;
-        const delta = fmtMs(video.corrected_path_arrival_delta_ms_p95);
+        const delta = fmtMs(
+          video.corrected_path_arrival_delta_ms_p95 ?? video.path_arrival_delta_ms_p95
+        );
         $("video-compare").textContent = paired
           ? `Paired complete frames: ${paired}. Corrected winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}, ties ${ties}. p95 corrected difference: ${delta}.`
           : "No paired complete video frames yet.";
