@@ -874,6 +874,48 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     )
 
 
+@app.get("/test-batches/{batch_id}", response_class=HTMLResponse)
+def batch_detail(
+    batch_id: str,
+    request: Request,
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    attempts = session.scalars(
+        select(BatchAttempt)
+        .where(BatchAttempt.batch_pk == batch.id)
+        .order_by(BatchAttempt.sequence_number)
+    ).all()
+    experiment = session.get(Experiment, batch.experiment_id) if batch.experiment_id else None
+    variant = session.get(ExperimentVariant, batch.variant_id) if batch.variant_id else None
+    site = session.get(TestSite, batch.site_id) if batch.site_id else None
+    antenna_profile = (
+        session.get(AntennaProfile, batch.antenna_profile_id)
+        if batch.antenna_profile_id
+        else None
+    )
+    return templates.TemplateResponse(
+        request,
+        "batch_detail.html",
+        {
+            "version": __version__,
+            "batch": batch,
+            "batch_row": _batch_row(batch, protocol),
+            "protocol": protocol,
+            "attempts": attempts,
+            "experiment": experiment,
+            "variant": variant,
+            "site": site,
+            "antenna_profile": antenna_profile,
+        },
+    )
+
+
 @app.get("/analytics", response_class=HTMLResponse)
 def analytics(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     experiments = session.scalars(select(Experiment).order_by(Experiment.id.desc())).all()

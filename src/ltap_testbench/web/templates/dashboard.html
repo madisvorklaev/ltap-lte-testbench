@@ -229,7 +229,7 @@
             <tbody id="batch-table">
               {% for batch in batches %}
               <tr>
-                <td>{{ batch.name }}<br><span class="muted">{{ batch.batch_id }}</span></td>
+                <td><a href="/test-batches/{{ batch.batch_id }}">{{ batch.name }}</a><br><span class="muted">{{ batch.batch_id }}</span></td>
                 <td>{{ batch.state.value }}{% if batch.state_reason %}<br><span class="muted">{{ batch.state_reason }}</span>{% endif %}</td>
                 <td>{{ batch.valid_run_count }}/{{ batch.target_valid_runs }} valid<br>{{ batch.attempt_count }}/{{ batch.max_attempts }} attempts</td>
                 <td>-</td>
@@ -532,7 +532,7 @@
           const canStart = ["DRAFT", "SCHEDULED", "PAUSED"].includes(row.state);
           const canCancel = !["CANCELLED", "COMPLETED", "FAILED"].includes(row.state);
           tr.innerHTML = `
-            <td>${row.name}<br><span class="muted">${row.batch_id}</span></td>
+            <td><a href="/test-batches/${row.batch_id}">${row.name}</a><br><span class="muted">${row.batch_id}</span></td>
             <td>${state}</td>
             <td>${progress}</td>
             <td>${estimate}</td>

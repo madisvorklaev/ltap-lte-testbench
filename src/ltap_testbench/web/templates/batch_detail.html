@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ batch.name }} · LtAP LTE Testbench</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --text: #18212f;
+        --muted: #617083;
+        --line: #d7dee8;
+        --ok: #166534;
+        --warn: #9a3412;
+        --bad: #b91c1c;
+        --blue: #075985;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+      header { background: #172033; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      main { max-width: 1180px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+      section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+      h1, h2 { margin: 0; letter-spacing: 0; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; margin-bottom: 10px; }
+      a { color: #075985; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      button, .button { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; font: inherit; background: #fff; color: var(--text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+      button.primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+      button.danger { background: #fff1f2; border-color: #fecaca; color: var(--bad); }
+      button:disabled { opacity: .55; cursor: wait; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th, td { border-bottom: 1px solid #e8edf3; text-align: left; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
+      th { color: var(--muted); font-weight: 650; }
+      code { background: #edf2f7; padding: 2px 4px; border-radius: 4px; }
+      pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+      .metric { background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-height: 74px; }
+      .metric span { display: block; color: var(--muted); font-size: 12px; }
+      .metric strong { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+      .muted { color: var(--muted); }
+      .badge { display: inline-flex; min-height: 24px; align-items: center; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
+      .badge.completed, .badge.valid { color: var(--ok); background: #f0fdf4; border-color: #86efac; }
+      .badge.failed, .badge.cancelled, .badge.invalid { color: var(--bad); background: #fff1f2; border-color: #fecaca; }
+      .badge.running, .badge.scheduled, .badge.draft, .badge.checking_preconditions, .badge.waiting_for_start, .badge.planned { color: var(--blue); background: #f0f9ff; border-color: #bae6fd; }
+      .badge.pause_requested, .badge.paused, .badge.cancel_requested, .badge.skipped { color: var(--warn); background: #fff7ed; border-color: #fed7aa; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Test Series</h1>
+      <div class="toolbar">
+        <a class="button" href="/">Dashboard</a>
+        <a class="button" href="/experiments">Experiments</a>
+        <a class="button" href="/analytics">Analytics</a>
+        <span>v{{ version }}</span>
+      </div>
+    </header>
+    <main>
+      <section>
+        <div class="toolbar" style="justify-content: space-between;">
+          <h2>{{ batch.name }}</h2>
+          <span class="badge {{ batch.state.value | lower }}">{{ batch.state.value }}</span>
+        </div>
+        <div class="grid" style="margin-top: 12px;">
+          <div class="metric"><span>Batch ID</span><strong><code>{{ batch.batch_id }}</code></strong></div>
+          <div class="metric"><span>Valid runs</span><strong>{{ batch.valid_run_count }} / {{ batch.target_valid_runs }}</strong></div>
+          <div class="metric"><span>Attempts</span><strong>{{ batch.attempt_count }} / {{ batch.max_attempts }}</strong></div>
+          <div class="metric"><span>Invalid / failed</span><strong>{{ batch.invalid_run_count }} / {{ batch.failed_attempt_count }}</strong></div>
+          <div class="metric"><span>Consecutive failures</span><strong>{{ batch.consecutive_failure_count }} / {{ batch.max_consecutive_failures }}</strong></div>
+          <div class="metric"><span>Protocol</span><strong>{{ batch.protocol_slug }}</strong></div>
+          <div class="metric"><span>Estimate</span><strong>{{ batch_row.estimated_attempt_seconds }}s attempt<br>{{ batch_row.estimated_cycle_seconds }}s cycle</strong></div>
+          <div class="metric"><span>Deadline</span><strong>{{ batch.deadline or "-" }}</strong></div>
+        </div>
+        {% if batch.state_reason %}
+        <p class="muted">Reason: {{ batch.state_reason }}</p>
+        {% endif %}
+        <div class="toolbar" style="margin-top: 12px;">
+          <button type="button" class="primary" data-action="start">Start / Resume</button>
+          <button type="button" data-action="pause">Pause</button>
+          <button type="button" class="danger" data-action="cancel">Cancel</button>
+          <button type="button" data-action="refresh">Refresh</button>
+          <span id="message" class="muted"></span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Experiment Context</h2>
+        <div class="grid">
+          <div class="metric"><span>Experiment</span><strong>{% if experiment %}{{ experiment.name }}{% else %}-{% endif %}</strong></div>
+          <div class="metric"><span>Variant</span><strong>{% if variant %}{{ variant.label }}{% else %}-{% endif %}</strong></div>
+          <div class="metric"><span>Site</span><strong>{% if site %}{{ site.name }}{% else %}-{% endif %}</strong></div>
+          <div class="metric"><span>Antenna</span><strong>{% if antenna_profile %}{{ antenna_profile.manufacturer }} {{ antenna_profile.model }}{% else %}-{% endif %}</strong></div>
+          <div class="metric"><span>Protocol hash</span><strong><code>{{ batch.protocol_hash }}</code></strong></div>
+          <div class="metric"><span>Cooldown</span><strong>{{ batch.inter_run_cooldown_seconds }}s</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Attempts</h2>
+        {% if attempts %}
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px;">#</th>
+              <th style="width: 150px;">State</th>
+              <th>Run</th>
+              <th style="width: 130px;">Eligible</th>
+              <th>Outcome</th>
+              <th>Started / finished</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for attempt in attempts %}
+            <tr>
+              <td>{{ attempt.sequence_number }}</td>
+              <td><span class="badge {{ attempt.state.value | lower }}">{{ attempt.state.value }}</span></td>
+              <td>
+                {% if attempt.run_id %}
+                <a href="/runs/{{ attempt.run_id }}"><code>{{ attempt.run_id }}</code></a>
+                {% else %}
+                <span class="muted">-</span>
+                {% endif %}
+              </td>
+              <td>{{ "yes" if attempt.comparison_eligible else "no" }}</td>
+              <td>
+                {{ attempt.outcome_code or "-" }}
+                {% if attempt.outcome_details_json %}
+                <details><summary class="muted">details</summary><pre>{{ attempt.outcome_details_json | tojson(indent=2) }}</pre></details>
+                {% endif %}
+              </td>
+              <td>{{ attempt.started_at or "-" }}<br><span class="muted">{{ attempt.finished_at or "-" }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="muted">No attempts recorded yet.</p>
+        {% endif %}
+      </section>
+    </main>
+    <script>
+      const setBusy = (busy) => {
+        for (const button of document.querySelectorAll("button[data-action]")) {
+          if (button.dataset.action !== "refresh") button.disabled = busy;
+        }
+      };
+      const callBatch = async (action) => {
+        if (action === "refresh") {
+          location.reload();
+          return;
+        }
+        setBusy(true);
+        try {
+          const endpoint = action === "start" ? "start" : action;
+          const response = await fetch(`/api/v1/test-batches/{{ batch.batch_id }}/${endpoint}`, {method: "POST"});
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || response.statusText);
+          document.querySelector("#message").textContent = `${action} accepted`;
+          setTimeout(() => location.reload(), 500);
+        } catch (error) {
+          document.querySelector("#message").textContent = error.message;
+        } finally {
+          setBusy(false);
+        }
+      };
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (button) callBatch(button.dataset.action);
+      });
+    </script>
+  </body>
+</html>

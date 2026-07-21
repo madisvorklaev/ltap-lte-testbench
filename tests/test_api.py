@@ -822,6 +822,15 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert "batch-variant" in dashboard.text
         assert "Antenna repeatability" in dashboard.text
         assert "roof panel" in dashboard.text
+        assert f"/test-batches/{payload['batch_id']}" in dashboard.text
+
+        batch_page = client.get(f"/test-batches/{payload['batch_id']}")
+        assert batch_page.status_code == 200
+        assert "Test Series" in batch_page.text
+        assert "Experiment Context" in batch_page.text
+        assert "Antenna repeatability" in batch_page.text
+        assert "roof panel" in batch_page.text
+        assert "Attempts" in batch_page.text
 
         antennas_page = client.get("/antennas")
         assert antennas_page.status_code == 200
