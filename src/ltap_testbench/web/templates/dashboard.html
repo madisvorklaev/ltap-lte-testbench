@@ -172,6 +172,22 @@
               {% endfor %}
             </select>
           </label>
+          <label>Experiment
+            <select id="batch-experiment">
+              <option value="">No experiment</option>
+              {% for experiment in experiments %}
+              <option value="{{ experiment.id }}">{{ experiment.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Variant
+            <select id="batch-variant">
+              <option value="">No variant</option>
+              {% for variant in variant_options %}
+              <option value="{{ variant.id }}" data-experiment-id="{{ variant.experiment_id }}">{{ variant.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
           <label>Antenna profile
             <select id="batch-antenna">
               <option value="">Choose profile</option>
@@ -492,6 +508,14 @@
         const value = $("batch-deadline").value;
         return value ? new Date(value).toISOString() : null;
       };
+      const syncBatchVariants = () => {
+        const experimentId = $("batch-experiment").value;
+        const variantSelect = $("batch-variant");
+        for (const option of variantSelect.options) {
+          option.hidden = Boolean(option.value && experimentId && option.dataset.experimentId !== experimentId);
+        }
+        if (variantSelect.selectedOptions[0]?.hidden) variantSelect.value = "";
+      };
       const renderBatches = async () => {
         const rows = await request("/api/v1/test-batches");
         const tbody = $("batch-table");
@@ -529,9 +553,13 @@
           : "No attempts yet.";
       };
       const createBatch = async () => {
+        const experimentId = $("batch-experiment").value;
+        const variantId = $("batch-variant").value;
         const payload = {
           name: $("batch-name").value.trim() || "Benchmark series",
           protocol_slug: $("batch-protocol").value,
+          experiment_id: experimentId ? Number(experimentId) : null,
+          variant_id: variantId ? Number(variantId) : null,
           antenna_profile_id: $("batch-antenna").value ? Number($("batch-antenna").value) : null,
           target_valid_runs: Number($("batch-target-valid").value),
           max_attempts: Number($("batch-max-attempts").value),
@@ -552,6 +580,7 @@
         catch (error) { $("batch-message").textContent = error.message; }
         finally { $("create-batch").disabled = false; }
       });
+      $("batch-experiment").addEventListener("change", syncBatchVariants);
       $("refresh-batches").addEventListener("click", async () => {
         try { await renderBatches(); }
         catch (error) { $("batch-message").textContent = error.message; }
@@ -639,6 +668,7 @@
         }
       });
       $("refresh-status").addEventListener("click", poll);
+      syncBatchVariants();
       poll();
       renderBatches().catch((error) => { $("batch-message").textContent = error.message; });
       pollTimer = setInterval(poll, 2500);

@@ -839,6 +839,20 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(10)).all()
     protocols = session.scalars(select(BenchmarkProtocol).order_by(BenchmarkProtocol.slug)).all()
     antenna_profiles = session.scalars(select(AntennaProfile).order_by(AntennaProfile.slug)).all()
+    experiments = session.scalars(select(Experiment).order_by(Experiment.id.desc())).all()
+    experiment_names = {experiment.id: experiment.name for experiment in experiments}
+    variants = session.scalars(select(ExperimentVariant).order_by(ExperimentVariant.id)).all()
+    variant_options = [
+        {
+            "id": variant.id,
+            "experiment_id": variant.experiment_id,
+            "label": (
+                f"{experiment_names.get(variant.experiment_id, 'Experiment')} · "
+                f"{variant.label}"
+            ),
+        }
+        for variant in variants
+    ]
     batches = session.scalars(select(TestBatch).order_by(TestBatch.id.desc()).limit(10)).all()
     return templates.TemplateResponse(
         request,
@@ -853,6 +867,8 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "antenna_options": _antenna_options(session),
             "benchmark_protocols": protocols,
             "antenna_profiles": antenna_profiles,
+            "experiments": experiments,
+            "variant_options": variant_options,
             "batches": batches,
         },
     )
