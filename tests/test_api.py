@@ -713,6 +713,19 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert active.json()["active"] is True
         assert active.json()["batch"]["batch_id"] == payload["batch_id"]
 
+        pause = client.post(f"/api/v1/test-batches/{payload['batch_id']}/pause")
+        assert pause.status_code == 200
+        assert pause.json()["state"] == "PAUSE_REQUESTED"
+
+        with session_factory() as session:
+            stored_batch = session.scalar(
+                select(TestBatch).where(TestBatch.batch_id == payload["batch_id"])
+            )
+            assert stored_batch is not None
+            stored_batch.state = BatchState.RUNNING
+            session.add(stored_batch)
+            session.commit()
+
         with session_factory() as session:
             router = session.scalar(
                 select(RouterProfile).where(RouterProfile.slug == "demo-generic")

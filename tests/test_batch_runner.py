@@ -193,6 +193,39 @@ def test_batch_runner_links_experiment_and_variant_to_runs() -> None:
     assert run.variant_id == variant.id
 
 
+def test_batch_pause_request_stops_after_current_attempt() -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=2, max_attempts=2)
+
+    def pause_after_first_attempt(
+        session: Session,
+        run: DbTestRun,
+        _cancel_event: Event | None,
+    ) -> DbTestRun:
+        run.state = RunState.COMPLETED
+        run.summary = {"comparison_eligible": True, "exclusion_reasons": []}
+        current_batch = session.scalar(
+            select(DbTestBatch).where(DbTestBatch.batch_id == run.batch_id)
+        )
+        assert current_batch is not None
+        current_batch.state = BatchState.PAUSE_REQUESTED
+        session.add_all([run, current_batch])
+        session.commit()
+        return run
+
+    run_batch(
+        session,
+        batch,
+        run_executor=pause_after_first_attempt,
+        precondition_runner=_ok_preconditions,
+    )
+
+    assert batch.state == BatchState.PAUSED
+    assert batch.state_reason == "user_paused"
+    assert batch.attempt_count == 1
+    assert batch.valid_run_count == 1
+
+
 def test_batch_fails_when_max_attempts_reached_before_valid_target() -> None:
     session = _session()
     batch = _batch(session, target_valid_runs=2, max_attempts=2)

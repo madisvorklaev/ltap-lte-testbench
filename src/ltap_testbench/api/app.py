@@ -1218,6 +1218,29 @@ def start_test_batch(batch_id: str, session: Session = Depends(get_session)) -> 
     return _batch_row(batch, protocol)
 
 
+@app.post("/api/v1/test-batches/{batch_id}/resume")
+def resume_test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    return start_test_batch(batch_id, session)
+
+
+@app.post("/api/v1/test-batches/{batch_id}/pause")
+def pause_test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    if batch.state == BatchState.RUNNING:
+        batch.state = BatchState.PAUSE_REQUESTED
+        batch.state_reason = "user_paused"
+        session.add(batch)
+        session.commit()
+    elif batch.state not in {BatchState.PAUSE_REQUESTED, BatchState.PAUSED}:
+        raise HTTPException(status_code=409, detail=f"batch is {batch.state.value}")
+    return _batch_row(batch, protocol)
+
+
 @app.post("/api/v1/test-batches/{batch_id}/cancel")
 def cancel_test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
     batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))

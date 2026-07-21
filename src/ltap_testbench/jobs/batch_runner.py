@@ -258,6 +258,9 @@ def run_batch(
         if _deadline_reached(batch):
             _finish_batch(session, batch, BatchState.COMPLETED, "deadline_reached")
             return batch
+        if batch.state == BatchState.PAUSE_REQUESTED:
+            _finish_batch(session, batch, BatchState.PAUSED, "user_paused")
+            return batch
         if batch.valid_run_count >= batch.target_valid_runs:
             _finish_batch(session, batch, BatchState.COMPLETED, "target_reached")
             return batch
@@ -308,6 +311,10 @@ def run_batch(
         _finish_attempt(session, batch, attempt, run)
         session.add_all([batch, attempt])
         session.commit()
+        session.refresh(batch)
+        if batch.state == BatchState.PAUSE_REQUESTED:
+            _finish_batch(session, batch, BatchState.PAUSED, "user_paused")
+            return batch
         if batch.valid_run_count >= batch.target_valid_runs:
             _finish_batch(session, batch, BatchState.COMPLETED, "target_reached")
             return batch
@@ -325,6 +332,9 @@ def run_batch(
                     return batch
                 if _deadline_reached(batch):
                     _finish_batch(session, batch, BatchState.COMPLETED, "deadline_reached")
+                    return batch
+                if batch.state == BatchState.PAUSE_REQUESTED:
+                    _finish_batch(session, batch, BatchState.PAUSED, "user_paused")
                     return batch
                 sleep(min(0.25, deadline - time.monotonic()))
 
