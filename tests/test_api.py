@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
+from ltap_testbench.analytics import cohort_summary
 from ltap_testbench.api import app as api_app
 from ltap_testbench.api.app import (
     LAB_LIVE_LATENCY_CACHE,
@@ -76,6 +77,39 @@ def test_lab_plan_keeps_tcp_count_and_udp_pattern() -> None:
         assert plan.definition["video_probe"]["fps"] == 25
         assert plan.definition["video_probe"]["scenario"] == "city"
         assert plan.definition["metadata"]["lab"]["antenna"] == "test placement"
+        assert plan.definition["metadata"]["protocol"]["protocol_hash"]
+
+
+def test_comparable_lab_plan_uses_fixed_protocol_and_requires_antenna() -> None:
+    client = TestClient(app)
+    client.post("/api/v1/demo/seed")
+
+    missing = client.post("/api/v1/lab/start", json={"benchmark_profile": "comparable-v1"})
+
+    assert missing.status_code == 400
+    assert "antenna" in missing.json()["detail"]
+
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        plan = _upsert_lab_plan(
+            session,
+            LabRunCreate(
+                benchmark_profile="comparable-v1",
+                antenna="roof panel",
+                antenna_gain_dbi=6.5,
+                antenna_cable_loss_db=1.2,
+            ),
+        )
+
+        assert plan.definition["protocol_id"] == "comparable-benchmark"
+        assert plan.definition["tcp_upload"]["payload_bytes"] is None
+        assert plan.definition["tcp_upload"]["duration_seconds"] == 60
+        assert plan.definition["tcp_upload"]["count"] == 3
+        assert plan.definition["udp_upload"]["duration_seconds"] == 120
+        assert plan.definition["video_probe"]["duration_seconds"] == 300
+        assert plan.definition["metadata"]["lab"]["antenna_effective_gain_dbi"] == 5.3
 
 
 def test_analytics_run_row_extracts_path_metrics() -> None:
@@ -111,8 +145,19 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
                 {"path_id": "lte2", "server_average_mbit_s": 30.0},
             ],
             "udp_upload_results": [
-                {"path_id": "lte1", "server_average_mbit_s": 4.8},
-                {"path_id": "lte2", "server_average_mbit_s": 4.4},
+                {
+                    "path_id": "lte1",
+                    "average_mbit_s": 5.0,
+                    "receiver": {"delivered_mbit_s": 4.8},
+                    "delivery": {"packet_loss_percent": 4.0},
+                },
+                {
+                    "path_id": "lte2",
+                    "average_mbit_s": 5.0,
+                    "test_node_connections": [
+                        {"protocol": "udp", "average_mbit_s": 4.4},
+                    ],
+                },
             ],
             "video_probe_results": {
                 "paths": {
@@ -128,8 +173,21 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
     assert row["antenna"] == "window panel"
     assert row["paths"]["lte1"]["tcp_mbit_s"] == 45.0
     assert row["paths"]["lte2"]["udp_mbit_s"] == 4.4
+    assert row["paths"]["lte1"]["udp_loss_percent"] == 4.0
     assert row["paths"]["lte1"]["latency_avg_ms"] == 24.0
     assert row["paths"]["lte2"]["video_success_percent"] == 94.0
+
+
+def test_cohort_summary_flags_mixed_protocols() -> None:
+    rows = [
+        {"protocol_hash": "aaa", "comparison_eligible": True, "paths": {}},
+        {"protocol_hash": "bbb", "comparison_eligible": True, "paths": {}},
+    ]
+
+    summary = cohort_summary(rows)
+
+    assert summary["mixed_protocols"] is True
+    assert summary["minimum_evidence_met"] is False
 
 
 def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:

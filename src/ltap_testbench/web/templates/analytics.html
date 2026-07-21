@@ -78,6 +78,17 @@
               <option value="CANCELLED">Cancelled</option>
             </select>
           </label>
+          <label>Protocol hash
+            <select id="protocol-filter">
+              <option value="">All protocols</option>
+            </select>
+          </label>
+          <label>Comparable only
+            <select id="eligible-filter">
+              <option value="false" selected>Show all</option>
+              <option value="true">Eligible only</option>
+            </select>
+          </label>
           <label>Runs
             <input id="limit-filter" type="number" min="1" max="500" value="30">
           </label>
@@ -89,10 +100,11 @@
         <h2>Overview</h2>
         <div class="metrics">
           <div class="metric"><span>Runs</span><strong id="run-count">0</strong></div>
-          <div class="metric"><span>Best TCP</span><strong id="best-tcp">-</strong></div>
-          <div class="metric"><span>Best UDP</span><strong id="best-udp">-</strong></div>
-          <div class="metric"><span>Best video success</span><strong id="best-video">-</strong></div>
+          <div class="metric"><span>Comparable runs</span><strong id="eligible-count">0</strong></div>
+          <div class="metric"><span>Protocol groups</span><strong id="protocol-count">0</strong></div>
+          <div class="metric"><span>Evidence status</span><strong id="evidence-status">-</strong></div>
         </div>
+        <p id="compatibility-note" class="muted"></p>
       </section>
 
       <section>
@@ -127,6 +139,7 @@
           <thead>
             <tr>
               <th style="width: 170px;">Run</th>
+              <th style="width: 95px;">Protocol</th>
               <th>Antenna</th>
               <th style="width: 105px;">lte1 TCP</th>
               <th style="width: 105px;">lte2 TCP</th>
@@ -135,6 +148,7 @@
               <th style="width: 105px;">lte1 Lat</th>
               <th style="width: 105px;">lte2 Lat</th>
               <th style="width: 105px;">Video</th>
+              <th style="width: 120px;">Eligibility</th>
             </tr>
           </thead>
           <tbody id="runs-body"></tbody>
@@ -224,7 +238,8 @@
           );
           return `<tr>
             <td><a href="/runs/${run.run_id}"><code>${run.run_id}</code></a><br><span class="muted">${new Date(run.created_at).toLocaleString()}</span></td>
-            <td>${run.antenna || "-"}</td>
+            <td><code>${(run.protocol_id || "legacy").slice(0, 12)}</code><br><span class="muted">${(run.protocol_hash || "").slice(0, 8)}</span></td>
+            <td>${run.antenna || "-"}<br><span class="muted">${run.antenna_effective_gain_dbi == null ? "" : `${Number(run.antenna_effective_gain_dbi).toFixed(1)} dBi effective`}</span></td>
             <td>${fmt(pathValue(run, "lte1", "tcp_mbit_s"))}</td>
             <td>${fmt(pathValue(run, "lte2", "tcp_mbit_s"))}</td>
             <td>${fmt(pathValue(run, "lte1", "udp_mbit_s"))}</td>
@@ -232,21 +247,35 @@
             <td>${fmt(pathValue(run, "lte1", "latency_avg_ms"), " ms")}</td>
             <td>${fmt(pathValue(run, "lte2", "latency_avg_ms"), " ms")}</td>
             <td>${Number.isFinite(video) && video > 0 ? fmt(video, "%") : "-"}</td>
+            <td>${run.comparison_eligible ? "Eligible" : "Excluded"}<br><span class="muted">${(run.exclusion_reasons || []).join(", ")}</span></td>
           </tr>`;
         }).join("");
+      };
+      const updateProtocolOptions = (options, selected) => {
+        const current = selected || $("protocol-filter").value;
+        $("protocol-filter").innerHTML = `<option value="">All protocols</option>` + (options || []).map((hash) => (
+          `<option value="${hash}" ${hash === current ? "selected" : ""}>${hash.slice(0, 12)}</option>`
+        )).join("");
       };
       const load = async () => {
         const params = new URLSearchParams();
         const antenna = $("antenna-filter").value;
         if (antenna) params.set("antenna", antenna);
+        const protocol = $("protocol-filter").value;
+        if (protocol) params.set("protocol_hash", protocol);
+        params.set("eligible_only", $("eligible-filter").value);
         params.set("state", $("state-filter").value);
         params.set("limit", $("limit-filter").value);
         const data = await request(`/api/v1/analytics/runs?${params}`);
         const runs = data.runs || [];
+        updateProtocolOptions(data.filters?.protocol_hash_options || [], data.filters?.protocol_hash || "");
         $("run-count").textContent = runs.length;
-        setMetric("best-tcp", Math.max(0, ...allValues(runs, "tcp_mbit_s")), " Mbit/s");
-        setMetric("best-udp", Math.max(0, ...allValues(runs, "udp_mbit_s")), " Mbit/s");
-        setMetric("best-video", Math.max(0, ...allValues(runs, "video_success_percent")), "%");
+        $("eligible-count").textContent = data.summary?.eligible_run_count ?? 0;
+        $("protocol-count").textContent = data.summary?.protocol_hashes?.length ?? 0;
+        $("evidence-status").textContent = data.summary?.minimum_evidence_met ? "Ready" : "Inconclusive";
+        $("compatibility-note").textContent = data.summary?.mixed_protocols
+          ? "Selected runs use multiple protocol hashes; treat charts as exploratory, not a controlled comparison."
+          : "Runs with the same protocol hash can be compared when metadata and sample count are sufficient.";
         drawChart("chart-tcp", runs, "tcp_mbit_s", "");
         drawChart("chart-udp", runs, "udp_mbit_s", "");
         drawChart("chart-latency", runs, "latency_avg_ms", " ms");
@@ -254,7 +283,7 @@
         renderTable(runs);
       };
       $("apply").addEventListener("click", load);
-      load().catch((error) => { $("runs-body").innerHTML = `<tr><td colspan="9">${error.message}</td></tr>`; });
+      load().catch((error) => { $("runs-body").innerHTML = `<tr><td colspan="11">${error.message}</td></tr>`; });
     </script>
   </body>
 </html>

@@ -12,10 +12,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ltap_testbench import __version__
+from ltap_testbench.analytics import analytics_run_row, cohort_summary, lab_metadata
 from ltap_testbench.db.base import SessionLocal, get_session, init_db
 from ltap_testbench.db.models import RouterProfile, RunState, ServerProfile, TestPlan, TestRun
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
+from ltap_testbench.profiles.protocols import (
+    COMPARABLE_PROTOCOL_ID,
+    COMPARABLE_PROTOCOL_VERSION,
+    estimated_duration_seconds,
+    protocol_metadata,
+)
 from ltap_testbench.profiles.schemas import RouterProfileConfig, ServerProfileConfig, TestPlanConfig
 from ltap_testbench.profiles.service import (
     create_router_profile,
@@ -39,15 +46,26 @@ class RunCreate(BaseModel):
 
 class LabRunCreate(BaseModel):
     router_ip: str = "192.168.101.254"
+    benchmark_profile: str = "custom"
+    tcp_mode: str = "payload"
     tcp_file_size_mb: int = 25
     tcp_upload_count: int = 1
+    tcp_duration_seconds: int = 120
     udp_duration_seconds: int = 60
     udp_bitrate_mbit_s: float = 5.0
     udp_pattern: str = "end"
+    video_duration_seconds: int | None = None
     video_resolution: str = "1080p"
     video_fps: int = 25
     video_scenario: str = "city"
     antenna: str = ""
+    antenna_gain_dbi: float | None = None
+    antenna_gain_source: str = "unknown"
+    antenna_cable_loss_db: float | None = None
+    antenna_connector_loss_db: float | None = None
+    antenna_mounting: str = ""
+    antenna_orientation: str = ""
+    notes: str = ""
 
 
 class LabRecoveryError(RuntimeError):
@@ -104,12 +122,54 @@ def _lab_router(session: Session, router_ip: str) -> RouterProfile:
     return router
 
 
+def _antenna_profile_id(payload: LabRunCreate) -> str:
+    value = payload.antenna.strip().lower()
+    normalized = "".join(ch if ch.isalnum() else "-" for ch in value).strip("-")
+    return normalized or "unknown"
+
+
+def _antenna_effective_gain(payload: LabRunCreate) -> float | None:
+    if payload.antenna_gain_dbi is None:
+        return None
+    cable_loss = payload.antenna_cable_loss_db or 0.0
+    connector_loss = payload.antenna_connector_loss_db or 0.0
+    return payload.antenna_gain_dbi - cable_loss - connector_loss
+
+
 def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
-    tcp_bytes = payload.tcp_file_size_mb * 1024 * 1024
-    definition = {
+    benchmark_profile = payload.benchmark_profile
+    tcp_mode = payload.tcp_mode
+    tcp_count = payload.tcp_upload_count
+    tcp_duration = payload.tcp_duration_seconds
+    tcp_bytes = payload.tcp_file_size_mb * 1024 * 1024 if tcp_mode == "payload" else None
+    udp_duration = payload.udp_duration_seconds
+    udp_bitrate = payload.udp_bitrate_mbit_s
+    udp_pattern = payload.udp_pattern
+    video_duration = payload.video_duration_seconds or payload.udp_duration_seconds
+    video_bitrate = payload.udp_bitrate_mbit_s
+    video_fps = payload.video_fps
+    protocol_id = "exploratory-lab"
+    protocol_version = "1"
+    if benchmark_profile == "comparable-v1":
+        protocol_id = COMPARABLE_PROTOCOL_ID
+        protocol_version = COMPARABLE_PROTOCOL_VERSION
+        tcp_mode = "timed"
+        tcp_count = 3
+        tcp_duration = 60
+        tcp_bytes = None
+        udp_duration = 120
+        udp_bitrate = 5.0
+        udp_pattern = "end"
+        video_duration = 300
+        video_bitrate = 5.0
+        video_fps = 25
+    definition: dict[str, Any] = {
         "slug": "lab-current",
         "name": "Current Lab Test",
         "version": "1",
+        "protocol_id": protocol_id,
+        "protocol_version": protocol_version,
+        "result_schema_version": 2,
         "server_slug": "stockbot",
         "stages": [
             "preflight",
@@ -121,46 +181,72 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
         ],
         "latency": {"duration_seconds": 10, "interval_ms": 1000},
         "tcp_upload": {
-            "duration_seconds": 120,
+            "duration_seconds": tcp_duration,
             "parallel_streams": [1],
             "payload_bytes": tcp_bytes,
-            "count": payload.tcp_upload_count,
+            "count": tcp_count,
         },
         "udp_upload": {
-            "duration_seconds": payload.udp_duration_seconds,
-            "bitrate_mbit_s": payload.udp_bitrate_mbit_s,
+            "duration_seconds": udp_duration,
+            "bitrate_mbit_s": udp_bitrate,
             "datagram_bytes": 1200,
-            "pattern": payload.udp_pattern,
+            "pattern": udp_pattern,
         },
         "video_probe": {
             "enabled": True,
             "resolution": payload.video_resolution,
             "scenario": payload.video_scenario,
-            "duration_seconds": payload.udp_duration_seconds,
-            "bitrate_mbit_s": payload.udp_bitrate_mbit_s,
-            "fps": payload.video_fps,
+            "duration_seconds": video_duration,
+            "bitrate_mbit_s": video_bitrate,
+            "fps": video_fps,
             "payload_bytes": 1200,
             "receiver_settle_seconds": 5,
+            "traffic_seed": "video-trace-v1",
+            "trace_id": f"synthetic-{payload.video_scenario}-v1",
+            "generator_version": "synthetic-video-v2",
         },
         "traffic": {"path_concurrency": "parallel"},
         "telemetry": {"controller_interval_seconds": 1, "lte_interval_seconds": 5},
         "temporary_router_changes": {"disable_fasttrack": False, "clear_test_connections": True},
         "metadata": {
+            "protocol": {
+                "profile": benchmark_profile,
+                "tcp_mode": tcp_mode,
+                "estimated_duration_seconds": 0,
+            },
             "lab": {
                 "router_ip": payload.router_ip,
+                "benchmark_profile": benchmark_profile,
+                "tcp_mode": tcp_mode,
                 "tcp_file_size_mb": payload.tcp_file_size_mb,
-                "tcp_upload_count": payload.tcp_upload_count,
-                "udp_duration_seconds": payload.udp_duration_seconds,
-                "udp_bitrate_mbit_s": payload.udp_bitrate_mbit_s,
-                "udp_pattern": payload.udp_pattern,
+                "tcp_upload_count": tcp_count,
+                "tcp_duration_seconds": tcp_duration,
+                "udp_duration_seconds": udp_duration,
+                "udp_bitrate_mbit_s": udp_bitrate,
+                "udp_pattern": udp_pattern,
+                "video_duration_seconds": video_duration,
                 "video_resolution": payload.video_resolution,
-                "video_fps": payload.video_fps,
+                "video_fps": video_fps,
                 "video_scenario": payload.video_scenario,
                 "antenna": payload.antenna,
+                "antenna_profile_id": _antenna_profile_id(payload),
+                "antenna_gain_dbi": payload.antenna_gain_dbi,
+                "antenna_gain_source": payload.antenna_gain_source,
+                "antenna_cable_loss_db": payload.antenna_cable_loss_db,
+                "antenna_connector_loss_db": payload.antenna_connector_loss_db,
+                "antenna_effective_gain_dbi": _antenna_effective_gain(payload),
+                "antenna_mounting": payload.antenna_mounting,
+                "antenna_orientation": payload.antenna_orientation,
+                "notes": payload.notes,
             },
         },
     }
     definition = TestPlanConfig.model_validate(definition).model_dump(mode="json")
+    metadata = definition.setdefault("metadata", {})
+    protocol = metadata.setdefault("protocol", {})
+    if isinstance(protocol, dict):
+        protocol.update(protocol_metadata(definition))
+        protocol["estimated_duration_seconds"] = estimated_duration_seconds(definition)
     plan = session.scalar(select(TestPlan).where(TestPlan.slug == "lab-current"))
     if plan is None:
         plan = TestPlan(
@@ -463,9 +549,7 @@ def _mean(values: list[float | None]) -> float | None:
 
 
 def _lab_metadata(run: TestRun) -> dict[str, Any]:
-    if not run.resolved_plan:
-        return {}
-    return run.resolved_plan.get("metadata", {}).get("lab", {}) or run.resolved_plan.get("lab", {})
+    return lab_metadata(run)
 
 
 def _known_path_ids(run: TestRun) -> list[str]:
@@ -491,81 +575,7 @@ def _known_path_ids(run: TestRun) -> list[str]:
 
 
 def _analytics_run_row(run: TestRun) -> dict[str, Any]:
-    lab = _lab_metadata(run)
-    summary = run.summary or {}
-    paths: dict[str, dict[str, Any]] = {
-        path_id: {
-            "tcp_mbit_s": None,
-            "udp_mbit_s": None,
-            "latency_avg_ms": None,
-            "latency_loss_percent": None,
-            "video_success_percent": None,
-            "video_not_decodable": None,
-        }
-        for path_id in _known_path_ids(run)
-    }
-    for path_id in paths:
-        tcp_rows = [
-            row for row in summary.get("upload_results", []) if str(row.get("path_id")) == path_id
-        ]
-        udp_rows = [
-            row
-            for row in summary.get("udp_upload_results", [])
-            if str(row.get("path_id")) == path_id
-        ]
-        latency_rows = [
-            row for row in summary.get("latency_results", []) if str(row.get("path_id")) == path_id
-        ]
-        paths[path_id]["tcp_mbit_s"] = _mean(
-            [
-                _float_value(row.get("server_average_mbit_s") or row.get("speed_upload_mbit_s"))
-                for row in tcp_rows
-            ]
-        )
-        paths[path_id]["udp_mbit_s"] = _mean(
-            [
-                _float_value(row.get("server_average_mbit_s") or row.get("average_mbit_s"))
-                for row in udp_rows
-            ]
-        )
-        if latency_rows:
-            latest_latency = latency_rows[-1]
-            paths[path_id]["latency_avg_ms"] = _float_value(latest_latency.get("avg_ms"))
-            paths[path_id]["latency_loss_percent"] = _float_value(
-                latest_latency.get("loss_percent")
-            )
-    for path_id, row in (summary.get("video_probe_results") or {}).get("paths", {}).items():
-        path = paths.setdefault(
-            str(path_id),
-            {
-                "tcp_mbit_s": None,
-                "udp_mbit_s": None,
-                "latency_avg_ms": None,
-                "latency_loss_percent": None,
-                "video_success_percent": None,
-                "video_not_decodable": None,
-            },
-        )
-        path["video_success_percent"] = _float_value(row.get("frame_success_percent"))
-        path["video_not_decodable"] = _float_value(row.get("frames_not_decodable"))
-    return {
-        "run_id": run.run_id,
-        "state": run.state.value,
-        "router": run.router.slug,
-        "created_at": run.created_at.isoformat() if run.created_at else None,
-        "updated_at": run.updated_at.isoformat() if run.updated_at else None,
-        "antenna": lab.get("antenna") or "",
-        "tcp_file_size_mb": lab.get("tcp_file_size_mb"),
-        "tcp_upload_count": lab.get("tcp_upload_count"),
-        "udp_duration_seconds": lab.get("udp_duration_seconds"),
-        "udp_bitrate_mbit_s": lab.get("udp_bitrate_mbit_s"),
-        "udp_pattern": lab.get("udp_pattern"),
-        "video_resolution": lab.get("video_resolution"),
-        "video_fps": lab.get("video_fps"),
-        "video_scenario": lab.get("video_scenario"),
-        "validity": summary.get("validity"),
-        "paths": paths,
-    }
+    return analytics_run_row(run)
 
 
 @app.on_event("startup")
@@ -638,6 +648,8 @@ def health() -> dict:
 @app.get("/api/v1/analytics/runs")
 def analytics_runs(
     antenna: str | None = None,
+    protocol_hash: str | None = None,
+    eligible_only: bool = False,
     state: str = "COMPLETED",
     limit: int = 30,
     session: Session = Depends(get_session),
@@ -647,6 +659,7 @@ def analytics_runs(
     runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(500)).all()
     rows = []
     antenna_values = []
+    protocol_values = []
     for run in runs:
         lab = _lab_metadata(run)
         run_antenna = str(lab.get("antenna") or "")
@@ -656,17 +669,29 @@ def analytics_runs(
             continue
         if normalized_state != "ALL" and run.state.value != normalized_state:
             continue
-        rows.append(_analytics_run_row(run))
+        row = _analytics_run_row(run)
+        run_protocol_hash = str(row.get("protocol_hash") or "")
+        if run_protocol_hash and run_protocol_hash not in protocol_values:
+            protocol_values.append(run_protocol_hash)
+        if protocol_hash and run_protocol_hash != protocol_hash:
+            continue
+        if eligible_only and not row.get("comparison_eligible"):
+            continue
+        rows.append(row)
         if len(rows) >= limit:
             break
     rows.reverse()
     return {
         "filters": {
             "antenna": antenna,
+            "protocol_hash": protocol_hash,
+            "eligible_only": eligible_only,
             "state": normalized_state,
             "limit": limit,
             "antenna_options": antenna_values[:50],
+            "protocol_hash_options": protocol_values[:50],
         },
+        "summary": cohort_summary(rows),
         "runs": rows,
     }
 
@@ -674,12 +699,23 @@ def analytics_runs(
 @app.post("/api/v1/lab/start")
 def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) -> dict:
     global LAB_ACTIVE_RUN_ID
+    if payload.benchmark_profile not in {"custom", "comparable-v1"}:
+        raise HTTPException(status_code=400, detail="unsupported benchmark profile")
+    if payload.tcp_mode not in {"payload", "timed"}:
+        raise HTTPException(status_code=400, detail="unsupported TCP mode")
+    if payload.benchmark_profile == "comparable-v1" and not payload.antenna.strip():
+        raise HTTPException(status_code=400, detail="comparable benchmark requires antenna profile")
     if payload.tcp_file_size_mb not in TCP_FILE_SIZE_OPTIONS_MB:
         raise HTTPException(status_code=400, detail="unsupported TCP file size")
     if payload.tcp_upload_count < 1 or payload.tcp_upload_count > 20:
         raise HTTPException(status_code=400, detail="TCP upload count must be 1..20")
+    if payload.tcp_duration_seconds < 1 or payload.tcp_duration_seconds > 3600:
+        raise HTTPException(status_code=400, detail="TCP duration must be 1..3600 seconds")
     if payload.udp_duration_seconds < 1 or payload.udp_duration_seconds > 3600:
         raise HTTPException(status_code=400, detail="UDP duration must be 1..3600 seconds")
+    video_duration = payload.video_duration_seconds or payload.udp_duration_seconds
+    if video_duration < 1 or video_duration > 3600:
+        raise HTTPException(status_code=400, detail="video duration must be 1..3600 seconds")
     if payload.udp_bitrate_mbit_s <= 0 or payload.udp_bitrate_mbit_s > 50:
         raise HTTPException(status_code=400, detail="UDP bitrate must be 0..50 Mbit/s")
     if payload.udp_pattern not in {"after_each_tcp", "beginning", "end"}:

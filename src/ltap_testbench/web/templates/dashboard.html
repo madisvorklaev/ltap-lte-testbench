@@ -68,6 +68,18 @@
           <label>Router IP
             <input id="router-ip" value="192.168.101.254" inputmode="numeric">
           </label>
+          <label>Profile
+            <select id="benchmark-profile">
+              <option value="custom" selected>Custom exploratory</option>
+              <option value="comparable-v1">Comparable Benchmark v1</option>
+            </select>
+          </label>
+          <label>TCP mode
+            <select id="tcp-mode">
+              <option value="payload" selected>Payload transfer</option>
+              <option value="timed">Timed window</option>
+            </select>
+          </label>
           <label>TCP file size
             <select id="tcp-file-size">
               {% for size in tcp_file_size_options_mb %}
@@ -77,6 +89,9 @@
           </label>
           <label>TCP upload count
             <input id="tcp-upload-count" type="number" min="1" max="20" value="1">
+          </label>
+          <label>TCP duration
+            <input id="tcp-duration" type="number" min="1" max="3600" value="120">
           </label>
           <label>UDP duration
             <input id="udp-duration" type="number" min="1" max="3600" value="60">
@@ -98,6 +113,9 @@
               <option value="1440p">1440p</option>
               <option value="4k">4K</option>
             </select>
+          </label>
+          <label>Video duration
+            <input id="video-duration" type="number" min="1" max="3600" value="60">
           </label>
           <label>Video FPS
             <select id="video-fps">
@@ -121,6 +139,15 @@
               <option value="{{ value }}"></option>
               {% endfor %}
             </datalist>
+          </label>
+          <label>Antenna gain
+            <input id="antenna-gain" type="number" step="0.1" placeholder="dBi">
+          </label>
+          <label>Cable loss
+            <input id="antenna-cable-loss" type="number" min="0" step="0.1" placeholder="dB">
+          </label>
+          <label>Mounting
+            <input id="antenna-mounting" placeholder="roof, window, mast">
           </label>
         </div>
         <div class="toolbar" style="margin-top: 12px;">
@@ -420,15 +447,22 @@
         try {
           const payload = {
             router_ip: $("router-ip").value.trim(),
+            benchmark_profile: $("benchmark-profile").value,
+            tcp_mode: $("tcp-mode").value,
             tcp_file_size_mb: Number($("tcp-file-size").value),
             tcp_upload_count: Number($("tcp-upload-count").value),
+            tcp_duration_seconds: Number($("tcp-duration").value),
             udp_duration_seconds: Number($("udp-duration").value),
             udp_bitrate_mbit_s: Number($("udp-bitrate").value),
             udp_pattern: $("udp-pattern").value,
+            video_duration_seconds: Number($("video-duration").value),
             video_resolution: $("video-resolution").value,
             video_fps: Number($("video-fps").value),
             video_scenario: $("video-scenario").value,
-            antenna: $("antenna").value.trim()
+            antenna: $("antenna").value.trim(),
+            antenna_gain_dbi: $("antenna-gain").value ? Number($("antenna-gain").value) : null,
+            antenna_cable_loss_db: $("antenna-cable-loss").value ? Number($("antenna-cable-loss").value) : null,
+            antenna_mounting: $("antenna-mounting").value.trim()
           };
           const started = await request("/api/v1/lab/start", {method: "POST", body: JSON.stringify(payload)});
           $("backend-log").textContent = `Started ${started.run_id}`;

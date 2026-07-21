@@ -1,3 +1,4 @@
+import json
 import socket
 import time
 from collections.abc import Callable
@@ -26,10 +27,8 @@ def run_udp_upload(
     run_id: str | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> UdpUploadResult:
-    prefix = f"LTAPUDP {run_id}\n".encode() if run_id else b""
-    if len(prefix) >= datagram_bytes:
-        raise ValueError("run_id prefix is larger than the configured UDP datagram size")
-    payload = prefix + (b"\0" * (datagram_bytes - len(prefix)))
+    if run_id and datagram_bytes < 160:
+        raise ValueError("datagram size is too small for the LTAP UDP header")
     interval = datagram_bytes * 8 / (bitrate_mbit_s * 1_000_000)
     start = time.monotonic()
     deadline = start + duration_seconds
@@ -39,6 +38,18 @@ def run_udp_upload(
         sock.settimeout(1)
         sock.connect((host, port))
         while time.monotonic() < deadline and not (should_cancel and should_cancel()):
+            if run_id:
+                header = {
+                    "run_id": run_id,
+                    "sequence": datagrams,
+                    "send_ns": time.time_ns(),
+                }
+                prefix = b"LTAPUDP " + json.dumps(header, separators=(",", ":")).encode() + b"\n"
+            else:
+                prefix = b""
+            if len(prefix) >= datagram_bytes:
+                raise ValueError("LTAP UDP header is larger than the configured datagram size")
+            payload = prefix + (b"\0" * (datagram_bytes - len(prefix)))
             sock.send(payload)
             datagrams += 1
             next_send += interval

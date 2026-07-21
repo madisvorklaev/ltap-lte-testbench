@@ -26,6 +26,9 @@ class VideoUdpProbeResult:
     bitrate_mbit_s: float
     fps: int
     payload_bytes: int
+    traffic_seed: str
+    trace_id: str
+    generator_version: str
     frames_sent: int
     datagrams_sent: int
     bytes_sent: int
@@ -112,13 +115,16 @@ def run_video_udp_probe(
     resolution: str = "1080p",
     scenario: str = "city",
     payload_bytes: int = 1200,
+    traffic_seed: str = "video-trace-v1",
+    trace_id: str = "synthetic-city-v1",
+    generator_version: str = "synthetic-video-v2",
     should_cancel: Callable[[], bool] | None = None,
 ) -> VideoUdpProbeResult:
     if fps <= 0:
         raise ValueError("fps must be positive")
     if payload_bytes < 300:
         raise ValueError("payload_bytes is too small for frame headers")
-    rng = random.Random(f"{run_id}:{resolution}:{scenario}")
+    rng = random.Random(f"{traffic_seed}:{trace_id}:{scenario}:{fps}:{bitrate_mbit_s}")
     frame_interval = 1 / fps
     planned_frame_sizes = _frame_size_schedule(
         duration_seconds * fps,
@@ -180,6 +186,9 @@ def run_video_udp_probe(
         bitrate_mbit_s=bitrate_mbit_s,
         fps=fps,
         payload_bytes=payload_bytes,
+        traffic_seed=traffic_seed,
+        trace_id=trace_id,
+        generator_version=generator_version,
         frames_sent=frames_sent,
         datagrams_sent=datagrams_sent,
         bytes_sent=bytes_sent,

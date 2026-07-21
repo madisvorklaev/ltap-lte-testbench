@@ -22,6 +22,7 @@ from ltap_testbench.jobs.state_machine import (
     require_transition,
     restart_target_for,
 )
+from ltap_testbench.profiles.protocols import protocol_metadata
 from ltap_testbench.profiles.schemas import STAGE_ALIASES
 from ltap_testbench.reporting.artifacts import persist_run_artifacts, run_artifact_dir
 from ltap_testbench.routers.base import RouterAdapter
@@ -73,11 +74,15 @@ def create_run(session: Session, router_slug: str, plan_slug: str) -> TestRun:
     plan = session.scalar(select(TestPlan).where(TestPlan.slug == plan_slug))
     if plan is None:
         raise ValueError(f"Unknown test plan: {plan_slug}")
+    resolved_plan = _normalize_plan_definition(plan.definition)
+    resolved_plan.setdefault("metadata", {}).setdefault("protocol", {}).update(
+        protocol_metadata(resolved_plan)
+    )
     run = TestRun(
         run_id=f"run-{uuid4().hex[:12]}",
         router_id=router.id,
         plan_slug=plan.slug,
-        resolved_plan=_normalize_plan_definition(plan.definition),
+        resolved_plan=resolved_plan,
     )
     session.add(run)
     session.commit()
@@ -552,6 +557,25 @@ def _execute_udp_upload_stage(
                 connections = TestNodeClient(server.control_api_url).run_connections(udp_run_id)
             except Exception:
                 connections = []
+        receiver = connections[0] if connections else {}
+        receiver_bytes = int(receiver.get("bytes_received") or 0)
+        receiver_unique = int(
+            receiver.get("unique_datagrams") or receiver.get("datagrams_received") or 0
+        )
+        receiver_duration = float(receiver.get("duration_seconds") or 0.0)
+        delivered_mbit_s = (
+            float(receiver.get("delivered_mbit_s") or receiver.get("average_mbit_s") or 0.0)
+            if receiver
+            else None
+        )
+        packet_loss_percent = (
+            max(0, result.datagrams_sent - receiver_unique) / result.datagrams_sent * 100
+            if result.datagrams_sent
+            else None
+        )
+        byte_delivery_percent = (
+            receiver_bytes / result.bytes_sent * 100 if result.bytes_sent else None
+        )
         row = {
             "path_id": path_id,
             "label": label,
@@ -565,6 +589,31 @@ def _execute_udp_upload_stage(
             "datagram_bytes": result.datagram_bytes,
             "datagrams_sent": result.datagrams_sent,
             "bytes_sent": result.bytes_sent,
+            "sender": {
+                "bytes": result.bytes_sent,
+                "datagrams": result.datagrams_sent,
+                "average_mbit_s": result.average_mbit_s,
+            },
+            "receiver": {
+                "bytes": receiver_bytes,
+                "unique_datagrams": receiver_unique,
+                "datagrams_received": int(receiver.get("datagrams_received") or 0),
+                "duplicates": int(receiver.get("duplicates") or 0),
+                "out_of_order": int(receiver.get("out_of_order") or 0),
+                "missing_datagrams": int(
+                    receiver.get("missing_datagrams")
+                    or max(0, result.datagrams_sent - receiver_unique)
+                ),
+                "duration_seconds": receiver_duration,
+                "delivered_mbit_s": delivered_mbit_s,
+            },
+            "delivery": {
+                "packet_loss_percent": packet_loss_percent,
+                "byte_delivery_percent": byte_delivery_percent,
+            },
+            "server_average_mbit_s": delivered_mbit_s,
+            "packet_loss_percent": packet_loss_percent,
+            "byte_delivery_percent": byte_delivery_percent,
             "validity": "server-confirmed" if connections else "sender-side",
             "server_confirmation": bool(connections),
             "test_node_connections": connections,
@@ -616,6 +665,9 @@ def _execute_video_probe_stage(
     resolution = str(config.get("resolution", "1080p"))
     scenario = str(config.get("scenario", "city"))
     payload_bytes = int(config.get("payload_bytes", 1200))
+    traffic_seed = str(config.get("traffic_seed", "video-trace-v1"))
+    trace_id = str(config.get("trace_id", f"synthetic-{scenario}-v1"))
+    generator_version = str(config.get("generator_version", "synthetic-video-v2"))
     receiver_settle_seconds = max(0, min(30, int(config.get("receiver_settle_seconds", 5))))
     paths = _router_paths(run)
     add_event(
@@ -631,6 +683,9 @@ def _execute_video_probe_stage(
             "resolution": resolution,
             "scenario": scenario,
             "payload_bytes": payload_bytes,
+            "traffic_seed": traffic_seed,
+            "trace_id": trace_id,
+            "generator_version": generator_version,
             "parallel_paths": True,
         },
     )
@@ -652,6 +707,9 @@ def _execute_video_probe_stage(
             resolution=resolution,
             scenario=scenario,
             payload_bytes=payload_bytes,
+            traffic_seed=traffic_seed,
+            trace_id=trace_id,
+            generator_version=generator_version,
             should_cancel=cancel_event.is_set if cancel_event is not None else None,
         )
         return {
@@ -666,6 +724,9 @@ def _execute_video_probe_stage(
             "bitrate_mbit_s": result.bitrate_mbit_s,
             "fps": result.fps,
             "payload_bytes": result.payload_bytes,
+            "traffic_seed": result.traffic_seed,
+            "trace_id": result.trace_id,
+            "generator_version": result.generator_version,
             "frames_sent": result.frames_sent,
             "datagrams_sent": result.datagrams_sent,
             "bytes_sent": result.bytes_sent,
@@ -754,6 +815,21 @@ def _execute_video_probe_stage(
                 else "sender-only"
             ),
         }
+    dual_path = receiver_summary.get("dual_path") if isinstance(receiver_summary, dict) else {}
+    if isinstance(dual_path, dict) and dual_path:
+        max_frames_sent = max(
+            (int(row.get("frames_sent") or 0) for row in sender_results),
+            default=0,
+        )
+        complete_on_either = int(dual_path.get("complete_on_either") or 0)
+        dual_path = {
+            **dual_path,
+            "frames_sent": max_frames_sent,
+            "lost_on_both": max(0, max_frames_sent - complete_on_either),
+            "effective_redundant_success_percent": (
+                complete_on_either / max_frames_sent * 100 if max_frames_sent else None
+            ),
+        }
     has_sender_traffic = any(int(row.get("bytes_sent") or 0) > 0 for row in sender_results)
     has_receiver_traffic = any(
         int(row.get("datagrams_received") or 0) > 0 for row in receiver_paths.values()
@@ -763,6 +839,7 @@ def _execute_video_probe_stage(
         "validity": "server-confirmed" if has_receiver_traffic else "sender-only",
         "sender_results": sender_results,
         "receiver_summary": receiver_summary,
+        "dual_path": dual_path,
         "paths": joined_paths,
     }
 
@@ -889,6 +966,26 @@ def execute_run(
         ]
         run.summary = {
             "validity": ("live-upload" if has_live_results else "simulated"),
+            "result_schema_version": run.resolved_plan.get("result_schema_version", 2),
+            "protocol": run.resolved_plan.get("metadata", {}).get("protocol", {}),
+            "comparison_eligible": bool(
+                has_live_results
+                and run.resolved_plan.get("metadata", {})
+                .get("protocol", {})
+                .get("protocol_id")
+                == "comparable-benchmark"
+            ),
+            "exclusion_reasons": (
+                []
+                if (
+                    has_live_results
+                    and run.resolved_plan.get("metadata", {})
+                    .get("protocol", {})
+                    .get("protocol_id")
+                    == "comparable-benchmark"
+                )
+                else ["exploratory_or_legacy_protocol"]
+            ),
             "warnings": controller_check.warnings,
             "message": (
                 "Run completed with live measured stages."

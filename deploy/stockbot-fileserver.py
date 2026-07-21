@@ -109,8 +109,16 @@ def prune_expired_reservations() -> None:
         RESERVATIONS.pop(reservation_id, None)
 
 
-def record_udp_datagram(run_id: str, source: str, port: int, size: int) -> None:
+def record_udp_datagram(
+    run_id: str,
+    source: str,
+    port: int,
+    size: int,
+    sequence: int | None = None,
+    send_ns: int | None = None,
+) -> None:
     now = datetime.now(UTC)
+    now_ns = time.time_ns()
     with RUNS_LOCK:
         records = RUNS.setdefault(run_id, [])
         record = next(
@@ -130,20 +138,56 @@ def record_udp_datagram(run_id: str, source: str, port: int, size: int) -> None:
                 "destination_port": port,
                 "bytes_received": 0,
                 "datagrams_received": 0,
-                "started_at": now.replace(microsecond=0).isoformat(),
-                "ended_at": now.replace(microsecond=0).isoformat(),
+                "unique_datagrams": 0,
+                "duplicates": 0,
+                "out_of_order": 0,
+                "missing_datagrams": 0,
+                "first_sequence": None,
+                "last_sequence": None,
+                "max_sequence": None,
+                "sequence_version": 2 if sequence is not None else 1,
+                "started_at": now.isoformat(),
+                "ended_at": now.isoformat(),
+                "start_epoch_ns": now_ns,
+                "last_epoch_ns": now_ns,
                 "duration_seconds": 0.000001,
                 "average_mbit_s": 0.0,
+                "delivered_mbit_s": 0.0,
+                "sender_timestamp_present": send_ns is not None,
+                "_seen_sequences": set(),
                 "token_present": False,
             }
             records.append(record)
         record["bytes_received"] += size
         record["datagrams_received"] += 1
-        started = datetime.fromisoformat(record["started_at"])
-        duration = max((now - started).total_seconds(), 0.000001)
-        record["ended_at"] = now.replace(microsecond=0).isoformat()
+        if sequence is None:
+            record["unique_datagrams"] += 1
+        else:
+            seen_sequences = record.setdefault("_seen_sequences", set())
+            if sequence in seen_sequences:
+                record["duplicates"] += 1
+            else:
+                seen_sequences.add(sequence)
+                record["unique_datagrams"] += 1
+                if record.get("first_sequence") is None:
+                    record["first_sequence"] = sequence
+                last_sequence = record.get("last_sequence")
+                if last_sequence is not None and sequence < int(last_sequence):
+                    record["out_of_order"] += 1
+                record["last_sequence"] = sequence
+                record["max_sequence"] = max(int(record.get("max_sequence") or sequence), sequence)
+                first_sequence = int(record.get("first_sequence") or 0)
+                max_sequence = int(record.get("max_sequence") or sequence)
+                record["missing_datagrams"] = max(
+                    0, (max_sequence - first_sequence + 1) - int(record["unique_datagrams"])
+                )
+        started_ns = int(record.get("start_epoch_ns") or now_ns)
+        duration = max((now_ns - started_ns) / 1_000_000_000, 0.000001)
+        record["ended_at"] = now.isoformat()
+        record["last_epoch_ns"] = now_ns
         record["duration_seconds"] = duration
         record["average_mbit_s"] = record["bytes_received"] * 8 / duration / 1_000_000
+        record["delivered_mbit_s"] = record["average_mbit_s"]
 
 
 def percentile(values: list[float], pct: float) -> float | None:
@@ -152,6 +196,20 @@ def percentile(values: list[float], pct: float) -> float | None:
     ordered = sorted(values)
     index = min(len(ordered) - 1, max(0, round((len(ordered) - 1) * pct)))
     return ordered[index]
+
+
+def public_run_records(run_id: str) -> list[dict]:
+    rows = []
+    with RUNS_LOCK:
+        for record in RUNS.get(run_id, []):
+            row = {key: value for key, value in record.items() if not key.startswith("_")}
+            if row.get("protocol") == "udp":
+                unique = int(row.get("unique_datagrams") or row.get("datagrams_received") or 0)
+                missing = int(row.get("missing_datagrams") or 0)
+                expected = unique + missing
+                row["packet_loss_percent"] = missing / expected * 100 if expected else 0.0
+            rows.append(row)
+    return rows
 
 
 def _new_video_path(source: str, port: int, now_wall: datetime) -> dict:
@@ -371,6 +429,9 @@ def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = F
         if len(first_by_path) >= 2:
             ids = sorted(first_by_path)[:2]
             common = complete_by_path.get(ids[0], set()) & complete_by_path.get(ids[1], set())
+            either = complete_by_path.get(ids[0], set()) | complete_by_path.get(ids[1], set())
+            left_only = complete_by_path.get(ids[0], set()) - complete_by_path.get(ids[1], set())
+            right_only = complete_by_path.get(ids[1], set()) - complete_by_path.get(ids[0], set())
             for frame_id in common:
                 diff_ms = (
                     first_by_path[ids[0]][frame_id] - first_by_path[ids[1]][frame_id]
@@ -387,6 +448,15 @@ def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = F
                 else:
                     winner = ids[0] if comparison_ms < 0 else ids[1]
                     winners[winner] = winners.get(winner, 0) + 1
+            dual_path = {
+                "paths": ids,
+                "complete_on_both": len(common),
+                "complete_on_either": len(either),
+                f"{ids[0]}_only_complete": len(left_only),
+                f"{ids[1]}_only_complete": len(right_only),
+            }
+        else:
+            dual_path = {}
         summary = {
             "run_id": run_id,
             "summary_mode": "final" if finalize else "full",
@@ -394,6 +464,7 @@ def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = F
             "paired_frames_complete": len(paired_diffs),
             "first_arrival_winners": winners,
             "first_arrival_ties": ties,
+            "dual_path": dual_path,
             "path_arrival_delta_ms_p50": percentile([abs(v) for v in paired_diffs], 0.50),
             "path_arrival_delta_ms_p95": percentile([abs(v) for v in paired_diffs], 0.95),
             "path_arrival_delta_ms_p99": percentile([abs(v) for v in paired_diffs], 0.99),
@@ -461,11 +532,30 @@ class UdpUploadHandler(socketserver.BaseRequestHandler):
             return
         if not header.startswith(b"LTAPUDP "):
             return
-        run_id = header.removeprefix(b"LTAPUDP ").decode("utf-8", errors="replace").strip()
+        header_text = header.removeprefix(b"LTAPUDP ").decode("utf-8", errors="replace").strip()
+        sequence = None
+        send_ns = None
+        if header_text.startswith("{"):
+            try:
+                udp_header = json.loads(header_text)
+            except json.JSONDecodeError:
+                return
+            run_id = str(udp_header.get("run_id") or "")
+            if udp_header.get("sequence") is not None:
+                sequence = int(udp_header["sequence"])
+            if udp_header.get("send_ns") is not None:
+                send_ns = int(udp_header["send_ns"])
+        else:
+            run_id = header_text
         if not run_id:
             return
         record_udp_datagram(
-            run_id, self.client_address[0], self.server.server_address[1], len(data)
+            run_id,
+            self.client_address[0],
+            self.server.server_address[1],
+            len(data),
+            sequence=sequence,
+            send_ns=send_ns,
         )
 
 
@@ -551,12 +641,15 @@ class UploadHandler(BaseHTTPRequestHandler):
         run_match = re.fullmatch(r"/api/v1/runs/([^/]+)", path)
         if run_match:
             run_id = unquote(run_match.group(1))
-            self.send_json(HTTPStatus.OK, {"run_id": run_id, "connections": RUNS.get(run_id, [])})
+            self.send_json(
+                HTTPStatus.OK,
+                {"run_id": run_id, "connections": public_run_records(run_id)},
+            )
             return True
         conn_match = re.fullmatch(r"/api/v1/runs/([^/]+)/connections", path)
         if conn_match:
             run_id = unquote(conn_match.group(1))
-            self.send_json(HTTPStatus.OK, RUNS.get(run_id, []))
+            self.send_json(HTTPStatus.OK, public_run_records(run_id))
             return True
         frame_match = re.fullmatch(r"/api/v1/runs/([^/]+)/video-frames", path)
         if frame_match:

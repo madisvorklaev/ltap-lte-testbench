@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
 
+from ltap_testbench.analytics import analytics_run_row
 from ltap_testbench.core.config import get_settings
 from ltap_testbench.db.models import TestRun
+from ltap_testbench.profiles.protocols import protocol_metadata
 
 
 def run_artifact_dir(run: TestRun, root: Path | None = None) -> Path:
@@ -323,6 +325,9 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
     metadata_path = directory / "metadata.json"
     plan_path = directory / "resolved_test_plan.json"
     summary_path = directory / "summary.json"
+    protocol_path = directory / "protocol.json"
+    integrity_path = directory / "integrity.json"
+    analytics_summary_path = directory / "analytics-summary.json"
     events_path = directory / "events.jsonl"
     report_json_path = directory / "report.json"
     report_markdown_path = directory / "report.md"
@@ -342,6 +347,21 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
     )
     write_json(plan_path, run.resolved_plan)
     write_json(summary_path, run.summary)
+    protocol = (
+        run.summary.get("protocol")
+        if isinstance(run.summary, dict) and isinstance(run.summary.get("protocol"), dict)
+        else protocol_metadata(run.resolved_plan)
+    )
+    write_json(protocol_path, protocol)
+    write_json(
+        integrity_path,
+        {
+            "comparison_eligible": bool((run.summary or {}).get("comparison_eligible")),
+            "exclusion_reasons": (run.summary or {}).get("exclusion_reasons") or [],
+            "validity": (run.summary or {}).get("validity"),
+        },
+    )
+    write_json(analytics_summary_path, analytics_run_row(run))
     with events_path.open("w") as event_file:
         for event in run.events:
             event_file.write(
@@ -366,6 +386,9 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
         "metadata": str(metadata_path),
         "resolved_test_plan": str(plan_path),
         "summary": str(summary_path),
+        "protocol": str(protocol_path),
+        "integrity": str(integrity_path),
+        "analytics_summary": str(analytics_summary_path),
         "events": str(events_path),
         "report_json": str(report_json_path),
         "report_markdown": str(report_markdown_path),

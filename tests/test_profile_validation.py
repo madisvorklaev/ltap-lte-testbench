@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from ltap_testbench.profiles.protocols import protocol_hash
 from ltap_testbench.profiles.schemas import (
     PortRange,
     RouterKindValue,
@@ -114,3 +115,24 @@ def test_udp_after_each_tcp_requires_tcp_stage() -> None:
             stages=["udp-upload"],
             udp_upload={"pattern": "after_each_tcp"},
         )
+
+
+def test_protocol_hash_ignores_notes_and_changes_workload() -> None:
+    first = TestPlanConfig(
+        slug="plan-a",
+        name="Plan A",
+        stages=["tcp-upload", "udp-upload"],
+        metadata={"lab": {"notes": "first"}},
+    ).model_dump(mode="json")
+    renamed = {
+        **first,
+        "name": "Different label",
+        "metadata": {"lab": {"notes": "second"}},
+    }
+    changed = {
+        **first,
+        "udp_upload": {**first["udp_upload"], "bitrate_mbit_s": 9.0},
+    }
+
+    assert protocol_hash(first) == protocol_hash(renamed)
+    assert protocol_hash(first) != protocol_hash(changed)

@@ -129,6 +129,9 @@ class VideoProbeConfig(BaseModel):
     scenario: str = Field(default="city", min_length=1, max_length=40)
     payload_bytes: int = Field(default=1200, ge=300, le=9000)
     receiver_settle_seconds: int = Field(default=5, ge=0, le=30)
+    traffic_seed: str = Field(default="video-trace-v1", min_length=1, max_length=80)
+    trace_id: str = Field(default="synthetic-city-v1", min_length=1, max_length=120)
+    generator_version: str = Field(default="synthetic-video-v2", min_length=1, max_length=80)
 
 
 class TemporaryRouterChangesConfig(BaseModel):
@@ -145,6 +148,9 @@ class TestPlanConfig(BaseModel):
     slug: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9][a-z0-9_.-]*$")
     name: str = Field(min_length=1, max_length=160)
     version: str = Field(default="1", min_length=1, max_length=40)
+    protocol_id: str = Field(default="exploratory-lab", min_length=1, max_length=80)
+    protocol_version: str = Field(default="1", min_length=1, max_length=40)
+    result_schema_version: int = Field(default=2, ge=1)
     server_slug: str | None = Field(default=None, min_length=1, max_length=80)
     stages: list[Stage] = Field(default_factory=list)
     latency: LatencyStageConfig = Field(default_factory=LatencyStageConfig)
