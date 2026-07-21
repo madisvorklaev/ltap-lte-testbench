@@ -329,6 +329,11 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
         path_metrics["phase_uploaded_mb"] = round(phase_bytes / 1024 / 1024, 2)
         path_metrics["tcp_average_mbit_s"] = _mbit_s(tcp_bytes, tcp_duration)
         path_metrics["udp_average_mbit_s"] = _mbit_s(udp_bytes, udp_duration)
+    if phase_name == "video":
+        try:
+            metrics["video_probe"] = client.video_frame_stats(f"{run.run_id}-video")
+        except Exception:
+            metrics["video_probe"] = {}
     return metrics
 
 

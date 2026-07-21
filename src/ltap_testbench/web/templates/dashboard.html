@@ -217,9 +217,20 @@
         const n = Number(value);
         return Number.isFinite(n) ? `${n.toFixed(1)}%` : "-";
       };
+      const rateToMbit = (value) => {
+        if (value === null || value === undefined || value === "") return null;
+        if (typeof value === "number") return Number.isFinite(value) ? value / 1000000 : null;
+        const text = String(value).trim().toLowerCase().replace(/\s+/g, "");
+        const match = text.match(/^([0-9]+(?:\.[0-9]+)?)([kmgt]?)(?:bit\/s|bits\/s|bps)?$/);
+        if (!match) return null;
+        const n = Number(match[1]);
+        if (!Number.isFinite(n)) return null;
+        const multiplier = { "": 1, k: 1e3, m: 1e6, g: 1e9, t: 1e12 }[match[2] || ""];
+        return n * multiplier / 1000000;
+      };
       const bitsToMbit = (value) => {
-        const n = Number(value);
-        return Number.isFinite(n) ? `${(n / 1000000).toFixed(2)} Mbit/s` : "-";
+        const n = rateToMbit(value);
+        return Number.isFinite(n) ? `${n.toFixed(2)} Mbit/s` : "-";
       };
       const request = async (url, options = {}) => {
         const response = await fetch(url, {
@@ -261,7 +272,10 @@
         for (const row of rows || []) {
           const id = row.path_id;
           if (!["lte1", "lte2"].includes(id)) continue;
-          setText(`${id}-current`, bitsToMbit(row.tx_rate));
+          const tx = rateToMbit(row.tx_rate);
+          const rx = rateToMbit(row.rx_rate);
+          const displayed = tx && tx > 0 ? tx : rx;
+          setText(`${id}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
           setText(`${id}-band`, row.primary_band || "-");
           setText(`${id}-rsrp`, row.rsrp || "-");
           setText(`${id}-rsrq`, row.rsrq || "-");
@@ -298,17 +312,21 @@
           setText(`${id}-lat-loss`, fmtPct(row?.loss_percent));
         }
       };
-      const applyVideoHealth = (summary) => {
+      const applyVideoHealth = (summary, liveMetrics) => {
         const videoResults = summary.video_probe_results || {};
-        const video = videoResults.receiver_summary || {};
+        const liveVideo = liveMetrics?.video_probe || {};
+        const video = videoResults.receiver_summary || liveVideo || {};
         const paths = videoResults.paths || {};
         for (const id of ["lte1", "lte2"]) {
-          const row = paths[id] || {};
-          const receiver = row.receiver || {};
-          setText(`${id}-video-frames`, row.frames_sent ?? "-");
-          setText(`${id}-video-complete`, row.frames_complete ?? "-");
+          const liveRow = (liveVideo.paths || {})[id] || {};
+          const row = paths[id] || liveRow;
+          const receiver = row.receiver || liveRow || {};
+          const complete = row.frames_complete ?? receiver.frames_complete;
+          const sentOrSeen = row.frames_sent ?? receiver.frames_seen;
+          setText(`${id}-video-frames`, sentOrSeen ?? "-");
+          setText(`${id}-video-complete`, complete ?? "-");
           setText(`${id}-video-lost`, row.frames_fully_lost ?? "-");
-          setText(`${id}-video-incomplete`, row.frames_not_decodable ?? "-");
+          setText(`${id}-video-incomplete`, row.frames_not_decodable ?? receiver.frames_partial ?? "-");
           setText(`${id}-video-success`, fmtPct(row.frame_success_percent));
           setText(`${id}-video-p95`, fmtMs(receiver.fragment_arrival_span_ms_p95));
         }
@@ -337,7 +355,7 @@
         applyAverages(run.summary || {}, run.live_metrics || {});
         applyPhaseUpload(run.live_metrics || {});
         applyLatency(run);
-        applyVideoHealth(run.summary || {});
+        applyVideoHealth(run.summary || {}, run.live_metrics || {});
         $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
         $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
       };
