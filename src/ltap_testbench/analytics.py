@@ -211,25 +211,26 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
 def cohort_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     compatible_rows = [row for row in rows if row.get("comparison_eligible")]
     hashes = sorted({str(row.get("protocol_hash")) for row in rows if row.get("protocol_hash")})
+    metric_rows = compatible_rows if compatible_rows else rows
     metrics: dict[str, Any] = {}
-    for path_id in sorted({path_id for row in rows for path_id in row.get("paths", {})}):
+    for path_id in sorted({path_id for row in metric_rows for path_id in row.get("paths", {})}):
         metrics[path_id] = {
             "tcp_mbit_s": aggregate(
                 [
                     float_value(row.get("paths", {}).get(path_id, {}).get("tcp_mbit_s"))
-                    for row in rows
+                    for row in metric_rows
                 ]
             ),
             "udp_mbit_s": aggregate(
                 [
                     float_value(row.get("paths", {}).get(path_id, {}).get("udp_mbit_s"))
-                    for row in rows
+                    for row in metric_rows
                 ]
             ),
             "latency_avg_ms": aggregate(
                 [
                     float_value(row.get("paths", {}).get(path_id, {}).get("latency_avg_ms"))
-                    for row in rows
+                    for row in metric_rows
                 ]
             ),
             "video_success_percent": aggregate(
@@ -237,15 +238,35 @@ def cohort_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     float_value(
                         row.get("paths", {}).get(path_id, {}).get("video_success_percent")
                     )
-                    for row in rows
+                    for row in metric_rows
                 ]
             ),
+        }
+    minimum_evidence_met = len(compatible_rows) >= 5 and len(hashes) == 1
+    if not rows:
+        conclusion = {"status": "NO_DATA", "reason": "no runs matched the selected filters"}
+    elif len(hashes) > 1:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": "selected runs use multiple protocol hashes",
+        }
+    elif len(compatible_rows) < 5:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": "fewer than five comparable runs matched the selected filters",
+        }
+    else:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": "baseline and candidate cohorts are not selected yet",
         }
     return {
         "run_count": len(rows),
         "eligible_run_count": len(compatible_rows),
+        "metric_run_count": len(metric_rows),
         "protocol_hashes": hashes,
         "mixed_protocols": len(hashes) > 1,
         "metrics": metrics,
-        "minimum_evidence_met": len(compatible_rows) >= 5 and len(hashes) == 1,
+        "minimum_evidence_met": minimum_evidence_met,
+        "conclusion": conclusion,
     }

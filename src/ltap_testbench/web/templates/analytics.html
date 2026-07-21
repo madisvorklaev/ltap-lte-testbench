@@ -273,10 +273,10 @@
         $("run-count").textContent = runs.length;
         $("eligible-count").textContent = data.summary?.eligible_run_count ?? 0;
         $("protocol-count").textContent = data.summary?.protocol_hashes?.length ?? 0;
-        $("evidence-status").textContent = data.summary?.minimum_evidence_met ? "Ready" : "Inconclusive";
+        $("evidence-status").textContent = data.summary?.conclusion?.status || "INCONCLUSIVE";
         $("compatibility-note").textContent = data.summary?.mixed_protocols
           ? "Selected runs use multiple protocol hashes; treat charts as exploratory, not a controlled comparison."
-          : "Runs with the same protocol hash can be compared when metadata and sample count are sufficient.";
+          : (data.summary?.conclusion?.reason || "Runs with the same protocol hash can be compared when metadata and sample count are sufficient.");
         drawChart("chart-tcp", runs, "tcp_mbit_s", "");
         drawChart("chart-udp", runs, "udp_mbit_s", "");
         drawChart("chart-latency", runs, "latency_avg_ms", " ms");

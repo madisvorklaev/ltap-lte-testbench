@@ -195,6 +195,29 @@ def test_cohort_summary_flags_mixed_protocols() -> None:
 
     assert summary["mixed_protocols"] is True
     assert summary["minimum_evidence_met"] is False
+    assert summary["conclusion"]["status"] == "INCONCLUSIVE"
+    assert "multiple protocol" in summary["conclusion"]["reason"]
+
+
+def test_cohort_summary_requires_minimum_evidence_and_reports_variability() -> None:
+    rows = [
+        {
+            "protocol_hash": "aaa",
+            "comparison_eligible": True,
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for value in [10, 20, 30, 40, 50]
+    ]
+
+    summary = cohort_summary(rows)
+
+    assert summary["minimum_evidence_met"] is True
+    assert summary["conclusion"]["status"] == "INCONCLUSIVE"
+    assert "baseline and candidate" in summary["conclusion"]["reason"]
+    assert summary["metrics"]["lte1"]["tcp_mbit_s"]["n"] == 5
+    assert summary["metrics"]["lte1"]["tcp_mbit_s"]["median"] == 30
+    assert summary["metrics"]["lte1"]["tcp_mbit_s"]["p25"] == 20
+    assert summary["metrics"]["lte1"]["tcp_mbit_s"]["p75"] == 40
 
 
 def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
