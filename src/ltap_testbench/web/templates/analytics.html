@@ -43,6 +43,10 @@
       .metric strong { display: block; font-size: 18px; margin-top: 3px; }
       .legend { display: flex; gap: 12px; color: var(--muted); font-size: 12px; margin-top: 6px; }
       .swatch { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 4px; }
+      .status { font-weight: 750; }
+      .status.good { color: var(--green); }
+      .status.bad { color: var(--red); }
+      .status.warn { color: var(--amber); }
       .muted { color: var(--muted); }
       @media (max-width: 720px) {
         main { padding: 12px; }
@@ -106,6 +110,54 @@
           <div class="metric"><span>Evidence status</span><strong id="evidence-status">-</strong></div>
         </div>
         <p id="compatibility-note" class="muted"></p>
+      </section>
+
+      <section>
+        <h2>Compare Variants</h2>
+        <div class="toolbar">
+          <label>Baseline
+            <select id="baseline-variant">
+              <option value="">Choose baseline</option>
+              {% for variant in variant_options %}
+              <option value="{{ variant.id }}">{{ variant.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Candidate
+            <select id="candidate-variant">
+              <option value="">Choose candidate</option>
+              {% for variant in variant_options %}
+              <option value="{{ variant.id }}">{{ variant.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Metric
+            <select id="compare-metric">
+              <option value="tcp_mbit_s">TCP median</option>
+              <option value="udp_mbit_s">UDP delivered</option>
+              <option value="latency_avg_ms">Latency average</option>
+              <option value="udp_loss_percent">UDP loss</option>
+              <option value="video_success_percent">Video success</option>
+            </select>
+          </label>
+          <label>Path
+            <select id="compare-path">
+              <option value="lte1">lte1</option>
+              <option value="lte2">lte2</option>
+            </select>
+          </label>
+          <label>Minimum runs
+            <input id="compare-min-runs" type="number" min="1" max="100" value="5">
+          </label>
+          <button id="compare" class="primary" type="button">Compare</button>
+        </div>
+        <div class="metrics" style="margin-top:10px;">
+          <div class="metric"><span>Conclusion</span><strong id="compare-status">-</strong></div>
+          <div class="metric"><span>Baseline median</span><strong id="compare-baseline">-</strong></div>
+          <div class="metric"><span>Candidate median</span><strong id="compare-candidate">-</strong></div>
+          <div class="metric"><span>Delta</span><strong id="compare-delta">-</strong></div>
+        </div>
+        <p id="compare-note" class="muted"></p>
       </section>
 
       <section>
@@ -173,6 +225,12 @@
       const pathValue = (run, path, key) => run.paths?.[path]?.[key] ?? null;
       const allValues = (runs, key) => runs.flatMap((run) => ["lte1", "lte2"].map((path) => pathValue(run, path, key))).filter((value) => Number.isFinite(Number(value)));
       const setMetric = (id, value, suffix = "") => { $(id).textContent = fmt(value, suffix); };
+      const statusClass = (status) => {
+        if (status === "LIKELY_IMPROVEMENT") return "status good";
+        if (status === "LIKELY_REGRESSION") return "status bad";
+        if (status === "INCONCLUSIVE") return "status warn";
+        return "status";
+      };
       const maxValue = (values, floor = 1) => Math.max(floor, ...values.map(Number));
       const drawChart = (id, runs, key, suffix, invert = false) => {
         const canvas = $(id);
@@ -258,6 +316,29 @@
           `<option value="${hash}" ${hash === current ? "selected" : ""}>${hash.slice(0, 12)}</option>`
         )).join("");
       };
+      const loadCompare = async () => {
+        const baseline = $("baseline-variant").value;
+        const candidate = $("candidate-variant").value;
+        if (!baseline || !candidate) {
+          $("compare-note").textContent = "Choose a baseline and candidate variant.";
+          return;
+        }
+        const params = new URLSearchParams({
+          baseline_variant_id: baseline,
+          candidate_variant_id: candidate,
+          metric_name: $("compare-metric").value,
+          path_id: $("compare-path").value,
+          min_runs: $("compare-min-runs").value,
+        });
+        const data = await request(`/api/v1/analytics/compare?${params}`);
+        const status = data.conclusion?.status || "-";
+        $("compare-status").className = statusClass(status);
+        $("compare-status").textContent = status;
+        setMetric("compare-baseline", data.baseline?.median);
+        setMetric("compare-candidate", data.candidate?.median);
+        setMetric("compare-delta", data.conclusion?.delta);
+        $("compare-note").textContent = data.conclusion?.reason || "";
+      };
       const load = async () => {
         const params = new URLSearchParams();
         const antenna = $("antenna-filter").value;
@@ -284,6 +365,11 @@
         renderTable(runs);
       };
       $("apply").addEventListener("click", load);
+      $("compare").addEventListener("click", () => loadCompare().catch((error) => {
+        $("compare-status").className = "status bad";
+        $("compare-status").textContent = "ERROR";
+        $("compare-note").textContent = error.message;
+      }));
       load().catch((error) => { $("runs-body").innerHTML = `<tr><td colspan="11">${error.message}</td></tr>`; });
     </script>
   </body>

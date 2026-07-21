@@ -822,6 +822,12 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert antennas_page.status_code == 200
         assert "Antenna Profiles" in antennas_page.text
         assert "Create Profile" in antennas_page.text
+
+        analytics_page = client.get("/analytics")
+        assert analytics_page.status_code == 200
+        assert "Compare Variants" in analytics_page.text
+        assert "baseline-variant" in analytics_page.text
+        assert "roof panel" in analytics_page.text
     finally:
         app.dependency_overrides.clear()
 

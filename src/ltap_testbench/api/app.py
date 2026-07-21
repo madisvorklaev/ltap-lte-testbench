@@ -860,12 +860,26 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
 
 @app.get("/analytics", response_class=HTMLResponse)
 def analytics(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    experiments = session.scalars(select(Experiment).order_by(Experiment.id.desc())).all()
+    experiment_names = {experiment.id: experiment.name for experiment in experiments}
+    variants = session.scalars(select(ExperimentVariant).order_by(ExperimentVariant.id)).all()
+    variant_options = [
+        {
+            "id": variant.id,
+            "label": (
+                f"{experiment_names.get(variant.experiment_id, 'Experiment')} · "
+                f"{variant.label}"
+            ),
+        }
+        for variant in variants
+    ]
     return templates.TemplateResponse(
         request,
         "analytics.html",
         {
             "version": __version__,
             "antenna_options": _antenna_options(session),
+            "variant_options": variant_options,
         },
     )
 
