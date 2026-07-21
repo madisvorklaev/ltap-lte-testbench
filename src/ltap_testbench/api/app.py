@@ -893,6 +893,19 @@ def antennas(request: Request) -> HTMLResponse:
     )
 
 
+@app.get("/experiments", response_class=HTMLResponse)
+def experiments_page(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    protocols = session.scalars(select(BenchmarkProtocol).order_by(BenchmarkProtocol.slug)).all()
+    return templates.TemplateResponse(
+        request,
+        "experiments.html",
+        {
+            "version": __version__,
+            "benchmark_protocols": protocols,
+        },
+    )
+
+
 @app.get("/runs/{run_id}", response_class=HTMLResponse)
 def run_detail(
     run_id: str,

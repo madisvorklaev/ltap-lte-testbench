@@ -817,11 +817,18 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert "Test Series" in dashboard.text
         assert "batch-table" in dashboard.text
         assert "Create Series" in dashboard.text
+        assert "/experiments" in dashboard.text
 
         antennas_page = client.get("/antennas")
         assert antennas_page.status_code == 200
         assert "Antenna Profiles" in antennas_page.text
         assert "Create Profile" in antennas_page.text
+
+        experiments_page = client.get("/experiments")
+        assert experiments_page.status_code == 200
+        assert "Create Experiment" in experiments_page.text
+        assert "Create Variant" in experiments_page.text
+        assert "variant-experiment" in experiments_page.text
 
         analytics_page = client.get("/analytics")
         assert analytics_page.status_code == 200
