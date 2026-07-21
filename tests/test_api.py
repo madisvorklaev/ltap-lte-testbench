@@ -627,5 +627,10 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert "Test Series" in dashboard.text
         assert "batch-table" in dashboard.text
         assert "Create Series" in dashboard.text
+
+        antennas_page = client.get("/antennas")
+        assert antennas_page.status_code == 200
+        assert "Antenna Profiles" in antennas_page.text
+        assert "Create Profile" in antennas_page.text
     finally:
         app.dependency_overrides.clear()

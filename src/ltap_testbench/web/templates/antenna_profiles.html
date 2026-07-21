@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Antennas · LtAP LTE Testbench</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --text: #18212f;
+        --muted: #617083;
+        --line: #d7dee8;
+        --green: #0f766e;
+        --bad: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+      header { background: #172033; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      main { max-width: 1180px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+      section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+      h1, h2 { margin: 0; letter-spacing: 0; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; margin-bottom: 10px; }
+      label { display: grid; gap: 4px; font-size: 12px; font-weight: 650; color: var(--muted); }
+      input, select, textarea { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; color: var(--text); background: #fff; width: 100%; }
+      textarea { min-height: 72px; resize: vertical; }
+      button, .button { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; font: inherit; background: #fff; color: var(--text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+      button.primary { background: var(--green); border-color: var(--green); color: #fff; }
+      button:disabled { opacity: .55; cursor: wait; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th, td { border-bottom: 1px solid #e8edf3; text-align: left; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
+      th { color: var(--muted); font-weight: 650; }
+      code { background: #edf2f7; padding: 2px 4px; border-radius: 4px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+      .muted { color: var(--muted); }
+      @media (max-width: 820px) {
+        main { padding: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Antenna Profiles</h1>
+      <div class="toolbar">
+        <a class="button" href="/">Dashboard</a>
+        <a class="button" href="/analytics">Analytics</a>
+        <span>v{{ version }}</span>
+      </div>
+    </header>
+    <main>
+      <section>
+        <h2>Create Profile</h2>
+        <div class="grid">
+          <label>Slug
+            <input id="slug" placeholder="roof-panel-v1">
+          </label>
+          <label>Manufacturer
+            <input id="manufacturer" placeholder="Poynting">
+          </label>
+          <label>Model
+            <input id="model" placeholder="MIMO-3">
+          </label>
+          <label>Type
+            <input id="antenna-type" value="mimo">
+          </label>
+          <label>MIMO ports
+            <input id="mimo-port-count" type="number" min="1" max="8" value="2">
+          </label>
+          <label>Gain source
+            <select id="gain-source">
+              <option value="manufacturer" selected>manufacturer</option>
+              <option value="measured">measured</option>
+              <option value="estimated">estimated</option>
+              <option value="unknown">unknown</option>
+            </select>
+          </label>
+          <label>Nominal peak gain
+            <input id="nominal-peak-gain" type="number" step="0.1" placeholder="dBi">
+          </label>
+          <label>Cable type
+            <input id="cable-type" placeholder="LMR-240">
+          </label>
+          <label>Cable length
+            <input id="cable-length" type="number" min="0" step="0.1" value="0">
+          </label>
+          <label>Estimated cable loss
+            <input id="estimated-cable-loss" type="number" min="0" step="0.1" placeholder="dB">
+          </label>
+          <label>Connector loss
+            <input id="connector-loss" type="number" min="0" step="0.1" placeholder="dB">
+          </label>
+          <label>Mounting location
+            <input id="mounting-location" placeholder="roof mast">
+          </label>
+          <label>Orientation
+            <input id="orientation" placeholder="south, vertical">
+          </label>
+        </div>
+        <label style="margin-top:10px;">Notes
+          <textarea id="notes" placeholder="Cable route, port mapping, exact placement"></textarea>
+        </label>
+        <div class="toolbar" style="margin-top:12px;">
+          <button id="create" class="primary" type="button">Create Profile</button>
+          <button id="refresh" type="button">Refresh</button>
+        </div>
+        <p id="message" class="muted">Structured antenna profiles are required for benchmark series.</p>
+      </section>
+
+      <section>
+        <h2>Profiles</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Profile</th><th>Gain</th><th>Cable</th><th>Mounting</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="profiles"></tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const request = async (url, options = {}) => {
+        const response = await fetch(url, {
+          headers: {"Content-Type": "application/json", ...(options.headers || {})},
+          ...options
+        });
+        const text = await response.text();
+        let payload = text;
+        try { payload = text ? JSON.parse(text) : {}; } catch (_error) {}
+        if (!response.ok) throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
+        return payload;
+      };
+      const numberOrNull = (id) => $(id).value === "" ? null : Number($(id).value);
+      const render = (rows) => {
+        const body = $("profiles");
+        body.innerHTML = "";
+        if (!rows.length) {
+          body.innerHTML = "<tr><td colspan=\"5\" class=\"muted\">No antenna profiles yet.</td></tr>";
+          return;
+        }
+        for (const row of rows) {
+          const effective = row.effective_gain_dbi == null ? "-" : `${Number(row.effective_gain_dbi).toFixed(1)} dBi`;
+          const nominal = row.nominal_peak_gain_dbi == null ? "unknown" : `${Number(row.nominal_peak_gain_dbi).toFixed(1)} dBi`;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${row.manufacturer} ${row.model}</strong><br><code>${row.slug}</code><br><span class="muted">${row.antenna_type}, ${row.mimo_port_count} ports</span></td>
+            <td>${effective}<br><span class="muted">${nominal}, ${row.gain_source}</span></td>
+            <td>${row.cable_type || "-"}<br><span class="muted">${row.cable_length_m || 0} m, ${(row.estimated_cable_loss_db ?? "-")} dB cable, ${(row.connector_loss_db ?? "-")} dB connector</span></td>
+            <td>${row.mounting_location || "-"}<br><span class="muted">${row.orientation || ""}</span></td>
+            <td>${row.notes || ""}</td>`;
+          body.appendChild(tr);
+        }
+      };
+      const load = async () => render(await request("/api/v1/antenna-profiles"));
+      const create = async () => {
+        const payload = {
+          slug: $("slug").value.trim(),
+          manufacturer: $("manufacturer").value.trim(),
+          model: $("model").value.trim(),
+          antenna_type: $("antenna-type").value.trim() || "mimo",
+          mimo_port_count: Number($("mimo-port-count").value || 2),
+          gain_source: $("gain-source").value,
+          nominal_peak_gain_dbi: numberOrNull("nominal-peak-gain"),
+          cable_type: $("cable-type").value.trim(),
+          cable_length_m: Number($("cable-length").value || 0),
+          estimated_cable_loss_db: numberOrNull("estimated-cable-loss"),
+          connector_loss_db: numberOrNull("connector-loss"),
+          mounting_location: $("mounting-location").value.trim(),
+          orientation: $("orientation").value.trim(),
+          notes: $("notes").value.trim(),
+        };
+        const row = await request("/api/v1/antenna-profiles", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        $("message").textContent = `Created ${row.slug}`;
+        await load();
+      };
+      $("create").addEventListener("click", async () => {
+        $("create").disabled = true;
+        try { await create(); }
+        catch (error) { $("message").textContent = error.message; }
+        finally { $("create").disabled = false; }
+      });
+      $("refresh").addEventListener("click", () => load().catch((error) => {
+        $("message").textContent = error.message;
+      }));
+      load().catch((error) => { $("message").textContent = error.message; });
+    </script>
+  </body>
+</html>

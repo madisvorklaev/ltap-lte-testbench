@@ -761,6 +761,15 @@ def analytics(request: Request, session: Session = Depends(get_session)) -> HTML
     )
 
 
+@app.get("/antennas", response_class=HTMLResponse)
+def antennas(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "antenna_profiles.html",
+        {"version": __version__},
+    )
+
+
 @app.get("/runs/{run_id}", response_class=HTMLResponse)
 def run_detail(
     run_id: str,
