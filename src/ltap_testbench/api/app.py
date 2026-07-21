@@ -174,14 +174,16 @@ def _clear_lab_reservations(session: Session) -> None:
 
 def _run_lab_background(run_id: str) -> None:
     global LAB_ACTIVE_RUN_ID
-    with SessionLocal() as session:
-        run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
-        if run is None:
-            return
-        execute_run(session, run)
-    with LAB_LOCK:
-        if run_id == LAB_ACTIVE_RUN_ID:
-            LAB_ACTIVE_RUN_ID = None
+    try:
+        with SessionLocal() as session:
+            run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+            if run is None:
+                return
+            execute_run(session, run)
+    finally:
+        with LAB_LOCK:
+            if run_id == LAB_ACTIVE_RUN_ID:
+                LAB_ACTIVE_RUN_ID = None
 
 
 def _latest_lab_run(session: Session) -> TestRun | None:
@@ -244,6 +246,12 @@ def _mbit_s(byte_count: int, duration_seconds: float) -> float | None:
 
 def _current_phase_info(run: TestRun) -> dict[str, Any]:
     for event in reversed(run.events):
+        if event.event_type == "video-probe-stage-started":
+            return {
+                "name": "video",
+                "duration_seconds": event.details.get("duration_seconds"),
+                "bitrate_mbit_s": event.details.get("bitrate_mbit_s"),
+            }
         if event.event_type == "udp-upload-stage-started":
             return {"name": "udp", "label": event.details.get("label", "end")}
         if event.event_type == "upload-stage-started":
@@ -390,6 +398,23 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
     if payload.video_scenario not in {"parked", "city", "highway", "rough-road"}:
         raise HTTPException(status_code=400, detail="unsupported video scenario")
     try:
+        with LAB_LOCK:
+            active_run_id = LAB_ACTIVE_RUN_ID
+        if active_run_id:
+            active_run = session.scalar(select(TestRun).where(TestRun.run_id == active_run_id))
+            if active_run is not None and active_run.state not in {
+                RunState.COMPLETED,
+                RunState.FAILED,
+                RunState.CANCELLED,
+                RunState.INTERRUPTED,
+            }:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"lab run {active_run_id} is already active",
+                )
+            with LAB_LOCK:
+                if active_run_id == LAB_ACTIVE_RUN_ID:
+                    LAB_ACTIVE_RUN_ID = None
         _clear_lab_reservations(session)
         _lab_router(session, payload.router_ip)
         _stockbot(session)

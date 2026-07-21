@@ -53,22 +53,31 @@ class RouterOsApi:
     def _decode_len(self) -> int:
         if self.sock is None:
             raise RuntimeError("RouterOS API socket is not connected")
-        first = self.sock.recv(1)
-        if not first:
-            raise EOFError("RouterOS API closed the connection")
+        first = self._recv_exact(1)
         byte = first[0]
         if (byte & 0x80) == 0:
             return byte
         if (byte & 0xC0) == 0x80:
-            return ((byte & ~0xC0) << 8) | self.sock.recv(1)[0]
+            return ((byte & ~0xC0) << 8) | self._recv_exact(1)[0]
         if (byte & 0xE0) == 0xC0:
-            data = self.sock.recv(2)
+            data = self._recv_exact(2)
             return ((byte & ~0xE0) << 16) | (data[0] << 8) | data[1]
         if (byte & 0xF0) == 0xE0:
-            data = self.sock.recv(3)
+            data = self._recv_exact(3)
             return ((byte & ~0xF0) << 24) | (data[0] << 16) | (data[1] << 8) | data[2]
-        data = self.sock.recv(4)
+        data = self._recv_exact(4)
         return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]
+
+    def _recv_exact(self, length: int) -> bytes:
+        if self.sock is None:
+            raise RuntimeError("RouterOS API socket is not connected")
+        data = b""
+        while len(data) < length:
+            chunk = self.sock.recv(length - len(data))
+            if not chunk:
+                raise EOFError("RouterOS API closed the connection")
+            data += chunk
+        return data
 
     def _write_word(self, word: str) -> None:
         if self.sock is None:
@@ -82,11 +91,7 @@ class RouterOsApi:
             length = self._decode_len()
             if length == 0:
                 return words
-            if self.sock is None:
-                raise RuntimeError("RouterOS API socket is not connected")
-            data = b""
-            while len(data) < length:
-                data += self.sock.recv(length - len(data))
+            data = self._recv_exact(length)
             words.append(data.decode(errors="replace"))
 
     def command(self, words: list[str]) -> list[list[str]]:
@@ -97,8 +102,8 @@ class RouterOsApi:
         while True:
             sentence = self._read_sentence()
             replies.append(sentence)
-            if sentence and sentence[0] in ("!done", "!fatal"):
-                if sentence[0] == "!fatal":
+            if sentence and sentence[0] in ("!done", "!fatal", "!trap"):
+                if sentence[0] in {"!fatal", "!trap"}:
                     raise RuntimeError(sentence)
                 return replies
 
@@ -219,11 +224,17 @@ class MikroTikRouterAdapter(RouterAdapter):
             monitor = monitors.get(interface, {})
             status = monitor.get("status") or monitor.get("registration-status")
             route_ok = True
+            matching_routes = []
             if routing_table:
-                route_ok = any(
-                    route.get("gateway") == interface and routing_table in route.get("comment", "")
+                matching_routes = [
+                    route
                     for route in routes
-                )
+                    if route.get("gateway") == interface
+                    and route.get("routing-table") == routing_table
+                    and route.get("active") == "true"
+                    and route.get("disabled") != "true"
+                ]
+                route_ok = bool(matching_routes)
             ok = (
                 bool(row)
                 and row.get("disabled") != "true"
@@ -250,6 +261,7 @@ class MikroTikRouterAdapter(RouterAdapter):
                         "rsrp": monitor.get("rsrp"),
                         "rsrq": monitor.get("rsrq"),
                         "sinr": monitor.get("sinr"),
+                        "matching_routes": matching_routes,
                     },
                 )
             )
@@ -298,24 +310,20 @@ class MikroTikRouterAdapter(RouterAdapter):
             for path in self._paths():
                 path_id = path.get("id")
                 routing_table = path.get("routing_table")
-                commands = [
-                    [
-                        "/ping",
-                        f"=address={target_host}",
-                        f"=count={count}",
-                        f"=routing-table={routing_table}",
-                    ],
-                    ["/ping", f"=address={target_host}", f"=count={count}"],
-                ]
                 rows = []
                 routed = False
-                for index, command in enumerate(commands):
-                    if index == 0 and not routing_table:
-                        continue
-                    rows = api.rows(api.command(command))
-                    if rows:
-                        routed = index == 0
-                        break
+                if routing_table:
+                    rows = api.rows(
+                        api.command(
+                            [
+                                "/ping",
+                                f"=address={target_host}",
+                                f"=count={count}",
+                                f"=routing-table={routing_table}",
+                            ]
+                        )
+                    )
+                    routed = bool(rows)
                 samples = [_routeros_duration_to_ms(row.get("time")) for row in rows]
                 samples = [sample for sample in samples if sample is not None]
                 last = rows[-1] if rows else {}
@@ -327,6 +335,8 @@ class MikroTikRouterAdapter(RouterAdapter):
                         "target_host": target_host,
                         "routing_table": routing_table,
                         "routing_table_used": routed,
+                        "validity": "path-routed" if routed else "invalid",
+                        "error": None if routed else "routed ping returned no rows",
                         "sent": sent,
                         "received": received,
                         "loss_percent": _float_or_none(last.get("packet-loss")),

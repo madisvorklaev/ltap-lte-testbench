@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import ClassVar
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class RouterKindValue(StrEnum):
@@ -13,6 +13,12 @@ class RouterKindValue(StrEnum):
 class Protocol(StrEnum):
     TCP = "tcp"
     UDP = "udp"
+
+
+class UdpUploadPattern(StrEnum):
+    AFTER_EACH_TCP = "after_each_tcp"
+    BEGINNING = "beginning"
+    END = "end"
 
 
 class PortRange(BaseModel):
@@ -68,12 +74,17 @@ class RouterProfileConfig(BaseModel):
 
 
 class LatencyStageConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     duration_seconds: int = Field(default=60, ge=1)
     interval_ms: int = Field(default=100, ge=10)
 
 
 class TcpUploadStageConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     duration_seconds: int = Field(default=30, ge=1)
+    count: int = Field(default=1, ge=1, le=100)
     parallel_streams: list[int] = Field(default_factory=lambda: [1])
     payload_bytes: int | None = Field(default=None, ge=1)
 
@@ -85,18 +96,37 @@ class TcpUploadStageConfig(BaseModel):
 
 
 class UdpUploadStageConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     duration_seconds: int = Field(default=30, ge=1)
     bitrate_mbit_s: float = Field(default=2.0, gt=0)
     datagram_bytes: int = Field(default=1200, ge=64, le=9000)
+    pattern: UdpUploadPattern = UdpUploadPattern.END
+
+
+class VideoProbeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    duration_seconds: int = Field(default=30, ge=1, le=3600)
+    bitrate_mbit_s: float = Field(default=5.0, gt=0, le=50)
+    fps: int = Field(default=25, ge=1, le=120)
+    resolution: str = Field(default="1080p", min_length=1, max_length=20)
+    scenario: str = Field(default="city", min_length=1, max_length=40)
+    payload_bytes: int = Field(default=1200, ge=300, le=9000)
+    receiver_settle_seconds: int = Field(default=5, ge=0, le=30)
 
 
 class TemporaryRouterChangesConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     disable_fasttrack: bool = False
     clear_test_connections: bool = True
 
 
 class TestPlanConfig(BaseModel):
     __test__: ClassVar[bool] = False
+    model_config = ConfigDict(extra="forbid")
 
     slug: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9][a-z0-9_.-]*$")
     name: str = Field(min_length=1, max_length=160)
@@ -106,6 +136,7 @@ class TestPlanConfig(BaseModel):
     latency: LatencyStageConfig = Field(default_factory=LatencyStageConfig)
     tcp_upload: TcpUploadStageConfig = Field(default_factory=TcpUploadStageConfig)
     udp_upload: UdpUploadStageConfig = Field(default_factory=UdpUploadStageConfig)
+    video_probe: VideoProbeConfig = Field(default_factory=VideoProbeConfig)
     traffic: dict = Field(default_factory=dict)
     telemetry: dict = Field(default_factory=dict)
     temporary_router_changes: TemporaryRouterChangesConfig = Field(

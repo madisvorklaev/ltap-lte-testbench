@@ -159,29 +159,39 @@ def render_markdown_report(payload: dict) -> str:
 
     video_probe = summary.get("video_probe_results") or {}
     receiver_summary = video_probe.get("receiver_summary") or {}
+    video_paths = video_probe.get("paths") or {}
     lines.extend(["## UDP Video Frame Probe", ""])
-    if receiver_summary.get("paths"):
+    if video_paths or receiver_summary.get("paths"):
         lines.extend(
             [
                 (
-                    "| Path | Source | Frames seen | Complete | Incomplete | "
-                    "p95 frame ms | Max frame ms |"
+                    "| Path | Source | Sent | Seen | Complete | Partial | Fully lost | "
+                    "Not decodable | Success % | p95 fragment span ms |"
                 ),
-                "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ]
         )
-        for path_id, row in sorted(receiver_summary.get("paths", {}).items()):
+        rows = video_paths or receiver_summary.get("paths", {})
+        for path_id, row in sorted(rows.items()):
+            receiver = row.get("receiver") or row
             lines.append(
                 (
-                    "| {path} | {source} | {seen} | {complete} | {incomplete} | {p95} | {max_ms} |"
+                    "| {path} | {source} | {sent} | {seen} | {complete} | {partial} | "
+                    "{lost} | {not_decodable} | {success} | {p95} |"
                 ).format(
                     path=_format_value(path_id),
-                    source=_format_value(row.get("source")),
+                    source=_format_value(receiver.get("source")),
+                    sent=_format_value(row.get("frames_sent")),
                     seen=_format_value(row.get("frames_seen")),
                     complete=_format_value(row.get("frames_complete")),
-                    incomplete=_format_value(row.get("frames_incomplete")),
-                    p95=_format_float(row.get("frame_completion_ms_p95")),
-                    max_ms=_format_float(row.get("frame_completion_ms_max")),
+                    partial=_format_value(row.get("frames_partial")),
+                    lost=_format_value(row.get("frames_fully_lost")),
+                    not_decodable=_format_value(row.get("frames_not_decodable")),
+                    success=_format_float(row.get("frame_success_percent")),
+                    p95=_format_float(
+                        receiver.get("fragment_arrival_span_ms_p95")
+                        or receiver.get("frame_completion_ms_p95")
+                    ),
                 )
             )
         winners = receiver_summary.get("first_arrival_winners") or {}
@@ -194,7 +204,15 @@ def render_markdown_report(payload: dict) -> str:
                 ),
                 f"- First-arrival winners: `{json.dumps(winners, sort_keys=True)}`",
                 (
-                    "- p95 path arrival difference ms: "
+                    "- First-arrival ties: "
+                    f"{_format_value(receiver_summary.get('first_arrival_ties'))}"
+                ),
+                (
+                    "- p95 corrected path arrival difference ms: "
+                    f"{_format_float(receiver_summary.get('corrected_path_arrival_delta_ms_p95'))}"
+                ),
+                (
+                    "- p95 raw path arrival difference ms: "
                     f"{_format_float(receiver_summary.get('path_arrival_delta_ms_p95'))}"
                 ),
                 "",

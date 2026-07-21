@@ -41,8 +41,9 @@ def run_udp_upload(
             datagrams += 1
             next_send += interval
             sleep_for = next_send - time.monotonic()
-            if sleep_for > 0:
+            while sleep_for > 0:
                 time.sleep(min(sleep_for, 0.05))
+                sleep_for = next_send - time.monotonic()
     elapsed = max(time.monotonic() - start, 0.001)
     bytes_sent = datagrams * datagram_bytes
     return UdpUploadResult(

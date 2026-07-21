@@ -29,6 +29,23 @@ class VideoUdpProbeResult:
     datagrams_sent: int
     bytes_sent: int
     average_mbit_s: float
+    first_send_ns: int | None
+    last_send_ns: int | None
+
+
+def _frame_weight(
+    frame_index: int,
+    fps: int,
+    scenario: str,
+    rng: random.Random,
+) -> float:
+    burst = SCENARIO_BURST.get(scenario, SCENARIO_BURST["city"])
+    keyframe = frame_index % fps == 0
+    keyframe_factor = 2.2 + burst * 0.8
+    if keyframe:
+        return keyframe_factor * rng.uniform(0.9, 1.1)
+    p_frame_base = max(0.25, (fps - keyframe_factor) / max(1, fps - 1))
+    return max(0.2, p_frame_base * rng.normalvariate(1.0, 0.10 + burst * 0.05))
 
 
 def _frame_size_bytes(
@@ -38,26 +55,25 @@ def _frame_size_bytes(
     scenario: str,
     rng: random.Random,
 ) -> int:
-    average = bitrate_mbit_s * 1_000_000 / 8 / fps * 0.8
-    burst = SCENARIO_BURST.get(scenario, SCENARIO_BURST["city"])
-    keyframe = frame_index % fps == 0
-    keyframe_factor = 2.2 + burst * 0.8
-    if keyframe:
-        factor = keyframe_factor * rng.uniform(0.9, 1.1)
-    else:
-        p_frame_base = max(0.25, (fps - keyframe_factor) / max(1, fps - 1))
-        factor = max(0.2, p_frame_base * rng.normalvariate(1.0, 0.10 + burst * 0.05))
-    return max(800, int(average * factor))
+    average = bitrate_mbit_s * 1_000_000 / 8 / fps
+    return max(1, int(average * _frame_weight(frame_index, fps, scenario, rng)))
 
 
-def _packet(run_id: str, path_id: str, frame_id: int, fragment: int, fragments: int) -> bytes:
+def _packet(
+    run_id: str,
+    path_id: str,
+    frame_id: int,
+    fragment: int,
+    fragments: int,
+    send_ns: int,
+) -> bytes:
     header = {
         "run_id": run_id,
         "path_id": path_id,
         "frame_id": frame_id,
         "fragment_index": fragment,
         "fragment_count": fragments,
-        "send_ns": time.time_ns(),
+        "send_ns": send_ns,
     }
     return b"LTAPFRAME " + json.dumps(header, separators=(",", ":")).encode() + b"\n"
 
@@ -86,6 +102,8 @@ def run_video_udp_probe(
     frames_sent = 0
     datagrams_sent = 0
     bytes_sent = 0
+    first_send_ns = None
+    last_send_ns = None
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(1)
         sock.connect((host, port))
@@ -93,8 +111,12 @@ def run_video_udp_probe(
             frame_bytes = _frame_size_bytes(frames_sent, fps, bitrate_mbit_s, scenario, rng)
             usable_payload = payload_bytes - 260
             fragments = max(1, (frame_bytes + usable_payload - 1) // usable_payload)
+            frame_send_ns = time.time_ns()
+            if first_send_ns is None:
+                first_send_ns = frame_send_ns
+            last_send_ns = frame_send_ns
             for fragment in range(fragments):
-                packet = _packet(run_id, path_id, frames_sent, fragment, fragments)
+                packet = _packet(run_id, path_id, frames_sent, fragment, fragments, frame_send_ns)
                 if len(packet) < payload_bytes:
                     packet += b"\0" * (payload_bytes - len(packet))
                 sock.send(packet[:payload_bytes])
@@ -103,8 +125,9 @@ def run_video_udp_probe(
             frames_sent += 1
             next_frame += frame_interval
             sleep_for = next_frame - time.monotonic()
-            if sleep_for > 0:
+            while sleep_for > 0:
                 time.sleep(min(sleep_for, 0.05))
+                sleep_for = next_frame - time.monotonic()
     elapsed = max(time.monotonic() - start, 0.001)
     return VideoUdpProbeResult(
         target_host=host,
@@ -122,4 +145,6 @@ def run_video_udp_probe(
         datagrams_sent=datagrams_sent,
         bytes_sent=bytes_sent,
         average_mbit_s=bytes_sent * 8 / elapsed / 1_000_000,
+        first_send_ns=first_send_ns,
+        last_send_ns=last_send_ns,
     )

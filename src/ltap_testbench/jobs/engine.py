@@ -32,6 +32,10 @@ from ltap_testbench.traffic.tcp_upload import run_timed_tcp_upload
 from ltap_testbench.traffic.udp_upload import run_udp_upload
 from ltap_testbench.traffic.video_udp import run_video_udp_probe
 
+TCP_UPLOAD_STAGE = "tcp-upload"
+UDP_UPLOAD_STAGE = "udp-upload"
+VIDEO_PROBE_STAGE = "video-udp-probe"
+
 
 def add_event(
     session: Session,
@@ -126,12 +130,12 @@ def _release_server(
 
 def _plan_has_upload_stage(run: TestRun) -> bool:
     stages = run.resolved_plan.get("stages", [])
-    return any("upload" in str(stage) for stage in stages)
+    return TCP_UPLOAD_STAGE in {str(stage) for stage in stages}
 
 
 def _plan_has_udp_upload_stage(run: TestRun) -> bool:
     stages = run.resolved_plan.get("stages", [])
-    return any("udp" in str(stage) and "upload" in str(stage) for stage in stages)
+    return UDP_UPLOAD_STAGE in {str(stage) for stage in stages}
 
 
 def _plan_has_latency_stage(run: TestRun) -> bool:
@@ -177,7 +181,7 @@ def _plan_has_video_probe_stage(run: TestRun) -> bool:
     if config.get("enabled") is False:
         return False
     stages = run.resolved_plan.get("stages", [])
-    return any("video" in str(stage) and "udp" in str(stage) for stage in stages)
+    return VIDEO_PROBE_STAGE in {str(stage) for stage in stages}
 
 
 def _tcp_upload_count(run: TestRun) -> int:
@@ -596,6 +600,8 @@ def _execute_video_probe_stage(
             "datagrams_sent": result.datagrams_sent,
             "bytes_sent": result.bytes_sent,
             "average_mbit_s": result.average_mbit_s,
+            "first_send_ns": result.first_send_ns,
+            "last_send_ns": result.last_send_ns,
         }
 
     sender_results = []
@@ -643,7 +649,46 @@ def _execute_video_probe_stage(
         "UDP video frame probe receiver summary collected.",
         receiver_summary,
     )
-    return {"sender_results": sender_results, "receiver_summary": receiver_summary}
+    joined_paths: dict[str, dict] = {}
+    receiver_paths = receiver_summary.get("paths") if isinstance(receiver_summary, dict) else {}
+    receiver_paths = receiver_paths if isinstance(receiver_paths, dict) else {}
+    for sender in sender_results:
+        path_id = str(sender.get("path_id"))
+        receiver = receiver_paths.get(path_id, {})
+        frames_sent = int(sender.get("frames_sent") or 0)
+        frames_seen = int(receiver.get("frames_seen") or 0)
+        frames_complete = int(receiver.get("frames_complete") or 0)
+        frames_partial = int(
+            receiver.get("frames_partial") or receiver.get("frames_incomplete") or 0
+        )
+        joined_paths[path_id] = {
+            **sender,
+            "receiver": receiver,
+            "frames_seen": frames_seen,
+            "frames_complete": frames_complete,
+            "frames_partial": frames_partial,
+            "frames_fully_lost": max(0, frames_sent - frames_seen),
+            "frames_not_decodable": max(0, frames_sent - frames_complete),
+            "frame_success_percent": (
+                frames_complete / frames_sent * 100 if frames_sent > 0 else None
+            ),
+            "validity": (
+                "server-confirmed"
+                if int(receiver.get("datagrams_received") or 0) > 0 and frames_sent > 0
+                else "sender-only"
+            ),
+        }
+    has_sender_traffic = any(int(row.get("bytes_sent") or 0) > 0 for row in sender_results)
+    has_receiver_traffic = any(
+        int(row.get("datagrams_received") or 0) > 0 for row in receiver_paths.values()
+    )
+    return {
+        "status": "ok" if has_sender_traffic else "skipped",
+        "validity": "server-confirmed" if has_receiver_traffic else "sender-only",
+        "sender_results": sender_results,
+        "receiver_summary": receiver_summary,
+        "paths": joined_paths,
+    }
 
 
 def execute_run(
@@ -717,8 +762,12 @@ def execute_run(
             udp_upload_results.extend(_execute_udp_upload_stage(session, run, server, "end"))
         video_probe_results = _execute_video_probe_stage(session, run, server)
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
+        has_video_sender_traffic = any(
+            int(row.get("bytes_sent") or 0) > 0
+            for row in video_probe_results.get("sender_results", [])
+        )
         has_live_results = bool(
-            upload_results or udp_upload_results or latency_results or video_probe_results
+            upload_results or udp_upload_results or latency_results or has_video_sender_traffic
         )
         if not has_live_results:
             add_event(
@@ -755,13 +804,13 @@ def execute_run(
         session.add(run)
         session.commit()
         transition(session, run, RunState.GENERATING_REPORT)
+        persist_run_artifacts(run)
         transition(session, run, RunState.COMPLETED)
     except Exception as exc:
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
     finally:
         _release_server(session, run, reservation, reservation_client)
-    persist_run_artifacts(run)
     return run
 
 

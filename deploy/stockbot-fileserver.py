@@ -27,6 +27,9 @@ VIDEO_FRAMES: dict[str, dict] = {}
 RESERVATIONS: dict[str, dict] = {}
 STARTED_AT = time.time()
 RUNS_LOCK = threading.Lock()
+MAX_ACTIVE_VIDEO_FRAMES_PER_PATH = int(
+    os.environ.get("STOCKBOT_VIDEO_MAX_ACTIVE_FRAMES_PER_PATH", "5000")
+)
 
 
 def now_iso() -> str:
@@ -151,6 +154,54 @@ def percentile(values: list[float], pct: float) -> float | None:
     return ordered[index]
 
 
+def _new_video_path(source: str, port: int, now_wall: datetime) -> dict:
+    now_iso_value = now_wall.replace(microsecond=0).isoformat()
+    return {
+        "source": source,
+        "destination_port": port,
+        "first_seen_at": now_iso_value,
+        "last_seen_at": now_iso_value,
+        "bytes_received": 0,
+        "datagrams_received": 0,
+        "frames": {},
+        "stats": {
+            "frames_seen": 0,
+            "frames_complete": 0,
+            "frames_partial": 0,
+            "fragment_arrival_span_ms": [],
+            "first_arrival_ns_by_frame": {},
+            "first_send_ns_by_frame": {},
+            "finalized_frame_ids": set(),
+        },
+    }
+
+
+def _finalize_video_frame(path: dict, frame_id: int, frame: dict) -> None:
+    stats = path["stats"]
+    if int(frame_id) in stats["finalized_frame_ids"]:
+        return
+    stats["finalized_frame_ids"].add(int(frame_id))
+    fragment_count = int(frame.get("fragment_count") or 0)
+    fragments = frame.get("fragments") or set()
+    if fragment_count and len(fragments) >= fragment_count:
+        stats["frames_complete"] += 1
+        stats["fragment_arrival_span_ms"].append(
+            (int(frame["last_arrival_ns"]) - int(frame["first_arrival_ns"])) / 1_000_000
+        )
+        stats["first_arrival_ns_by_frame"][int(frame_id)] = int(frame["first_arrival_ns"])
+        if frame.get("first_send_ns") is not None:
+            stats["first_send_ns_by_frame"][int(frame_id)] = int(frame["first_send_ns"])
+    else:
+        stats["frames_partial"] += 1
+
+
+def _prune_video_frames(path: dict) -> None:
+    frames = path["frames"]
+    while len(frames) > MAX_ACTIVE_VIDEO_FRAMES_PER_PATH:
+        oldest_id = min(frames)
+        _finalize_video_frame(path, int(oldest_id), frames.pop(oldest_id))
+
+
 def record_video_frame_datagram(header: dict, source: str, port: int, size: int) -> None:
     run_id = str(header.get("run_id") or "")
     path_id = str(header.get("path_id") or "")
@@ -160,29 +211,25 @@ def record_video_frame_datagram(header: dict, source: str, port: int, size: int)
         frame_id = int(header["frame_id"])
         fragment_index = int(header["fragment_index"])
         fragment_count = int(header["fragment_count"])
+        send_ns = int(header["send_ns"]) if header.get("send_ns") is not None else None
     except (KeyError, TypeError, ValueError):
+        return
+    if frame_id < 0 or fragment_count < 1 or fragment_index < 0 or fragment_index >= fragment_count:
         return
     now_ns = time.monotonic_ns()
     now_wall = datetime.now(UTC)
     with RUNS_LOCK:
         run = VIDEO_FRAMES.setdefault(run_id, {"paths": {}})
-        path = run["paths"].setdefault(
-            path_id,
-            {
-                "source": source,
-                "destination_port": port,
-                "first_seen_at": now_wall.replace(microsecond=0).isoformat(),
-                "last_seen_at": now_wall.replace(microsecond=0).isoformat(),
-                "bytes_received": 0,
-                "datagrams_received": 0,
-                "frames": {},
-            },
-        )
+        path = run["paths"].setdefault(path_id, _new_video_path(source, port, now_wall))
         path["source"] = source
         path["destination_port"] = port
         path["last_seen_at"] = now_wall.replace(microsecond=0).isoformat()
         path["bytes_received"] += size
         path["datagrams_received"] += 1
+        if frame_id in path["stats"]["finalized_frame_ids"]:
+            return
+        frames = path["frames"]
+        is_new_frame = frame_id not in frames
         frame = path["frames"].setdefault(
             frame_id,
             {
@@ -191,12 +238,20 @@ def record_video_frame_datagram(header: dict, source: str, port: int, size: int)
                 "fragments": set(),
                 "first_arrival_ns": now_ns,
                 "last_arrival_ns": now_ns,
+                "first_send_ns": send_ns,
             },
         )
+        if is_new_frame:
+            path["stats"]["frames_seen"] += 1
         frame["fragment_count"] = max(int(frame["fragment_count"]), fragment_count)
         frame["fragments"].add(fragment_index)
         frame["first_arrival_ns"] = min(int(frame["first_arrival_ns"]), now_ns)
         frame["last_arrival_ns"] = max(int(frame["last_arrival_ns"]), now_ns)
+        if frame.get("first_send_ns") is None and send_ns is not None:
+            frame["first_send_ns"] = send_ns
+        if len(frame["fragments"]) >= int(frame["fragment_count"]):
+            _finalize_video_frame(path, frame_id, frames.pop(frame_id))
+        _prune_video_frames(path)
 
 
 def summarize_video_frames(run_id: str) -> dict:
@@ -206,25 +261,18 @@ def summarize_video_frames(run_id: str) -> dict:
         path_summaries = {}
         complete_by_path = {}
         first_by_path = {}
+        send_by_path = {}
         for path_id, path in paths.items():
             frames = path.get("frames", {})
-            complete = []
-            incomplete = 0
-            completion_ms = []
-            for frame_id, frame in frames.items():
-                fragment_count = int(frame.get("fragment_count") or 0)
-                received = len(frame.get("fragments") or [])
-                if fragment_count and received >= fragment_count:
-                    complete.append(int(frame_id))
-                    completion_ms.append(
-                        (int(frame["last_arrival_ns"]) - int(frame["first_arrival_ns"])) / 1_000_000
-                    )
-                    first_by_path.setdefault(path_id, {})[int(frame_id)] = int(
-                        frame["first_arrival_ns"]
-                    )
-                else:
-                    incomplete += 1
-            complete_by_path[path_id] = set(complete)
+            for frame_id in list(frames):
+                _finalize_video_frame(path, int(frame_id), frames.pop(frame_id))
+            stats = path.get("stats", {})
+            first_arrivals = stats.get("first_arrival_ns_by_frame") or {}
+            first_sends = stats.get("first_send_ns_by_frame") or {}
+            completion_ms = stats.get("fragment_arrival_span_ms") or []
+            complete_by_path[path_id] = set(first_arrivals)
+            first_by_path[path_id] = {int(k): int(v) for k, v in first_arrivals.items()}
+            send_by_path[path_id] = {int(k): int(v) for k, v in first_sends.items()}
             path_summaries[path_id] = {
                 "path_id": path_id,
                 "source": path.get("source"),
@@ -233,16 +281,23 @@ def summarize_video_frames(run_id: str) -> dict:
                 "last_seen_at": path.get("last_seen_at"),
                 "bytes_received": path.get("bytes_received", 0),
                 "datagrams_received": path.get("datagrams_received", 0),
-                "frames_seen": len(frames),
-                "frames_complete": len(complete),
-                "frames_incomplete": incomplete,
+                "frames_seen": stats.get("frames_seen", 0),
+                "frames_complete": stats.get("frames_complete", 0),
+                "frames_partial": stats.get("frames_partial", 0),
+                "frames_incomplete": stats.get("frames_partial", 0),
+                "fragment_arrival_span_ms_p50": percentile(completion_ms, 0.50),
+                "fragment_arrival_span_ms_p95": percentile(completion_ms, 0.95),
+                "fragment_arrival_span_ms_p99": percentile(completion_ms, 0.99),
+                "fragment_arrival_span_ms_max": max(completion_ms, default=None),
                 "frame_completion_ms_p50": percentile(completion_ms, 0.50),
                 "frame_completion_ms_p95": percentile(completion_ms, 0.95),
                 "frame_completion_ms_p99": percentile(completion_ms, 0.99),
                 "frame_completion_ms_max": max(completion_ms, default=None),
             }
         paired_diffs = []
-        winners = {}
+        corrected_diffs = []
+        winners: dict[str, int] = {}
+        ties = 0
         if len(first_by_path) >= 2:
             ids = sorted(first_by_path)[:2]
             common = complete_by_path.get(ids[0], set()) & complete_by_path.get(ids[1], set())
@@ -251,17 +306,39 @@ def summarize_video_frames(run_id: str) -> dict:
                     first_by_path[ids[0]][frame_id] - first_by_path[ids[1]][frame_id]
                 ) / 1_000_000
                 paired_diffs.append(diff_ms)
-                winner = ids[0] if diff_ms < 0 else ids[1]
-                winners[winner] = winners.get(winner, 0) + 1
+                send_0 = send_by_path.get(ids[0], {}).get(frame_id)
+                send_1 = send_by_path.get(ids[1], {}).get(frame_id)
+                comparison_ms = diff_ms
+                if send_0 is not None and send_1 is not None:
+                    comparison_ms = diff_ms - ((send_0 - send_1) / 1_000_000)
+                    corrected_diffs.append(comparison_ms)
+                if comparison_ms == 0:
+                    ties += 1
+                else:
+                    winner = ids[0] if comparison_ms < 0 else ids[1]
+                    winners[winner] = winners.get(winner, 0) + 1
         return {
             "run_id": run_id,
             "paths": path_summaries,
             "paired_frames_complete": len(paired_diffs),
             "first_arrival_winners": winners,
+            "first_arrival_ties": ties,
             "path_arrival_delta_ms_p50": percentile([abs(v) for v in paired_diffs], 0.50),
             "path_arrival_delta_ms_p95": percentile([abs(v) for v in paired_diffs], 0.95),
             "path_arrival_delta_ms_p99": percentile([abs(v) for v in paired_diffs], 0.99),
             "path_arrival_delta_ms_max": max([abs(v) for v in paired_diffs], default=None),
+            "corrected_path_arrival_delta_ms_p50": percentile(
+                [abs(v) for v in corrected_diffs], 0.50
+            ),
+            "corrected_path_arrival_delta_ms_p95": percentile(
+                [abs(v) for v in corrected_diffs], 0.95
+            ),
+            "corrected_path_arrival_delta_ms_p99": percentile(
+                [abs(v) for v in corrected_diffs], 0.99
+            ),
+            "corrected_path_arrival_delta_ms_max": max(
+                [abs(v) for v in corrected_diffs], default=None
+            ),
         }
 
 

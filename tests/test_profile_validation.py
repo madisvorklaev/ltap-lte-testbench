@@ -62,3 +62,29 @@ def test_test_plan_accepts_server_slug() -> None:
         stages=["tcp-upload"],
     )
     assert plan.server_slug == "stockbot"
+
+
+def test_test_plan_keeps_video_tcp_count_and_udp_pattern() -> None:
+    plan = TestPlanConfig(
+        slug="video-plan",
+        name="Video Plan",
+        server_slug="stockbot",
+        stages=["tcp-upload", "udp-upload", "video-udp-probe"],
+        tcp_upload={"duration_seconds": 10, "count": 3},
+        udp_upload={"duration_seconds": 5, "bitrate_mbit_s": 1, "pattern": "after_each_tcp"},
+        video_probe={"duration_seconds": 5, "bitrate_mbit_s": 2, "fps": 25},
+    )
+
+    assert plan.tcp_upload.count == 3
+    assert plan.udp_upload.pattern == "after_each_tcp"
+    assert plan.video_probe.duration_seconds == 5
+
+
+def test_test_plan_rejects_unknown_fields() -> None:
+    with pytest.raises(ValidationError):
+        TestPlanConfig(
+            slug="bad-extra",
+            name="Bad Extra",
+            stages=["tcp-upload"],
+            video_probe={"duration_seconds": 5, "unexpected": True},
+        )
