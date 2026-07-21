@@ -5,6 +5,18 @@ import socket
 from ltap_testbench.routers.base import RouterAdapter, RouterCheck
 
 
+class RouterOsApiError(RuntimeError):
+    def __init__(self, sentence: list[str]):
+        self.sentence = sentence
+        self.details = {
+            word[1:].split("=", 1)[0]: word[1:].split("=", 1)[1]
+            for word in sentence[1:]
+            if word.startswith("=") and "=" in word[1:]
+        }
+        message = self.details.get("message") or str(sentence)
+        super().__init__(message)
+
+
 class RouterOsApi:
     def __init__(self, host: str, user: str, password: str, port: int = 8728, timeout: int = 10):
         self.host = host
@@ -104,7 +116,7 @@ class RouterOsApi:
             replies.append(sentence)
             if sentence and sentence[0] in ("!done", "!fatal", "!trap"):
                 if sentence[0] in {"!fatal", "!trap"}:
-                    raise RuntimeError(sentence)
+                    raise RouterOsApiError(sentence)
                 return replies
 
     @staticmethod
@@ -310,18 +322,16 @@ class MikroTikRouterAdapter(RouterAdapter):
             for path in self._paths():
                 path_id = path.get("id")
                 routing_table = path.get("routing_table")
-                rows = []
+                rows: list[dict[str, str]] = []
                 routed = False
+                route_parameter = None
+                error = None
                 if routing_table:
-                    rows = api.rows(
-                        api.command(
-                            [
-                                "/ping",
-                                f"=address={target_host}",
-                                f"=count={count}",
-                                f"=routing-table={routing_table}",
-                            ]
-                        )
+                    rows, route_parameter, error = _routed_ping_rows(
+                        api,
+                        target_host,
+                        count,
+                        routing_table,
                     )
                     routed = bool(rows)
                 samples = [_routeros_duration_to_ms(row.get("time")) for row in rows]
@@ -335,8 +345,9 @@ class MikroTikRouterAdapter(RouterAdapter):
                         "target_host": target_host,
                         "routing_table": routing_table,
                         "routing_table_used": routed,
+                        "route_parameter": route_parameter,
                         "validity": "path-routed" if routed else "invalid",
-                        "error": None if routed else "routed ping returned no rows",
+                        "error": None if routed else error or "routed ping returned no rows",
                         "sent": sent,
                         "received": received,
                         "loss_percent": _float_or_none(last.get("packet-loss")),
@@ -347,6 +358,34 @@ class MikroTikRouterAdapter(RouterAdapter):
                     }
                 )
         return results
+
+
+def _routed_ping_rows(
+    api: RouterOsApi,
+    target_host: str,
+    count: int,
+    routing_table: str,
+) -> tuple[list[dict[str, str]], str | None, str | None]:
+    errors = []
+    for parameter in ("routing-table", "routing-mark"):
+        try:
+            rows = api.rows(
+                api.command(
+                    [
+                        "/ping",
+                        f"=address={target_host}",
+                        f"=count={count}",
+                        f"={parameter}={routing_table}",
+                    ]
+                )
+            )
+            return rows, parameter, None
+        except RouterOsApiError as exc:
+            message = str(exc)
+            errors.append(f"{parameter}: {message}")
+            if "unknown parameter" not in message.lower():
+                return [], parameter, message
+    return [], None, "; ".join(errors)
 
 
 def _routeros_duration_to_ms(value: str | None) -> float | None:
