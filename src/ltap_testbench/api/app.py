@@ -1,3 +1,5 @@
+import csv
+import io
 import time
 from contextlib import suppress
 from datetime import datetime
@@ -7,7 +9,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -1391,6 +1393,30 @@ def analytics_runs(
     limit: int = 30,
     session: Session = Depends(get_session),
 ) -> dict:
+    rows, filters = _filtered_analytics_rows(
+        session,
+        antenna=antenna,
+        protocol_hash=protocol_hash,
+        eligible_only=eligible_only,
+        state=state,
+        limit=limit,
+    )
+    return {
+        "filters": filters,
+        "summary": cohort_summary(rows),
+        "runs": rows,
+    }
+
+
+def _filtered_analytics_rows(
+    session: Session,
+    *,
+    antenna: str | None = None,
+    protocol_hash: str | None = None,
+    eligible_only: bool = False,
+    state: str = "COMPLETED",
+    limit: int = 30,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     limit = max(1, min(limit, 500))
     normalized_state = state.upper()
     runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(500)).all()
@@ -1418,19 +1444,113 @@ def analytics_runs(
         if len(rows) >= limit:
             break
     rows.reverse()
-    return {
-        "filters": {
-            "antenna": antenna,
-            "protocol_hash": protocol_hash,
-            "eligible_only": eligible_only,
-            "state": normalized_state,
-            "limit": limit,
-            "antenna_options": antenna_values[:50],
-            "protocol_hash_options": protocol_values[:50],
-        },
-        "summary": cohort_summary(rows),
-        "runs": rows,
+    return rows, {
+        "antenna": antenna,
+        "protocol_hash": protocol_hash,
+        "eligible_only": eligible_only,
+        "state": normalized_state,
+        "limit": limit,
+        "antenna_options": antenna_values[:50],
+        "protocol_hash_options": protocol_values[:50],
     }
+
+
+def _analytics_csv(rows: list[dict[str, Any]]) -> str:
+    base_columns = [
+        "run_id",
+        "state",
+        "created_at",
+        "updated_at",
+        "router",
+        "protocol_id",
+        "protocol_version",
+        "protocol_hash",
+        "result_schema_version",
+        "comparison_eligible",
+        "exclusion_reasons",
+        "experiment_id",
+        "variant_id",
+        "batch_id",
+        "antenna",
+        "antenna_profile_id",
+        "antenna_gain_dbi",
+        "antenna_effective_gain_dbi",
+        "tcp_mode",
+        "tcp_upload_count",
+        "udp_duration_seconds",
+        "udp_bitrate_mbit_s",
+        "udp_pattern",
+        "video_duration_seconds",
+        "video_resolution",
+        "video_fps",
+        "video_scenario",
+    ]
+    path_metrics = [
+        "tcp_mbit_s",
+        "udp_mbit_s",
+        "udp_loss_percent",
+        "latency_avg_ms",
+        "latency_loss_percent",
+        "video_success_percent",
+        "video_not_decodable",
+    ]
+    dual_video_columns = [
+        "frames_sent",
+        "complete_on_both",
+        "complete_on_either",
+        "lte1_only_complete",
+        "lte2_only_complete",
+        "lost_on_both",
+        "effective_redundant_success_percent",
+        "both_path_loss_percent",
+    ]
+    path_ids = sorted({path_id for row in rows for path_id in row.get("paths", {})})
+    fieldnames = [
+        *base_columns,
+        *[f"{path_id}_{metric}" for path_id in path_ids for metric in path_metrics],
+        *[f"dual_video_{column}" for column in dual_video_columns],
+    ]
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    for row in rows:
+        flat = {column: row.get(column) for column in base_columns}
+        flat["exclusion_reasons"] = ";".join(
+            str(reason) for reason in row.get("exclusion_reasons", [])
+        )
+        for path_id in path_ids:
+            path = row.get("paths", {}).get(path_id, {})
+            for metric in path_metrics:
+                flat[f"{path_id}_{metric}"] = path.get(metric)
+        dual_video = row.get("dual_video", {})
+        for column in dual_video_columns:
+            flat[f"dual_video_{column}"] = dual_video.get(column)
+        writer.writerow(flat)
+    return buffer.getvalue()
+
+
+@app.get("/api/v1/analytics/export.csv")
+def analytics_export_csv(
+    antenna: str | None = None,
+    protocol_hash: str | None = None,
+    eligible_only: bool = False,
+    state: str = "COMPLETED",
+    limit: int = 500,
+    session: Session = Depends(get_session),
+) -> Response:
+    rows, _filters = _filtered_analytics_rows(
+        session,
+        antenna=antenna,
+        protocol_hash=protocol_hash,
+        eligible_only=eligible_only,
+        state=state,
+        limit=limit,
+    )
+    return Response(
+        content=_analytics_csv(rows),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="ltap-analytics-export.csv"'},
+    )
 
 
 @app.get("/api/v1/analytics/timeseries")

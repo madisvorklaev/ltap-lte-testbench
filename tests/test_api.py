@@ -946,5 +946,22 @@ def test_analytics_compare_endpoint_compares_variant_cohorts() -> None:
         assert payload["baseline"]["n"] == 5
         assert payload["candidate"]["median"] == 22
         assert payload["conclusion"]["status"] == "LIKELY_IMPROVEMENT"
+
+        export = client.get(
+            "/api/v1/analytics/export.csv",
+            params={"protocol_hash": protocol_hash, "eligible_only": "true", "limit": 20},
+        )
+        assert export.status_code == 200
+        assert export.headers["content-type"].startswith("text/csv")
+        assert "attachment" in export.headers["content-disposition"]
+        text = export.text
+        assert "run_id,state,created_at" in text
+        assert "lte1_tcp_mbit_s" in text
+        assert "run-baseline-1" in text
+        assert "run-candidate-5" in text
+
+        analytics_page = client.get("/analytics")
+        assert analytics_page.status_code == 200
+        assert "/api/v1/analytics/export.csv" in analytics_page.text
     finally:
         app.dependency_overrides.clear()

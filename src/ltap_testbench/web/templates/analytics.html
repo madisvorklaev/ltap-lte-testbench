@@ -99,6 +99,7 @@
             <input id="limit-filter" type="number" min="1" max="500" value="30">
           </label>
           <button id="apply" class="primary" type="button">Apply</button>
+          <a id="export-csv" class="button" href="/api/v1/analytics/export.csv">Export CSV</a>
         </div>
       </section>
 
@@ -340,7 +341,7 @@
         setMetric("compare-delta", data.conclusion?.delta);
         $("compare-note").textContent = data.conclusion?.reason || "";
       };
-      const load = async () => {
+      const analyticsParams = () => {
         const params = new URLSearchParams();
         const antenna = $("antenna-filter").value;
         if (antenna) params.set("antenna", antenna);
@@ -349,6 +350,14 @@
         params.set("eligible_only", $("eligible-filter").value);
         params.set("state", $("state-filter").value);
         params.set("limit", $("limit-filter").value);
+        return params;
+      };
+      const syncExportLink = () => {
+        $("export-csv").href = `/api/v1/analytics/export.csv?${analyticsParams()}`;
+      };
+      const load = async () => {
+        const params = analyticsParams();
+        syncExportLink();
         const data = await request(`/api/v1/analytics/runs?${params}`);
         const runs = data.runs || [];
         updateProtocolOptions(data.filters?.protocol_hash_options || [], data.filters?.protocol_hash || "");
