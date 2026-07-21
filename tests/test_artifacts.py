@@ -1,3 +1,4 @@
+import gzip
 import json
 
 from sqlalchemy import create_engine
@@ -5,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from ltap_testbench.core.config import get_settings
 from ltap_testbench.db.base import Base
-from ltap_testbench.db.models import RunState
+from ltap_testbench.db.models import MetricSample, RunState
 from ltap_testbench.jobs.engine import create_run, execute_run
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.reporting.artifacts import persist_run_artifacts, run_artifact_dir
@@ -19,11 +20,35 @@ def test_run_artifacts_are_written(tmp_path) -> None:
         seed_demo_data(session)
         run = create_run(session, "demo-generic", "quick-check")
         run = execute_run(session, run)
+        session.add(
+            MetricSample(
+                run_pk=run.id,
+                offset_ms=1000,
+                path_id="wan",
+                phase="idle",
+                metric_name="latency_rtt_ms",
+                value=42.0,
+                unit="ms",
+            )
+        )
+        session.commit()
         artifacts = persist_run_artifacts(run, tmp_path)
 
     metadata = json.loads((tmp_path / run.run_id / "metadata.json").read_text())
+    environment = json.loads((tmp_path / run.run_id / "environment.json").read_text())
+    integrity = json.loads((tmp_path / run.run_id / "integrity.json").read_text())
+    batch = json.loads((tmp_path / run.run_id / "batch.json").read_text())
+    with gzip.open(tmp_path / run.run_id / "metric-samples.ndjson.gz", "rt") as sample_file:
+        sample_lines = [json.loads(line) for line in sample_file if line.strip()]
     assert metadata["run_id"] == run.run_id
+    assert environment["router"]["slug"] == "demo-generic"
+    assert "comparison_eligible" in integrity
+    assert batch["result_schema_version"] == run.result_schema_version
+    assert sample_lines[0]["metric_name"] == "latency_rtt_ms"
     assert "events" in artifacts
+    assert "environment" in artifacts
+    assert "batch" in artifacts
+    assert "metric_samples" in artifacts
     assert "report_markdown" in artifacts
     assert "report_json" in artifacts
     assert (tmp_path / run.run_id / "events.jsonl").read_text()

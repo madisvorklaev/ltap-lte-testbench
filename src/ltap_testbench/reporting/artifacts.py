@@ -1,9 +1,13 @@
+import gzip
 import json
 from pathlib import Path
 
+from sqlalchemy import select
+from sqlalchemy.orm import object_session
+
 from ltap_testbench.analytics import analytics_run_row
 from ltap_testbench.core.config import get_settings
-from ltap_testbench.db.models import TestRun
+from ltap_testbench.db.models import MetricSample, TestRun
 from ltap_testbench.profiles.protocols import protocol_metadata
 
 
@@ -15,6 +19,43 @@ def run_artifact_dir(run: TestRun, root: Path | None = None) -> Path:
 def write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, default=str) + "\n")
+
+
+def write_metric_samples(path: Path, samples: list[MetricSample]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt", encoding="utf-8") as sample_file:
+        for sample in sorted(samples, key=lambda row: (row.offset_ms, row.id)):
+            sample_file.write(
+                json.dumps(
+                    {
+                        "timestamp": sample.timestamp,
+                        "offset_ms": sample.offset_ms,
+                        "path_id": sample.path_id,
+                        "phase": sample.phase,
+                        "phase_instance": sample.phase_instance,
+                        "metric_name": sample.metric_name,
+                        "value": sample.value,
+                        "unit": sample.unit,
+                        "validity": sample.validity,
+                        "details": sample.details_json,
+                    },
+                    default=str,
+                )
+                + "\n"
+            )
+
+
+def _metric_samples_for_run(run: TestRun) -> list[MetricSample]:
+    session = object_session(run)
+    if session is not None:
+        return list(
+            session.scalars(
+                select(MetricSample)
+                .where(MetricSample.run_pk == run.id)
+                .order_by(MetricSample.offset_ms, MetricSample.id)
+            ).all()
+        )
+    return list(run.metric_samples)
 
 
 def run_report_payload(run: TestRun) -> dict:
@@ -326,7 +367,10 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
     plan_path = directory / "resolved_test_plan.json"
     summary_path = directory / "summary.json"
     protocol_path = directory / "protocol.json"
+    environment_path = directory / "environment.json"
     integrity_path = directory / "integrity.json"
+    batch_path = directory / "batch.json"
+    metric_samples_path = directory / "metric-samples.ndjson.gz"
     analytics_summary_path = directory / "analytics-summary.json"
     events_path = directory / "events.jsonl"
     report_json_path = directory / "report.json"
@@ -347,6 +391,7 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
     )
     write_json(plan_path, run.resolved_plan)
     write_json(summary_path, run.summary)
+    write_json(environment_path, run.environment_snapshot_json or {})
     protocol = (
         run.summary.get("protocol")
         if isinstance(run.summary, dict) and isinstance(run.summary.get("protocol"), dict)
@@ -356,11 +401,25 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
     write_json(
         integrity_path,
         {
+            **(run.integrity_json or {}),
             "comparison_eligible": bool((run.summary or {}).get("comparison_eligible")),
             "exclusion_reasons": (run.summary or {}).get("exclusion_reasons") or [],
             "validity": (run.summary or {}).get("validity"),
         },
     )
+    write_json(
+        batch_path,
+        {
+            "batch_id": run.batch_id,
+            "batch_attempt_id": run.batch_attempt_id,
+            "experiment_id": run.experiment_id,
+            "variant_id": run.variant_id,
+            "benchmark_protocol_id": run.benchmark_protocol_id,
+            "protocol_hash": run.protocol_hash,
+            "result_schema_version": run.result_schema_version,
+        },
+    )
+    write_metric_samples(metric_samples_path, _metric_samples_for_run(run))
     write_json(analytics_summary_path, analytics_run_row(run))
     with events_path.open("w") as event_file:
         for event in run.events:
@@ -387,7 +446,10 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
         "resolved_test_plan": str(plan_path),
         "summary": str(summary_path),
         "protocol": str(protocol_path),
+        "environment": str(environment_path),
         "integrity": str(integrity_path),
+        "batch": str(batch_path),
+        "metric_samples": str(metric_samples_path),
         "analytics_summary": str(analytics_summary_path),
         "events": str(events_path),
         "report_json": str(report_json_path),
