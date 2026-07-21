@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from ltap_testbench.analytics import cohort_summary
 from ltap_testbench.api import app as api_app
@@ -15,6 +16,7 @@ from ltap_testbench.api.app import (
     _upsert_lab_plan,
     app,
 )
+from ltap_testbench.benchmarks.defaults import seed_benchmark_protocols
 from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
     RouterKind,
@@ -46,7 +48,12 @@ def test_router_preflight_api() -> None:
 
 
 def test_lab_plan_keeps_tcp_count_and_udp_pattern() -> None:
-    engine = create_engine("sqlite:///:memory:", future=True)
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
     with session_factory() as session:
@@ -529,3 +536,90 @@ def test_recover_orphaned_lab_reservation_failure_marks_recovery_required(
         lab_run = session.scalar(select(DbTestRun).where(DbTestRun.run_id == "run-lab"))
         assert lab_run is not None
         assert lab_run.state == RunState.RECOVERY_REQUIRED
+
+
+def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        seed_benchmark_protocols(session)
+
+    def override_session():
+        with session_factory() as session:
+            yield session
+
+    app.dependency_overrides[api_app.get_session] = override_session
+    try:
+        client = TestClient(app)
+
+        protocols = client.get("/api/v1/benchmark-protocols")
+        assert protocols.status_code == 200
+        assert {row["slug"] for row in protocols.json()} >= {
+            "comparable-v1",
+            "video-stability-v1",
+        }
+
+        missing_gain = client.post(
+            "/api/v1/antenna-profiles",
+            json={
+                "slug": "bad-gain",
+                "manufacturer": "ACME",
+                "model": "Panel",
+                "gain_source": "manufacturer",
+            },
+        )
+        assert missing_gain.status_code == 400
+
+        antenna = client.post(
+            "/api/v1/antenna-profiles",
+            json={
+                "slug": "roof-panel",
+                "manufacturer": "ACME",
+                "model": "Panel",
+                "gain_source": "manufacturer",
+                "nominal_peak_gain_dbi": 7.0,
+                "estimated_cable_loss_db": 1.0,
+                "connector_loss_db": 0.5,
+                "mounting_location": "roof",
+                "orientation": "south",
+            },
+        )
+        assert antenna.status_code == 200
+        antenna_id = antenna.json()["id"]
+        assert antenna.json()["effective_gain_dbi"] == 5.5
+
+        bad_batch = client.post(
+            "/api/v1/test-batches",
+            json={
+                "name": "Bad batch",
+                "antenna_profile_id": antenna_id,
+                "target_valid_runs": 10,
+                "max_attempts": 5,
+            },
+        )
+        assert bad_batch.status_code == 400
+
+        batch = client.post(
+            "/api/v1/test-batches",
+            json={
+                "name": "Overnight baseline",
+                "antenna_profile_id": antenna_id,
+                "target_valid_runs": 5,
+                "max_attempts": 7,
+            },
+        )
+        assert batch.status_code == 200
+        payload = batch.json()
+        assert payload["batch_id"].startswith("batch-")
+        assert payload["state"] == "DRAFT"
+        assert payload["target_valid_runs"] == 5
+        assert payload["max_attempts"] == 7
+        assert payload["estimated_attempt_seconds"] > 900
+    finally:
+        app.dependency_overrides.clear()

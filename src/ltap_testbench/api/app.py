@@ -1,20 +1,34 @@
 import time
 from contextlib import suppress
+from datetime import datetime
 from pathlib import Path
 from threading import Event, Lock, Thread
 from typing import Any
+from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ltap_testbench import __version__
 from ltap_testbench.analytics import analytics_run_row, cohort_summary, lab_metadata
+from ltap_testbench.benchmarks.defaults import protocol_duration_seconds, seed_benchmark_protocols
 from ltap_testbench.db.base import SessionLocal, get_session, init_db
-from ltap_testbench.db.models import RouterProfile, RunState, ServerProfile, TestPlan, TestRun
+from ltap_testbench.db.models import (
+    AntennaProfile,
+    BatchState,
+    BenchmarkProtocol,
+    GainSource,
+    RouterProfile,
+    RunState,
+    ServerProfile,
+    TestBatch,
+    TestPlan,
+    TestRun,
+)
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.protocols import (
@@ -65,6 +79,38 @@ class LabRunCreate(BaseModel):
     antenna_connector_loss_db: float | None = None
     antenna_mounting: str = ""
     antenna_orientation: str = ""
+    notes: str = ""
+
+
+class AntennaProfileCreate(BaseModel):
+    slug: str
+    manufacturer: str
+    model: str
+    antenna_type: str = "mimo"
+    mimo_port_count: int = 2
+    gain_source: str = "unknown"
+    nominal_peak_gain_dbi: float | None = None
+    gain_by_band: list[dict[str, Any]] = Field(default_factory=list)
+    cable_type: str = ""
+    cable_length_m: float = 0.0
+    estimated_cable_loss_db: float | None = None
+    connector_loss_db: float | None = None
+    mounting_location: str = ""
+    orientation: str = ""
+    notes: str = ""
+
+
+class TestBatchCreate(BaseModel):
+    name: str
+    protocol_slug: str = "comparable-v1"
+    router_slug: str = "r1-ltap-live"
+    antenna_profile_id: int | None = None
+    target_valid_runs: int = 10
+    max_attempts: int = 15
+    inter_run_cooldown_seconds: int = 120
+    retry_delay_seconds: int = 300
+    max_consecutive_failures: int = 3
+    deadline: str | None = None
     notes: str = ""
 
 
@@ -134,6 +180,80 @@ def _antenna_effective_gain(payload: LabRunCreate) -> float | None:
     cable_loss = payload.antenna_cable_loss_db or 0.0
     connector_loss = payload.antenna_connector_loss_db or 0.0
     return payload.antenna_gain_dbi - cable_loss - connector_loss
+
+
+def _protocol_row(protocol: BenchmarkProtocol) -> dict[str, Any]:
+    return {
+        "id": protocol.id,
+        "slug": protocol.slug,
+        "version": protocol.version,
+        "name": protocol.name,
+        "protocol_hash": protocol.protocol_hash,
+        "result_schema_version": protocol.result_schema_version,
+        "status": protocol.status.value,
+        "estimated_attempt_seconds": protocol_duration_seconds(protocol.definition_json),
+        "definition": protocol.definition_json,
+    }
+
+
+def _antenna_row(profile: AntennaProfile) -> dict[str, Any]:
+    effective_gain = (
+        profile.nominal_peak_gain_dbi
+        - (profile.estimated_cable_loss_db or 0.0)
+        - (profile.connector_loss_db or 0.0)
+        if profile.nominal_peak_gain_dbi is not None
+        else None
+    )
+    return {
+        "id": profile.id,
+        "slug": profile.slug,
+        "manufacturer": profile.manufacturer,
+        "model": profile.model,
+        "antenna_type": profile.antenna_type,
+        "mimo_port_count": profile.mimo_port_count,
+        "gain_source": profile.gain_source.value,
+        "nominal_peak_gain_dbi": profile.nominal_peak_gain_dbi,
+        "effective_gain_dbi": effective_gain,
+        "gain_by_band": profile.gain_by_band_json,
+        "cable_type": profile.cable_type,
+        "cable_length_m": profile.cable_length_m,
+        "estimated_cable_loss_db": profile.estimated_cable_loss_db,
+        "connector_loss_db": profile.connector_loss_db,
+        "mounting_location": profile.mounting_location,
+        "orientation": profile.orientation,
+        "notes": profile.notes,
+    }
+
+
+def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> dict[str, Any]:
+    estimated_attempt_seconds = (
+        protocol_duration_seconds(protocol.definition_json) if protocol is not None else 0
+    )
+    estimated_cycle_seconds = estimated_attempt_seconds + batch.inter_run_cooldown_seconds
+    return {
+        "batch_id": batch.batch_id,
+        "name": batch.name,
+        "state": batch.state.value,
+        "protocol_slug": batch.protocol_slug,
+        "protocol_hash": batch.protocol_hash,
+        "router_slug": batch.router_slug,
+        "antenna_profile_id": batch.antenna_profile_id,
+        "target_valid_runs": batch.target_valid_runs,
+        "max_attempts": batch.max_attempts,
+        "valid_run_count": batch.valid_run_count,
+        "attempt_count": batch.attempt_count,
+        "invalid_run_count": batch.invalid_run_count,
+        "failed_attempt_count": batch.failed_attempt_count,
+        "consecutive_failure_count": batch.consecutive_failure_count,
+        "inter_run_cooldown_seconds": batch.inter_run_cooldown_seconds,
+        "estimated_attempt_seconds": estimated_attempt_seconds,
+        "estimated_cycle_seconds": estimated_cycle_seconds,
+        "deadline": batch.deadline.isoformat() if batch.deadline else None,
+        "state_reason": batch.state_reason,
+        "created_at": batch.created_at.isoformat() if batch.created_at else None,
+        "started_at": batch.started_at.isoformat() if batch.started_at else None,
+        "completed_at": batch.completed_at.isoformat() if batch.completed_at else None,
+    }
 
 
 def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
@@ -581,8 +701,10 @@ def _analytics_run_row(run: TestRun) -> dict[str, Any]:
 @app.on_event("startup")
 def startup() -> None:
     init_db()
-    with SessionLocal() as session, suppress(LabRecoveryError):
-        _recover_orphaned_lab_reservations(session)
+    with SessionLocal() as session:
+        seed_benchmark_protocols(session)
+        with suppress(LabRecoveryError):
+            _recover_orphaned_lab_reservations(session)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -643,6 +765,135 @@ def run_detail(
 @app.get("/api/v1/health")
 def health() -> dict:
     return {"ok": True, "version": __version__}
+
+
+@app.get("/api/v1/benchmark-protocols")
+def benchmark_protocols(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    protocols = session.scalars(select(BenchmarkProtocol).order_by(BenchmarkProtocol.slug)).all()
+    return [_protocol_row(protocol) for protocol in protocols]
+
+
+@app.get("/api/v1/benchmark-protocols/{slug}")
+def benchmark_protocol(slug: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    protocol = session.scalar(select(BenchmarkProtocol).where(BenchmarkProtocol.slug == slug))
+    if protocol is None:
+        raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    return _protocol_row(protocol)
+
+
+@app.get("/api/v1/antenna-profiles")
+def antenna_profiles(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    profiles = session.scalars(select(AntennaProfile).order_by(AntennaProfile.slug)).all()
+    return [_antenna_row(profile) for profile in profiles]
+
+
+@app.post("/api/v1/antenna-profiles")
+def create_antenna_profile(
+    payload: AntennaProfileCreate,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    if payload.mimo_port_count < 1:
+        raise HTTPException(status_code=400, detail="mimo_port_count must be positive")
+    if payload.cable_length_m < 0:
+        raise HTTPException(status_code=400, detail="cable_length_m must be non-negative")
+    try:
+        gain_source = GainSource(payload.gain_source)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="unsupported gain source") from exc
+    if gain_source != GainSource.UNKNOWN and payload.nominal_peak_gain_dbi is None:
+        raise HTTPException(status_code=400, detail="numeric gain is required")
+    existing = session.scalar(select(AntennaProfile).where(AntennaProfile.slug == payload.slug))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="antenna profile already exists")
+    profile = AntennaProfile(
+        slug=payload.slug,
+        manufacturer=payload.manufacturer,
+        model=payload.model,
+        antenna_type=payload.antenna_type,
+        mimo_port_count=payload.mimo_port_count,
+        gain_source=gain_source,
+        nominal_peak_gain_dbi=payload.nominal_peak_gain_dbi,
+        gain_by_band_json=payload.gain_by_band,
+        cable_type=payload.cable_type,
+        cable_length_m=payload.cable_length_m,
+        estimated_cable_loss_db=payload.estimated_cable_loss_db,
+        connector_loss_db=payload.connector_loss_db,
+        mounting_location=payload.mounting_location,
+        orientation=payload.orientation,
+        notes=payload.notes,
+    )
+    session.add(profile)
+    session.commit()
+    return _antenna_row(profile)
+
+
+@app.get("/api/v1/test-batches")
+def test_batches(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    batches = session.scalars(select(TestBatch).order_by(TestBatch.id.desc()).limit(100)).all()
+    protocols = {
+        protocol.protocol_hash: protocol
+        for protocol in session.scalars(select(BenchmarkProtocol)).all()
+    }
+    return [_batch_row(batch, protocols.get(batch.protocol_hash)) for batch in batches]
+
+
+@app.post("/api/v1/test-batches")
+def create_test_batch(
+    payload: TestBatchCreate,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    if payload.target_valid_runs < 1:
+        raise HTTPException(status_code=400, detail="target_valid_runs must be positive")
+    if payload.max_attempts < payload.target_valid_runs:
+        raise HTTPException(status_code=400, detail="max_attempts must be >= target_valid_runs")
+    if payload.max_consecutive_failures < 1:
+        raise HTTPException(status_code=400, detail="max_consecutive_failures must be positive")
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.slug == payload.protocol_slug)
+    )
+    if protocol is None:
+        raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    if payload.antenna_profile_id is None:
+        raise HTTPException(status_code=400, detail="antenna_profile_id is required")
+    antenna = session.get(AntennaProfile, payload.antenna_profile_id)
+    if antenna is None:
+        raise HTTPException(status_code=404, detail="antenna profile not found")
+    deadline = None
+    if payload.deadline:
+        with suppress(ValueError):
+            deadline = datetime.fromisoformat(payload.deadline)
+        if deadline is None:
+            raise HTTPException(status_code=400, detail="invalid deadline")
+    batch = TestBatch(
+        batch_id=f"batch-{uuid4().hex[:12]}",
+        name=payload.name,
+        protocol_slug=protocol.slug,
+        protocol_hash=protocol.protocol_hash,
+        router_slug=payload.router_slug,
+        antenna_profile_id=antenna.id,
+        state=BatchState.DRAFT,
+        target_valid_runs=payload.target_valid_runs,
+        max_attempts=payload.max_attempts,
+        inter_run_cooldown_seconds=payload.inter_run_cooldown_seconds,
+        retry_delay_seconds=payload.retry_delay_seconds,
+        max_consecutive_failures=payload.max_consecutive_failures,
+        deadline=deadline,
+        notes=payload.notes,
+    )
+    session.add(batch)
+    session.commit()
+    return _batch_row(batch, protocol)
+
+
+@app.get("/api/v1/test-batches/{batch_id}")
+def test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    return _batch_row(batch, protocol)
 
 
 @app.get("/api/v1/analytics/runs")

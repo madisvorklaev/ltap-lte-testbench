@@ -35,6 +35,146 @@ class RunState(StrEnum):
     RECOVERY_REQUIRED = "RECOVERY_REQUIRED"
 
 
+class ProtocolStatus(StrEnum):
+    DRAFT = "draft"
+    FROZEN = "frozen"
+    RETIRED = "retired"
+
+
+class GainSource(StrEnum):
+    MANUFACTURER = "manufacturer"
+    MEASURED = "measured"
+    ESTIMATED = "estimated"
+    UNKNOWN = "unknown"
+
+
+class BatchState(StrEnum):
+    DRAFT = "DRAFT"
+    SCHEDULED = "SCHEDULED"
+    RUNNING = "RUNNING"
+    PAUSE_REQUESTED = "PAUSE_REQUESTED"
+    PAUSED = "PAUSED"
+    CANCEL_REQUESTED = "CANCEL_REQUESTED"
+    CANCELLED = "CANCELLED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class BatchAttemptState(StrEnum):
+    PLANNED = "PLANNED"
+    WAITING_FOR_START = "WAITING_FOR_START"
+    CHECKING_PRECONDITIONS = "CHECKING_PRECONDITIONS"
+    RUNNING = "RUNNING"
+    VALID = "VALID"
+    INVALID = "INVALID"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+    CANCELLED = "CANCELLED"
+
+
+class BenchmarkProtocol(Base):
+    __tablename__ = "benchmark_protocols"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    version: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(160))
+    definition_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    protocol_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    result_schema_version: Mapped[int] = mapped_column(default=2)
+    status: Mapped[ProtocolStatus] = mapped_column(Enum(ProtocolStatus))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AntennaProfile(Base):
+    __tablename__ = "antenna_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    manufacturer: Mapped[str] = mapped_column(String(160))
+    model: Mapped[str] = mapped_column(String(160))
+    antenna_type: Mapped[str] = mapped_column(String(80))
+    mimo_port_count: Mapped[int] = mapped_column(default=2)
+    gain_source: Mapped[GainSource] = mapped_column(Enum(GainSource))
+    nominal_peak_gain_dbi: Mapped[float | None] = mapped_column(nullable=True)
+    gain_by_band_json: Mapped[list] = mapped_column(JSON, default=list)
+    cable_type: Mapped[str] = mapped_column(String(120), default="")
+    cable_length_m: Mapped[float] = mapped_column(default=0.0)
+    estimated_cable_loss_db: Mapped[float | None] = mapped_column(nullable=True)
+    connector_loss_db: Mapped[float | None] = mapped_column(nullable=True)
+    mounting_location: Mapped[str] = mapped_column(String(160), default="")
+    orientation: Mapped[str] = mapped_column(String(160), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class TestBatch(Base):
+    __tablename__ = "test_batches"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    batch_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    protocol_slug: Mapped[str] = mapped_column(String(80), index=True)
+    protocol_hash: Mapped[str] = mapped_column(String(64), index=True)
+    router_slug: Mapped[str] = mapped_column(String(80))
+    antenna_profile_id: Mapped[int | None] = mapped_column(
+        ForeignKey("antenna_profiles.id"), nullable=True
+    )
+    state: Mapped[BatchState] = mapped_column(Enum(BatchState), default=BatchState.DRAFT)
+    target_valid_runs: Mapped[int] = mapped_column(default=10)
+    max_attempts: Mapped[int] = mapped_column(default=15)
+    valid_run_count: Mapped[int] = mapped_column(default=0)
+    attempt_count: Mapped[int] = mapped_column(default=0)
+    invalid_run_count: Mapped[int] = mapped_column(default=0)
+    failed_attempt_count: Mapped[int] = mapped_column(default=0)
+    consecutive_failure_count: Mapped[int] = mapped_column(default=0)
+    inter_run_cooldown_seconds: Mapped[int] = mapped_column(default=120)
+    retry_delay_seconds: Mapped[int] = mapped_column(default=300)
+    max_consecutive_failures: Mapped[int] = mapped_column(default=3)
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    state_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    attempts: Mapped[list["BatchAttempt"]] = relationship(
+        back_populates="batch",
+        cascade="all, delete-orphan",
+    )
+
+
+class BatchAttempt(Base):
+    __tablename__ = "batch_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    batch_pk: Mapped[int] = mapped_column(ForeignKey("test_batches.id"))
+    sequence_number: Mapped[int]
+    state: Mapped[BatchAttemptState] = mapped_column(
+        Enum(BatchAttemptState),
+        default=BatchAttemptState.PLANNED,
+    )
+    run_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    planned_start_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    comparison_eligible: Mapped[bool] = mapped_column(default=False)
+    outcome_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    outcome_details_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    batch: Mapped[TestBatch] = relationship(back_populates="attempts")
+
+
 class RouterProfile(Base):
     __tablename__ = "router_profiles"
 
