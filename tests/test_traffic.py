@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
 from ltap_testbench.traffic.iperf import build_iperf3_client_command, parse_iperf3_json
 from ltap_testbench.traffic.irtt import build_irtt_client_command, parse_irtt_json
@@ -223,3 +225,56 @@ def test_run_video_udp_probe(monkeypatch) -> None:
     assert result.frames_sent > 0
     assert result.datagrams_sent == len(sent)
     assert sent[0].startswith(b"LTAPFRAME ")
+
+
+def test_run_video_udp_probe_matches_requested_datagram_bitrate(monkeypatch) -> None:
+    class FakeSocket:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def connect(self, address):
+            self.address = address
+
+        def send(self, payload):
+            return len(payload)
+
+    class FakeClock:
+        def __init__(self) -> None:
+            self.now = 0.0
+
+        def monotonic(self) -> float:
+            return self.now
+
+        def sleep(self, seconds: float) -> None:
+            self.now += seconds
+
+    monkeypatch.setattr(
+        "ltap_testbench.traffic.video_udp.socket.socket", lambda *_args: FakeSocket()
+    )
+    monkeypatch.setattr("ltap_testbench.traffic.video_udp.time.time_ns", lambda: 123)
+
+    for bitrate_mbit_s in [0.1, 0.5, 1, 5, 10, 50]:
+        clock = FakeClock()
+        monkeypatch.setattr("ltap_testbench.traffic.video_udp.time.monotonic", clock.monotonic)
+        monkeypatch.setattr("ltap_testbench.traffic.video_udp.time.sleep", clock.sleep)
+
+        result = run_video_udp_probe(
+            "198.51.100.10",
+            18080,
+            f"run-video-{bitrate_mbit_s}",
+            "lte1",
+            duration_seconds=1,
+            bitrate_mbit_s=bitrate_mbit_s,
+            fps=25,
+            resolution="1080p",
+            scenario="city",
+        )
+
+        assert result.frames_sent == 25
+        assert result.average_mbit_s == pytest.approx(bitrate_mbit_s, rel=0.05)

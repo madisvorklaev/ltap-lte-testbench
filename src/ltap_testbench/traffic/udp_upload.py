@@ -1,5 +1,6 @@
 import socket
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 
 
@@ -23,6 +24,7 @@ def run_udp_upload(
     bitrate_mbit_s: float,
     datagram_bytes: int = 1200,
     run_id: str | None = None,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> UdpUploadResult:
     prefix = f"LTAPUDP {run_id}\n".encode() if run_id else b""
     if len(prefix) >= datagram_bytes:
@@ -36,12 +38,12 @@ def run_udp_upload(
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(1)
         sock.connect((host, port))
-        while time.monotonic() < deadline:
+        while time.monotonic() < deadline and not (should_cancel and should_cancel()):
             sock.send(payload)
             datagrams += 1
             next_send += interval
             sleep_for = next_send - time.monotonic()
-            while sleep_for > 0:
+            while sleep_for > 0 and not (should_cancel and should_cancel()):
                 time.sleep(min(sleep_for, 0.05))
                 sleep_for = next_send - time.monotonic()
     elapsed = max(time.monotonic() - start, 0.001)

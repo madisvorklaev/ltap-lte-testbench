@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RouterKindValue(StrEnum):
@@ -19,6 +19,20 @@ class UdpUploadPattern(StrEnum):
     AFTER_EACH_TCP = "after_each_tcp"
     BEGINNING = "beginning"
     END = "end"
+
+
+class Stage(StrEnum):
+    PREFLIGHT = "preflight"
+    PATH_VERIFICATION = "path-verification"
+    IDLE_LATENCY = "idle-latency"
+    TCP_UPLOAD = "tcp-upload"
+    UDP_UPLOAD = "udp-upload"
+    VIDEO_UDP_PROBE = "video-udp-probe"
+
+
+STAGE_ALIASES = {
+    "short-upload": Stage.TCP_UPLOAD,
+}
 
 
 class PortRange(BaseModel):
@@ -132,16 +146,24 @@ class TestPlanConfig(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     version: str = Field(default="1", min_length=1, max_length=40)
     server_slug: str | None = Field(default=None, min_length=1, max_length=80)
-    stages: list[str] = Field(default_factory=list)
+    stages: list[Stage] = Field(default_factory=list)
     latency: LatencyStageConfig = Field(default_factory=LatencyStageConfig)
     tcp_upload: TcpUploadStageConfig = Field(default_factory=TcpUploadStageConfig)
     udp_upload: UdpUploadStageConfig = Field(default_factory=UdpUploadStageConfig)
     video_probe: VideoProbeConfig = Field(default_factory=VideoProbeConfig)
     traffic: dict = Field(default_factory=dict)
     telemetry: dict = Field(default_factory=dict)
+    metadata: dict = Field(default_factory=dict)
     temporary_router_changes: TemporaryRouterChangesConfig = Field(
         default_factory=TemporaryRouterChangesConfig
     )
+
+    @field_validator("stages", mode="before")
+    @classmethod
+    def migrate_stage_aliases(cls, value: object) -> object:
+        if not isinstance(value, list):
+            return value
+        return [STAGE_ALIASES.get(item, item) if isinstance(item, str) else item for item in value]
 
     @model_validator(mode="after")
     def validate_plan(self) -> "TestPlanConfig":
@@ -149,6 +171,15 @@ class TestPlanConfig(BaseModel):
             raise ValueError("test plan must include at least one stage")
         if len(self.stages) != len(set(self.stages)):
             raise ValueError("test plan stages must be unique")
+        if (
+            self.udp_upload.pattern == UdpUploadPattern.AFTER_EACH_TCP
+            and Stage.TCP_UPLOAD not in self.stages
+        ):
+            raise ValueError("udp after_each_tcp pattern requires the tcp-upload stage")
+        if self.tcp_upload.count != 1 and Stage.TCP_UPLOAD not in self.stages:
+            raise ValueError("tcp upload count has no effect without the tcp-upload stage")
+        if self.video_probe.enabled and Stage.VIDEO_UDP_PROBE not in self.stages:
+            self.video_probe.enabled = False
         return self
 
 

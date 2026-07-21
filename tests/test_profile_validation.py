@@ -6,6 +6,7 @@ from ltap_testbench.profiles.schemas import (
     RouterKindValue,
     RouterPathConfig,
     RouterProfileConfig,
+    Stage,
     TestPlanConfig,
     validate_non_overlapping_ports,
 )
@@ -87,4 +88,29 @@ def test_test_plan_rejects_unknown_fields() -> None:
             name="Bad Extra",
             stages=["tcp-upload"],
             video_probe={"duration_seconds": 5, "unexpected": True},
+        )
+
+
+def test_test_plan_migrates_short_upload_alias() -> None:
+    plan = TestPlanConfig(
+        slug="alias-plan",
+        name="Alias Plan",
+        stages=["preflight", "short-upload"],
+    )
+
+    assert plan.stages == [Stage.PREFLIGHT, Stage.TCP_UPLOAD]
+
+
+def test_test_plan_rejects_unknown_stage() -> None:
+    with pytest.raises(ValidationError):
+        TestPlanConfig(slug="bad-stage", name="Bad Stage", stages=["short-uplaod"])
+
+
+def test_udp_after_each_tcp_requires_tcp_stage() -> None:
+    with pytest.raises(ValidationError):
+        TestPlanConfig(
+            slug="bad-pattern",
+            name="Bad Pattern",
+            stages=["udp-upload"],
+            udp_upload={"pattern": "after_each_tcp"},
         )

@@ -9,6 +9,7 @@ from ltap_testbench.profiles.schemas import (
     RouterPathConfig,
     RouterProfileConfig,
     ServerProfileConfig,
+    Stage,
     TcpUploadStageConfig,
     TemporaryRouterChangesConfig,
     TestPlanConfig,
@@ -23,7 +24,13 @@ from ltap_testbench.profiles.service import (
 QUICK_CHECK_PLAN = TestPlanConfig(
     slug="quick-check",
     name="Quick Health Check",
-    stages=["preflight", "path-verification", "idle-latency", "short-upload", "udp-upload"],
+    stages=[
+        Stage.PREFLIGHT,
+        Stage.PATH_VERIFICATION,
+        Stage.IDLE_LATENCY,
+        Stage.TCP_UPLOAD,
+        Stage.UDP_UPLOAD,
+    ],
     latency=LatencyStageConfig(duration_seconds=60, interval_ms=100),
     tcp_upload=TcpUploadStageConfig(
         duration_seconds=30,

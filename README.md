@@ -79,7 +79,7 @@ The current live smoke plan is in `deploy/r1-live-smoke-plan.json`:
 {
   "slug": "r1-live-smoke",
   "server_slug": "stockbot",
-  "stages": ["preflight", "path-verification", "idle-latency", "short-upload", "udp-upload"],
+  "stages": ["preflight", "path-verification", "idle-latency", "tcp-upload", "udp-upload"],
   "latency": {"duration_seconds": 10, "interval_ms": 1000},
   "tcp_upload": {"duration_seconds": 10, "parallel_streams": [1], "payload_bytes": 1048576},
   "udp_upload": {"duration_seconds": 10, "bitrate_mbit_s": 2.0, "datagram_bytes": 1200}
@@ -117,7 +117,7 @@ Example timed plan:
   "slug": "r1-60s-upload",
   "name": "R1 60 second upload",
   "server_slug": "stockbot",
-  "stages": ["preflight", "path-verification", "idle-latency", "short-upload", "udp-upload"],
+  "stages": ["preflight", "path-verification", "idle-latency", "tcp-upload", "udp-upload"],
   "latency": {"duration_seconds": 60, "interval_ms": 1000},
   "tcp_upload": {"duration_seconds": 60, "parallel_streams": [1]},
   "udp_upload": {"duration_seconds": 60, "bitrate_mbit_s": 2.0, "datagram_bytes": 1200},

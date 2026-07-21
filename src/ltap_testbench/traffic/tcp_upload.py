@@ -1,5 +1,6 @@
 import socket
 import time
+from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 
@@ -22,6 +23,7 @@ def run_timed_tcp_upload(
     path: str,
     duration_seconds: int,
     chunk_bytes: int = 64 * 1024,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> TcpTimedUploadResult:
     payload = b"\0" * chunk_bytes
     request_head = (
@@ -40,7 +42,7 @@ def run_timed_tcp_upload(
     with socket.create_connection((host, port), timeout=10) as sock:
         sock.settimeout(max(duration_seconds + 30, 30))
         sock.sendall(request_head)
-        while time.monotonic() < deadline:
+        while time.monotonic() < deadline and not (should_cancel and should_cancel()):
             try:
                 sock.sendall(payload)
             except (BrokenPipeError, ConnectionResetError):

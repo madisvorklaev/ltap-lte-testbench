@@ -59,3 +59,19 @@ def test_video_receiver_rejects_invalid_fragment_index() -> None:
     )
 
     assert stockbot.summarize_video_frames("run-video")["paths"] == {}
+
+
+def test_video_live_summary_does_not_finalize_partial_frame(monkeypatch: Any) -> None:
+    stockbot = load_stockbot_module()
+    stockbot.VIDEO_FRAMES.clear()
+    arrivals = iter([1_000_000_000, 1_010_000_000])
+    monkeypatch.setattr(stockbot.time, "monotonic_ns", lambda: next(arrivals))
+
+    stockbot.record_video_frame_datagram(frame_header("lte1", 7, 0, 2, 100_000_000), "a", 1, 1200)
+    live = stockbot.summarize_video_frames("run-video")
+    stockbot.record_video_frame_datagram(frame_header("lte1", 7, 1, 2, 100_000_000), "a", 1, 1200)
+    final = stockbot.summarize_video_frames("run-video", finalize=True, delete=True)
+
+    assert live["paths"]["lte1"]["frames_partial"] == 1
+    assert final["paths"]["lte1"]["frames_complete"] == 1
+    assert stockbot.summarize_video_frames("run-video")["paths"] == {}

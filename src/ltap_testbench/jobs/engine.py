@@ -2,6 +2,7 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
+from threading import Event
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -21,6 +22,7 @@ from ltap_testbench.jobs.state_machine import (
     require_transition,
     restart_target_for,
 )
+from ltap_testbench.profiles.schemas import STAGE_ALIASES
 from ltap_testbench.reporting.artifacts import persist_run_artifacts, run_artifact_dir
 from ltap_testbench.routers.base import RouterAdapter
 from ltap_testbench.routers.factory import adapter_for
@@ -35,6 +37,10 @@ from ltap_testbench.traffic.video_udp import run_video_udp_probe
 TCP_UPLOAD_STAGE = "tcp-upload"
 UDP_UPLOAD_STAGE = "udp-upload"
 VIDEO_PROBE_STAGE = "video-udp-probe"
+
+
+class RunCancelledError(RuntimeError):
+    pass
 
 
 def add_event(
@@ -71,12 +77,25 @@ def create_run(session: Session, router_slug: str, plan_slug: str) -> TestRun:
         run_id=f"run-{uuid4().hex[:12]}",
         router_id=router.id,
         plan_slug=plan.slug,
-        resolved_plan=plan.definition,
+        resolved_plan=_normalize_plan_definition(plan.definition),
     )
     session.add(run)
     session.commit()
     add_event(session, run, "created", "Run created.", {"router": router.slug, "plan": plan.slug})
     return run
+
+
+def _normalize_plan_definition(definition: dict) -> dict:
+    normalized = {**definition}
+    stages = normalized.get("stages", [])
+    if isinstance(stages, list):
+        normalized["stages"] = [
+            STAGE_ALIASES[stage].value
+            if isinstance(stage, str) and stage in STAGE_ALIASES
+            else str(stage)
+            for stage in stages
+        ]
+    return normalized
 
 
 def _server_for_run(session: Session, run: TestRun) -> ServerProfile | None:
@@ -129,18 +148,27 @@ def _release_server(
 
 
 def _plan_has_upload_stage(run: TestRun) -> bool:
-    stages = run.resolved_plan.get("stages", [])
-    return TCP_UPLOAD_STAGE in {str(stage) for stage in stages}
+    return TCP_UPLOAD_STAGE in _plan_stage_set(run)
 
 
 def _plan_has_udp_upload_stage(run: TestRun) -> bool:
-    stages = run.resolved_plan.get("stages", [])
-    return UDP_UPLOAD_STAGE in {str(stage) for stage in stages}
+    return UDP_UPLOAD_STAGE in _plan_stage_set(run)
 
 
 def _plan_has_latency_stage(run: TestRun) -> bool:
+    return "idle-latency" in _plan_stage_set(run)
+
+
+def _plan_stage_set(run: TestRun) -> set[str]:
     stages = run.resolved_plan.get("stages", [])
-    return any("latency" in str(stage) for stage in stages)
+    if not isinstance(stages, list):
+        return set()
+    return {
+        STAGE_ALIASES[stage].value
+        if isinstance(stage, str) and stage in STAGE_ALIASES
+        else str(stage)
+        for stage in stages
+    }
 
 
 def _router_paths(run: TestRun) -> list[dict]:
@@ -180,8 +208,7 @@ def _plan_has_video_probe_stage(run: TestRun) -> bool:
     config = _video_probe_config(run)
     if config.get("enabled") is False:
         return False
-    stages = run.resolved_plan.get("stages", [])
-    return VIDEO_PROBE_STAGE in {str(stage) for stage in stages}
+    return VIDEO_PROBE_STAGE in _plan_stage_set(run)
 
 
 def _tcp_upload_count(run: TestRun) -> int:
@@ -224,6 +251,27 @@ def _safe_router_telemetry(
     return rows
 
 
+def _is_cancel_requested(session: Session, run: TestRun, cancel_event: Event | None) -> bool:
+    if cancel_event is not None and cancel_event.is_set():
+        return True
+    session.refresh(run)
+    return run.state == RunState.CANCEL_REQUESTED
+
+
+def _raise_if_cancelled(session: Session, run: TestRun, cancel_event: Event | None) -> None:
+    if _is_cancel_requested(session, run, cancel_event):
+        raise RunCancelledError("run cancellation requested")
+
+
+def _transition_cancelled(session: Session, run: TestRun) -> None:
+    session.refresh(run)
+    if run.state != RunState.CANCEL_REQUESTED and run.state != RunState.RESTORING:
+        transition(session, run, RunState.CANCEL_REQUESTED, "cancel requested")
+    if run.state == RunState.CANCEL_REQUESTED:
+        transition(session, run, RunState.RESTORING, "cleanup after cancellation")
+    transition(session, run, RunState.CANCELLED, "cancelled cleanly")
+
+
 def _execute_latency_stage(
     session: Session,
     run: TestRun,
@@ -255,6 +303,7 @@ def _execute_http_upload_stage(
     client: TestNodeClient | None,
     round_index: int = 1,
     total_rounds: int = 1,
+    cancel_event: Event | None = None,
 ) -> list[dict]:
     if server is None or client is None or not _plan_has_upload_stage(run):
         add_event(session, run, "upload-stage", "No live HTTP upload stage configured.")
@@ -306,6 +355,7 @@ def _execute_http_upload_stage(
                 port,
                 f"/upload/{upload_run_id}",
                 duration_seconds,
+                should_cancel=cancel_event.is_set if cancel_event is not None else None,
             )
             result = None
             summary = None
@@ -402,6 +452,12 @@ def _execute_http_upload_stage(
             result is not None and result.exit_code == 0 and http_code in {"200", "201"}
         )
         timed_confirmed = timed is not None and timed.bytes_sent > 0
+        if server_confirmed:
+            row["validity"] = "server-confirmed"
+        elif curl_confirmed or timed_confirmed:
+            row["validity"] = "sender-only"
+        else:
+            row["validity"] = "failed"
         if not server_confirmed and not curl_confirmed and not timed_confirmed:
             raise RuntimeError(f"HTTP upload failed for {path_id}: {row}")
         return row
@@ -437,6 +493,7 @@ def _execute_udp_upload_stage(
     run: TestRun,
     server: ServerProfile | None,
     label: str = "end",
+    cancel_event: Event | None = None,
 ) -> list[dict]:
     if server is None or not _plan_has_udp_upload_stage(run):
         add_event(session, run, "udp-upload-stage", "No UDP upload stage configured.")
@@ -477,6 +534,7 @@ def _execute_udp_upload_stage(
             bitrate_mbit_s,
             datagram_bytes,
             run_id=udp_run_id,
+            should_cancel=cancel_event.is_set if cancel_event is not None else None,
         )
         connections = []
         if server.public_host and server:
@@ -533,6 +591,7 @@ def _execute_video_probe_stage(
     session: Session,
     run: TestRun,
     server: ServerProfile | None,
+    cancel_event: Event | None = None,
 ) -> dict:
     if server is None or not _plan_has_video_probe_stage(run):
         add_event(session, run, "video-probe-stage", "No UDP video frame probe configured.")
@@ -583,6 +642,7 @@ def _execute_video_probe_stage(
             resolution=resolution,
             scenario=scenario,
             payload_bytes=payload_bytes,
+            should_cancel=cancel_event.is_set if cancel_event is not None else None,
         )
         return {
             "path_id": path_id,
@@ -635,10 +695,16 @@ def _execute_video_probe_stage(
             "Waiting for late UDP video packets before collecting receiver summary.",
             {"seconds": receiver_settle_seconds},
         )
-        time.sleep(receiver_settle_seconds)
+        settle_deadline = time.monotonic() + receiver_settle_seconds
+        while time.monotonic() < settle_deadline:
+            if cancel_event is not None and cancel_event.is_set():
+                break
+            time.sleep(min(0.25, settle_deadline - time.monotonic()))
     try:
         receiver_summary = TestNodeClient(server.control_api_url).video_frame_stats(
-            f"{run.run_id}-video"
+            f"{run.run_id}-video",
+            finalize=True,
+            delete=True,
         )
     except Exception as exc:
         receiver_summary = {"error": str(exc), "type": type(exc).__name__}
@@ -695,6 +761,7 @@ def execute_run(
     session: Session,
     run: TestRun,
     client_factory: type[TestNodeClient] = TestNodeClient,
+    cancel_event: Event | None = None,
 ) -> TestRun:
     router = run.router
     adapter = adapter_for(router)
@@ -703,6 +770,7 @@ def execute_run(
     try:
         transition(session, run, RunState.PREFLIGHT)
         server = _server_for_run(session, run)
+        _raise_if_cancelled(session, run, cancel_event)
         controller_check = common_preflight(router.controller_interface)
         add_event(
             session,
@@ -724,6 +792,7 @@ def execute_run(
             transition(session, run, RunState.FAILED, "router preflight failed")
             return run
 
+        _raise_if_cancelled(session, run, cancel_event)
         transition(session, run, RunState.VERIFYING_PATHS)
         path_checks = adapter.verify_paths()
         for check in path_checks:
@@ -732,18 +801,25 @@ def execute_run(
             transition(session, run, RunState.FAILED, "path verification failed")
             return run
 
+        _raise_if_cancelled(session, run, cancel_event)
         transition(session, run, RunState.WARMING_UP)
         reservation, reservation_client = _reserve_server(session, run, server, client_factory)
         transition(session, run, RunState.RUNNING)
+        _raise_if_cancelled(session, run, cancel_event)
         telemetry_before = _safe_router_telemetry(session, run, adapter, "before-traffic")
         latency_results = _execute_latency_stage(session, run, adapter, server)
+        _raise_if_cancelled(session, run, cancel_event)
         upload_results = []
         udp_upload_results = []
         tcp_rounds = _tcp_upload_count(run)
         udp_pattern = _udp_pattern(run)
         if udp_pattern == "beginning":
-            udp_upload_results.extend(_execute_udp_upload_stage(session, run, server, "beginning"))
+            udp_upload_results.extend(
+                _execute_udp_upload_stage(session, run, server, "beginning", cancel_event)
+            )
+            _raise_if_cancelled(session, run, cancel_event)
         for round_index in range(1, tcp_rounds + 1):
+            _raise_if_cancelled(session, run, cancel_event)
             upload_results.extend(
                 _execute_http_upload_stage(
                     session,
@@ -752,22 +828,39 @@ def execute_run(
                     reservation_client,
                     round_index=round_index,
                     total_rounds=tcp_rounds,
+                    cancel_event=cancel_event,
                 )
             )
+            _raise_if_cancelled(session, run, cancel_event)
             if udp_pattern == "after_each_tcp":
                 udp_upload_results.extend(
-                    _execute_udp_upload_stage(session, run, server, f"after-tcp-{round_index}")
+                    _execute_udp_upload_stage(
+                        session, run, server, f"after-tcp-{round_index}", cancel_event
+                    )
                 )
+                _raise_if_cancelled(session, run, cancel_event)
         if udp_pattern == "end":
-            udp_upload_results.extend(_execute_udp_upload_stage(session, run, server, "end"))
-        video_probe_results = _execute_video_probe_stage(session, run, server)
+            udp_upload_results.extend(
+                _execute_udp_upload_stage(session, run, server, "end", cancel_event)
+            )
+            _raise_if_cancelled(session, run, cancel_event)
+        video_probe_results = _execute_video_probe_stage(session, run, server, cancel_event)
+        _raise_if_cancelled(session, run, cancel_event)
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
         has_video_sender_traffic = any(
             int(row.get("bytes_sent") or 0) > 0
             for row in video_probe_results.get("sender_results", [])
         )
+        valid_latency_results = [
+            row
+            for row in latency_results
+            if row.get("validity") != "invalid" and int(row.get("received") or 0) > 0
+        ]
         has_live_results = bool(
-            upload_results or udp_upload_results or latency_results or has_video_sender_traffic
+            upload_results
+            or udp_upload_results
+            or valid_latency_results
+            or has_video_sender_traffic
         )
         if not has_live_results:
             add_event(
@@ -804,13 +897,29 @@ def execute_run(
         session.add(run)
         session.commit()
         transition(session, run, RunState.GENERATING_REPORT)
-        persist_run_artifacts(run)
-        transition(session, run, RunState.COMPLETED)
+    except RunCancelledError as exc:
+        add_event(session, run, "cancel", str(exc))
+        _transition_cancelled(session, run)
     except Exception as exc:
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
     finally:
-        _release_server(session, run, reservation, reservation_client)
+        try:
+            _release_server(session, run, reservation, reservation_client)
+        except Exception as exc:
+            add_event(
+                session,
+                run,
+                "server-release-failed",
+                "Failed to release test node reservation.",
+                {"type": type(exc).__name__, "error": str(exc)},
+            )
+    if run.state == RunState.ANALYZING:
+        transition(session, run, RunState.GENERATING_REPORT)
+    if run.state == RunState.GENERATING_REPORT:
+        transition(session, run, RunState.COMPLETED)
+    if run.state == RunState.COMPLETED:
+        persist_run_artifacts(run)
     return run
 
 
@@ -822,8 +931,6 @@ def request_cancel(session: Session, run: TestRun) -> TestRun:
         transition(session, run, RunState.CANCELLED, "cancelled before start")
         return run
     transition(session, run, RunState.CANCEL_REQUESTED, "cancel requested")
-    transition(session, run, RunState.RESTORING, "cleanup after cancellation")
-    transition(session, run, RunState.CANCELLED, "cancelled cleanly")
     return run
 
 

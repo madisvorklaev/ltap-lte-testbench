@@ -177,9 +177,9 @@
         <div style="margin-top:14px;">
           <h3>Video Health</h3>
           <table>
-            <tr><th>Modem</th><th>Frames</th><th>Complete</th><th>Incomplete</th><th>p95 frame</th></tr>
-            <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-p95">-</td></tr>
-            <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-p95">-</td></tr>
+            <tr><th>Modem</th><th>Sent</th><th>Complete</th><th>Lost</th><th>Not decodable</th><th>Success</th><th>p95 fragment span</th></tr>
+            <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-lost">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-success">-</td><td id="lte1-video-p95">-</td></tr>
+            <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-lost">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-success">-</td><td id="lte2-video-p95">-</td></tr>
           </table>
           <div class="muted" id="video-compare" style="margin-top:6px;">No video frame probe yet.</div>
         </div>
@@ -238,6 +238,12 @@
         const state = String(run.state);
         if (["COMPLETED"].includes(state)) return 100;
         if (["FAILED", "CANCELLED", "INTERRUPTED"].includes(state)) return 100;
+        const videoStart = latestEvent(run, "video-probe-stage-started");
+        if (videoStart) {
+          const seconds = Number(videoStart.details.duration_seconds || 1);
+          const elapsed = Math.max(0, Date.now() / 1000 - eventTime(videoStart));
+          return Math.min(98, 70 + (elapsed / seconds) * 25);
+        }
         const udpStart = latestEvent(run, "udp-upload-stage-started");
         if (udpStart) {
           const seconds = Number(udpStart.details.duration_seconds || 1);
@@ -293,20 +299,25 @@
         }
       };
       const applyVideoHealth = (summary) => {
-        const video = summary.video_probe_results?.receiver_summary || {};
-        const paths = video.paths || {};
+        const videoResults = summary.video_probe_results || {};
+        const video = videoResults.receiver_summary || {};
+        const paths = videoResults.paths || {};
         for (const id of ["lte1", "lte2"]) {
           const row = paths[id] || {};
-          setText(`${id}-video-frames`, row.frames_seen ?? "-");
+          const receiver = row.receiver || {};
+          setText(`${id}-video-frames`, row.frames_sent ?? "-");
           setText(`${id}-video-complete`, row.frames_complete ?? "-");
-          setText(`${id}-video-incomplete`, row.frames_incomplete ?? "-");
-          setText(`${id}-video-p95`, fmtMs(row.frame_completion_ms_p95));
+          setText(`${id}-video-lost`, row.frames_fully_lost ?? "-");
+          setText(`${id}-video-incomplete`, row.frames_not_decodable ?? "-");
+          setText(`${id}-video-success`, fmtPct(row.frame_success_percent));
+          setText(`${id}-video-p95`, fmtMs(receiver.fragment_arrival_span_ms_p95));
         }
         const winners = video.first_arrival_winners || {};
+        const ties = video.first_arrival_ties || 0;
         const paired = video.paired_frames_complete ?? 0;
-        const delta = fmtMs(video.path_arrival_delta_ms_p95);
+        const delta = fmtMs(video.corrected_path_arrival_delta_ms_p95);
         $("video-compare").textContent = paired
-          ? `Paired complete frames: ${paired}. First-arrival winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}. p95 path arrival difference: ${delta}.`
+          ? `Paired complete frames: ${paired}. Corrected winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}, ties ${ties}. p95 corrected difference: ${delta}.`
           : "No paired complete video frames yet.";
       };
       const render = (data) => {

@@ -64,9 +64,17 @@ class TestNodeClient:
             response.raise_for_status()
             return response.json()
 
-    def video_frame_stats(self, run_id: str) -> dict:
+    def video_frame_stats(
+        self,
+        run_id: str,
+        finalize: bool = False,
+        delete: bool = False,
+    ) -> dict:
         with self._client() as client:
-            response = client.get(f"/api/v1/runs/{run_id}/video-frames")
+            response = client.get(
+                f"/api/v1/runs/{run_id}/video-frames",
+                params={"finalize": finalize, "delete": delete},
+            )
             response.raise_for_status()
             return response.json()
 

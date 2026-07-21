@@ -1,5 +1,5 @@
 from pathlib import Path
-from threading import Lock, Thread
+from threading import Event, Lock, Thread
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -50,6 +50,7 @@ class LabRunCreate(BaseModel):
 
 LAB_LOCK = Lock()
 LAB_ACTIVE_RUN_ID: str | None = None
+LAB_CANCEL_EVENTS: dict[str, Event] = {}
 TCP_FILE_SIZE_OPTIONS_MB = [5, 10, 25, 50, 100]
 
 
@@ -60,7 +61,10 @@ def _antenna_options(session: Session) -> list[str]:
     runs = session.scalars(select(TestRun).order_by(TestRun.id.desc()).limit(100)).all()
     seen = []
     for run in runs:
-        value = run.resolved_plan.get("lab", {}).get("antenna") if run.resolved_plan else None
+        lab = run.resolved_plan.get("metadata", {}).get("lab", {}) if run.resolved_plan else {}
+        if not lab and run.resolved_plan:
+            lab = run.resolved_plan.get("lab", {})
+        value = lab.get("antenna")
         if value and value not in seen:
             seen.append(value)
     return seen[:20]
@@ -96,7 +100,7 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
             "preflight",
             "path-verification",
             "idle-latency",
-            "short-upload",
+            "tcp-upload",
             "udp-upload",
             "video-udp-probe",
         ],
@@ -116,7 +120,6 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
         "video_probe": {
             "enabled": True,
             "resolution": payload.video_resolution,
-            "codec": "H.265",
             "scenario": payload.video_scenario,
             "duration_seconds": payload.udp_duration_seconds,
             "bitrate_mbit_s": payload.udp_bitrate_mbit_s,
@@ -127,19 +130,22 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
         "traffic": {"path_concurrency": "parallel"},
         "telemetry": {"controller_interval_seconds": 1, "lte_interval_seconds": 5},
         "temporary_router_changes": {"disable_fasttrack": False, "clear_test_connections": True},
-        "lab": {
-            "router_ip": payload.router_ip,
-            "tcp_file_size_mb": payload.tcp_file_size_mb,
-            "tcp_upload_count": payload.tcp_upload_count,
-            "udp_duration_seconds": payload.udp_duration_seconds,
-            "udp_bitrate_mbit_s": payload.udp_bitrate_mbit_s,
-            "udp_pattern": payload.udp_pattern,
-            "video_resolution": payload.video_resolution,
-            "video_fps": payload.video_fps,
-            "video_scenario": payload.video_scenario,
-            "antenna": payload.antenna,
+        "metadata": {
+            "lab": {
+                "router_ip": payload.router_ip,
+                "tcp_file_size_mb": payload.tcp_file_size_mb,
+                "tcp_upload_count": payload.tcp_upload_count,
+                "udp_duration_seconds": payload.udp_duration_seconds,
+                "udp_bitrate_mbit_s": payload.udp_bitrate_mbit_s,
+                "udp_pattern": payload.udp_pattern,
+                "video_resolution": payload.video_resolution,
+                "video_fps": payload.video_fps,
+                "video_scenario": payload.video_scenario,
+                "antenna": payload.antenna,
+            },
         },
     }
+    definition = TestPlanConfig.model_validate(definition).model_dump(mode="json")
     plan = session.scalar(select(TestPlan).where(TestPlan.slug == "lab-current"))
     if plan is None:
         plan = TestPlan(
@@ -172,18 +178,19 @@ def _clear_lab_reservations(session: Session) -> None:
     session.commit()
 
 
-def _run_lab_background(run_id: str) -> None:
+def _run_lab_background(run_id: str, cancel_event: Event) -> None:
     global LAB_ACTIVE_RUN_ID
     try:
         with SessionLocal() as session:
             run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
             if run is None:
                 return
-            execute_run(session, run)
+            execute_run(session, run, cancel_event=cancel_event)
     finally:
         with LAB_LOCK:
             if run_id == LAB_ACTIVE_RUN_ID:
                 LAB_ACTIVE_RUN_ID = None
+            LAB_CANCEL_EVENTS.pop(run_id, None)
 
 
 def _latest_lab_run(session: Session) -> TestRun | None:
@@ -400,31 +407,43 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
     try:
         with LAB_LOCK:
             active_run_id = LAB_ACTIVE_RUN_ID
-        if active_run_id:
-            active_run = session.scalar(select(TestRun).where(TestRun.run_id == active_run_id))
-            if active_run is not None and active_run.state not in {
-                RunState.COMPLETED,
-                RunState.FAILED,
-                RunState.CANCELLED,
-                RunState.INTERRUPTED,
-            }:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"lab run {active_run_id} is already active",
-                )
-            with LAB_LOCK:
-                if active_run_id == LAB_ACTIVE_RUN_ID:
-                    LAB_ACTIVE_RUN_ID = None
-        _clear_lab_reservations(session)
-        _lab_router(session, payload.router_ip)
-        _stockbot(session)
-        _upsert_lab_plan(session, payload)
-        run = create_run(session, "r1-ltap-live", "lab-current")
+            if active_run_id:
+                active_run = session.scalar(select(TestRun).where(TestRun.run_id == active_run_id))
+                active = active_run is None or active_run.state not in {
+                    RunState.COMPLETED,
+                    RunState.FAILED,
+                    RunState.CANCELLED,
+                    RunState.INTERRUPTED,
+                }
+                if active:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"lab run {active_run_id} is already active",
+                    )
+                LAB_ACTIVE_RUN_ID = None
+            _lab_router(session, payload.router_ip)
+            _stockbot(session)
+            _upsert_lab_plan(session, payload)
+            run = create_run(session, "r1-ltap-live", "lab-current")
+            cancel_event = Event()
+            LAB_ACTIVE_RUN_ID = run.run_id
+            LAB_CANCEL_EVENTS[run.run_id] = cancel_event
+    except HTTPException:
+        raise
     except ValueError as exc:
+        with LAB_LOCK:
+            previous_active_run_id = active_run_id if "active_run_id" in locals() else None
+            if LAB_ACTIVE_RUN_ID not in {None, previous_active_run_id}:
+                LAB_ACTIVE_RUN_ID = None
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    with LAB_LOCK:
-        LAB_ACTIVE_RUN_ID = run.run_id
-    Thread(target=_run_lab_background, args=(run.run_id,), daemon=True).start()
+    try:
+        Thread(target=_run_lab_background, args=(run.run_id, cancel_event), daemon=True).start()
+    except Exception:
+        with LAB_LOCK:
+            if run.run_id == LAB_ACTIVE_RUN_ID:
+                LAB_ACTIVE_RUN_ID = None
+            LAB_CANCEL_EVENTS.pop(run.run_id, None)
+        raise
     return {"run_id": run.run_id, "state": run.state, "plan": run.resolved_plan}
 
 
@@ -461,7 +480,8 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
             "router_name": run.router.display_name,
             "router_ip": run.router.management_host,
             "plan": run.plan_slug,
-            "description": run.resolved_plan.get("lab", {}),
+            "description": run.resolved_plan.get("metadata", {}).get("lab", {})
+            or run.resolved_plan.get("lab", {}),
             "summary": run.summary,
             "events": events,
             "telemetry": telemetry,
@@ -662,6 +682,10 @@ def cancel_run(run_id: str, session: Session = Depends(get_session)) -> dict:
     run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
+    with LAB_LOCK:
+        cancel_event = LAB_CANCEL_EVENTS.get(run_id)
+        if cancel_event is not None:
+            cancel_event.set()
     run = request_cancel(session, run)
     return {"run_id": run.run_id, "state": run.state, "reason": run.state_reason}
 

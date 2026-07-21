@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import quote, unquote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 from uuid import uuid4
 
 USERNAME = os.environ.get("STOCKBOT_FILESERVER_USER", "madis")
@@ -224,10 +224,10 @@ def record_video_frame_datagram(header: dict, source: str, port: int, size: int)
         path["source"] = source
         path["destination_port"] = port
         path["last_seen_at"] = now_wall.replace(microsecond=0).isoformat()
-        path["bytes_received"] += size
-        path["datagrams_received"] += 1
         if frame_id in path["stats"]["finalized_frame_ids"]:
             return
+        path["bytes_received"] += size
+        path["datagrams_received"] += 1
         frames = path["frames"]
         is_new_frame = frame_id not in frames
         frame = path["frames"].setdefault(
@@ -254,7 +254,7 @@ def record_video_frame_datagram(header: dict, source: str, port: int, size: int)
         _prune_video_frames(path)
 
 
-def summarize_video_frames(run_id: str) -> dict:
+def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = False) -> dict:
     with RUNS_LOCK:
         raw = VIDEO_FRAMES.get(run_id, {"paths": {}})
         paths = raw.get("paths", {})
@@ -264,15 +264,39 @@ def summarize_video_frames(run_id: str) -> dict:
         send_by_path = {}
         for path_id, path in paths.items():
             frames = path.get("frames", {})
-            for frame_id in list(frames):
-                _finalize_video_frame(path, int(frame_id), frames.pop(frame_id))
             stats = path.get("stats", {})
+            active_complete = 0
+            active_partial = 0
+            active_completion_ms = []
+            active_first_arrivals = {}
+            active_first_sends = {}
+            for frame_id, frame in list(frames.items()):
+                fragment_count = int(frame.get("fragment_count") or 0)
+                received = len(frame.get("fragments") or [])
+                if finalize:
+                    _finalize_video_frame(path, int(frame_id), frames.pop(frame_id))
+                    continue
+                if fragment_count and received >= fragment_count:
+                    active_complete += 1
+                    active_completion_ms.append(
+                        (int(frame["last_arrival_ns"]) - int(frame["first_arrival_ns"]))
+                        / 1_000_000
+                    )
+                    active_first_arrivals[int(frame_id)] = int(frame["first_arrival_ns"])
+                    if frame.get("first_send_ns") is not None:
+                        active_first_sends[int(frame_id)] = int(frame["first_send_ns"])
+                else:
+                    active_partial += 1
             first_arrivals = stats.get("first_arrival_ns_by_frame") or {}
             first_sends = stats.get("first_send_ns_by_frame") or {}
-            completion_ms = stats.get("fragment_arrival_span_ms") or []
-            complete_by_path[path_id] = set(first_arrivals)
-            first_by_path[path_id] = {int(k): int(v) for k, v in first_arrivals.items()}
-            send_by_path[path_id] = {int(k): int(v) for k, v in first_sends.items()}
+            completion_ms = [*(stats.get("fragment_arrival_span_ms") or []), *active_completion_ms]
+            path_first_arrivals = {int(k): int(v) for k, v in first_arrivals.items()}
+            path_first_arrivals.update(active_first_arrivals)
+            path_first_sends = {int(k): int(v) for k, v in first_sends.items()}
+            path_first_sends.update(active_first_sends)
+            complete_by_path[path_id] = set(path_first_arrivals)
+            first_by_path[path_id] = path_first_arrivals
+            send_by_path[path_id] = path_first_sends
             path_summaries[path_id] = {
                 "path_id": path_id,
                 "source": path.get("source"),
@@ -282,9 +306,9 @@ def summarize_video_frames(run_id: str) -> dict:
                 "bytes_received": path.get("bytes_received", 0),
                 "datagrams_received": path.get("datagrams_received", 0),
                 "frames_seen": stats.get("frames_seen", 0),
-                "frames_complete": stats.get("frames_complete", 0),
-                "frames_partial": stats.get("frames_partial", 0),
-                "frames_incomplete": stats.get("frames_partial", 0),
+                "frames_complete": stats.get("frames_complete", 0) + active_complete,
+                "frames_partial": stats.get("frames_partial", 0) + active_partial,
+                "frames_incomplete": stats.get("frames_partial", 0) + active_partial,
                 "fragment_arrival_span_ms_p50": percentile(completion_ms, 0.50),
                 "fragment_arrival_span_ms_p95": percentile(completion_ms, 0.95),
                 "fragment_arrival_span_ms_p99": percentile(completion_ms, 0.99),
@@ -317,7 +341,7 @@ def summarize_video_frames(run_id: str) -> dict:
                 else:
                     winner = ids[0] if comparison_ms < 0 else ids[1]
                     winners[winner] = winners.get(winner, 0) + 1
-        return {
+        summary = {
             "run_id": run_id,
             "paths": path_summaries,
             "paired_frames_complete": len(paired_diffs),
@@ -340,6 +364,9 @@ def summarize_video_frames(run_id: str) -> dict:
                 [abs(v) for v in corrected_diffs], default=None
             ),
         }
+        if delete:
+            VIDEO_FRAMES.pop(run_id, None)
+        return summary
 
 
 def record_tcp_upload(
@@ -487,7 +514,10 @@ class UploadHandler(BaseHTTPRequestHandler):
         frame_match = re.fullmatch(r"/api/v1/runs/([^/]+)/video-frames", path)
         if frame_match:
             run_id = unquote(frame_match.group(1))
-            self.send_json(HTTPStatus.OK, summarize_video_frames(run_id))
+            query = parse_qs(parsed.query)
+            finalize = query.get("finalize", ["false"])[0].lower() == "true"
+            delete = query.get("delete", ["false"])[0].lower() == "true"
+            self.send_json(HTTPStatus.OK, summarize_video_frames(run_id, finalize, delete))
             return True
         reservation_match = re.fullmatch(r"/api/v1/reservations/([^/]+)", path)
         if reservation_match:

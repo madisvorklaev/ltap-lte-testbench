@@ -2,6 +2,7 @@ import json
 import random
 import socket
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 
 SCENARIO_BURST = {
@@ -59,6 +60,28 @@ def _frame_size_bytes(
     return max(1, int(average * _frame_weight(frame_index, fps, scenario, rng)))
 
 
+def _frame_size_schedule(
+    frames: int,
+    fps: int,
+    bitrate_mbit_s: float,
+    scenario: str,
+    rng: random.Random,
+) -> list[int]:
+    if frames <= 0:
+        return []
+    weights = [_frame_weight(index, fps, scenario, rng) for index in range(frames)]
+    target_bytes = bitrate_mbit_s * 1_000_000 / 8 * (frames / fps)
+    scale = target_bytes / max(sum(weights), 1)
+    sizes = [max(1, int(weight * scale)) for weight in weights]
+    remainder = round(target_bytes - sum(sizes))
+    index = 0
+    while remainder > 0:
+        sizes[index % len(sizes)] += 1
+        remainder -= 1
+        index += 1
+    return sizes
+
+
 def _packet(
     run_id: str,
     path_id: str,
@@ -89,6 +112,7 @@ def run_video_udp_probe(
     resolution: str = "1080p",
     scenario: str = "city",
     payload_bytes: int = 1200,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> VideoUdpProbeResult:
     if fps <= 0:
         raise ValueError("fps must be positive")
@@ -96,6 +120,13 @@ def run_video_udp_probe(
         raise ValueError("payload_bytes is too small for frame headers")
     rng = random.Random(f"{run_id}:{resolution}:{scenario}")
     frame_interval = 1 / fps
+    planned_frame_sizes = _frame_size_schedule(
+        duration_seconds * fps,
+        fps,
+        bitrate_mbit_s,
+        scenario,
+        rng,
+    )
     start = time.monotonic()
     deadline = start + duration_seconds
     next_frame = start
@@ -107,25 +138,33 @@ def run_video_udp_probe(
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(1)
         sock.connect((host, port))
-        while time.monotonic() < deadline:
-            frame_bytes = _frame_size_bytes(frames_sent, fps, bitrate_mbit_s, scenario, rng)
-            usable_payload = payload_bytes - 260
-            fragments = max(1, (frame_bytes + usable_payload - 1) // usable_payload)
+        while (
+            frames_sent < len(planned_frame_sizes)
+            and time.monotonic() < deadline
+            and not (should_cancel and should_cancel())
+        ):
+            frame_bytes = planned_frame_sizes[frames_sent]
+            fragments = max(1, (frame_bytes + payload_bytes - 1) // payload_bytes)
             frame_send_ns = time.time_ns()
             if first_send_ns is None:
                 first_send_ns = frame_send_ns
             last_send_ns = frame_send_ns
+            remaining_frame_bytes = frame_bytes
             for fragment in range(fragments):
+                if should_cancel and should_cancel():
+                    break
                 packet = _packet(run_id, path_id, frames_sent, fragment, fragments, frame_send_ns)
-                if len(packet) < payload_bytes:
-                    packet += b"\0" * (payload_bytes - len(packet))
-                sock.send(packet[:payload_bytes])
+                packet_size = min(payload_bytes, remaining_frame_bytes)
+                if len(packet) < packet_size:
+                    packet += b"\0" * (packet_size - len(packet))
+                sock.send(packet)
                 datagrams_sent += 1
-                bytes_sent += min(payload_bytes, len(packet))
+                bytes_sent += len(packet)
+                remaining_frame_bytes = max(0, remaining_frame_bytes - packet_size)
             frames_sent += 1
             next_frame += frame_interval
             sleep_for = next_frame - time.monotonic()
-            while sleep_for > 0:
+            while sleep_for > 0 and not (should_cancel and should_cancel()):
                 time.sleep(min(sleep_for, 0.05))
                 sleep_for = next_frame - time.monotonic()
     elapsed = max(time.monotonic() - start, 0.001)
