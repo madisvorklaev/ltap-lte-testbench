@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from ltap_testbench import __version__
 from ltap_testbench.db.base import SessionLocal, get_session, init_db
 from ltap_testbench.db.models import RouterProfile, RunState, ServerProfile, TestPlan, TestRun
-from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
+from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.schemas import RouterProfileConfig, ServerProfileConfig, TestPlanConfig
 from ltap_testbench.profiles.service import (
@@ -51,7 +51,15 @@ class LabRunCreate(BaseModel):
 LAB_LOCK = Lock()
 LAB_ACTIVE_RUN_ID: str | None = None
 LAB_CANCEL_EVENTS: dict[str, Event] = {}
+LAB_RESERVATION_OWNER = "ltap-testbench"
 TCP_FILE_SIZE_OPTIONS_MB = [5, 10, 25, 50, 100]
+TERMINAL_RUN_STATES = {
+    RunState.COMPLETED,
+    RunState.FAILED,
+    RunState.CANCELLED,
+    RunState.INTERRUPTED,
+    RunState.RECOVERY_REQUIRED,
+}
 
 
 app = FastAPI(title="LtAP LTE Testbench", version=__version__)
@@ -159,21 +167,69 @@ def _upsert_lab_plan(session: Session, payload: LabRunCreate) -> TestPlan:
     return plan
 
 
-def _clear_lab_reservations(session: Session) -> None:
+def _recover_orphaned_lab_reservations(session: Session) -> None:
+    if LAB_ACTIVE_RUN_ID is not None:
+        return
     try:
         server = _stockbot(session)
         client = TestNodeClient(server.control_api_url)
         status = client.status()
-        for reservation in status.get("active_reservations", []):
-            reservation_id = reservation.get("id")
-            if reservation_id:
-                client.release_reservation(reservation_id)
     except Exception:
-        pass
-    runs = session.scalars(select(TestRun).where(TestRun.state.in_([RunState.RUNNING]))).all()
-    for run in runs:
-        run.state = RunState.CANCELLED
-        run.state_reason = "cleared before lab restart"
+        return
+    reserved_lab_run_ids = set()
+    for reservation in status.get("active_reservations", []):
+        if reservation.get("owner") != LAB_RESERVATION_OWNER:
+            continue
+        reservation_id = reservation.get("id")
+        run_id = reservation.get("run_id")
+        if not reservation_id or not run_id:
+            continue
+        reserved_lab_run_ids.add(str(run_id))
+        run = session.scalar(select(TestRun).where(TestRun.run_id == str(run_id)))
+        if (
+            run is None
+            or run.plan_slug != "lab-current"
+            or run.state in TERMINAL_RUN_STATES
+        ):
+            continue
+        try:
+            client.release_reservation(str(reservation_id))
+        except Exception as exc:
+            add_event(
+                session,
+                run,
+                "server-release-failed",
+                "Failed to release orphaned lab reservation.",
+                {"reservation_id": reservation_id, "type": type(exc).__name__, "error": str(exc)},
+            )
+            continue
+        run.state = RunState.INTERRUPTED
+        run.state_reason = "interrupted by web service restart"
+        add_event(
+            session,
+            run,
+            "server-release",
+            "Released orphaned lab reservation after worker restart.",
+            {"reservation_id": reservation_id},
+        )
+        session.add(run)
+    stale_lab_runs = session.scalars(
+        select(TestRun).where(
+            TestRun.plan_slug == "lab-current",
+            TestRun.state.not_in(TERMINAL_RUN_STATES),
+        )
+    ).all()
+    for run in stale_lab_runs:
+        if run.run_id in reserved_lab_run_ids:
+            continue
+        run.state = RunState.INTERRUPTED
+        run.state_reason = "interrupted by web service restart"
+        add_event(
+            session,
+            run,
+            "lab-worker-recovery",
+            "Marked orphaned lab run interrupted after worker restart.",
+        )
         session.add(run)
     session.commit()
 
@@ -347,6 +403,8 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
 @app.on_event("startup")
 def startup() -> None:
     init_db()
+    with SessionLocal() as session:
+        _recover_orphaned_lab_reservations(session)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -421,12 +479,7 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
             active_run_id = LAB_ACTIVE_RUN_ID
             if active_run_id:
                 active_run = session.scalar(select(TestRun).where(TestRun.run_id == active_run_id))
-                active = active_run is None or active_run.state not in {
-                    RunState.COMPLETED,
-                    RunState.FAILED,
-                    RunState.CANCELLED,
-                    RunState.INTERRUPTED,
-                }
+                active = active_run is None or active_run.state not in TERMINAL_RUN_STATES
                 if active:
                     raise HTTPException(
                         status_code=409,
@@ -435,6 +488,7 @@ def lab_start(payload: LabRunCreate, session: Session = Depends(get_session)) ->
                 LAB_ACTIVE_RUN_ID = None
             _lab_router(session, payload.router_ip)
             _stockbot(session)
+            _recover_orphaned_lab_reservations(session)
             _upsert_lab_plan(session, payload)
             run = create_run(session, "r1-ltap-live", "lab-current")
             cancel_event = Event()

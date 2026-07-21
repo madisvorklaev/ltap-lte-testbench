@@ -1,9 +1,15 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from ltap_testbench.api import app as api_app
-from ltap_testbench.api.app import LabRunCreate, _live_lab_metrics, _upsert_lab_plan, app
+from ltap_testbench.api.app import (
+    LabRunCreate,
+    _live_lab_metrics,
+    _recover_orphaned_lab_reservations,
+    _upsert_lab_plan,
+    app,
+)
 from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
     RouterKind,
@@ -133,3 +139,94 @@ def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
 
         assert metrics["paths"]["lte1"]["phase_uploaded_mb"] == 5.0
         assert metrics["paths"]["lte2"]["phase_uploaded_mb"] == 7.5
+
+
+def test_recover_orphaned_lab_reservation_only_releases_owned_lab_run(monkeypatch) -> None:
+    released: list[str] = []
+
+    class FakeTestNodeClient:
+        def __init__(self, _base_url: str):
+            pass
+
+        def status(self) -> dict:
+            return {
+                "active_reservations": [
+                    {
+                        "id": "res-lab",
+                        "owner": "ltap-testbench",
+                        "run_id": "run-lab",
+                    },
+                    {
+                        "id": "res-other",
+                        "owner": "other-tool",
+                        "run_id": "run-other",
+                    },
+                ]
+            }
+
+        def release_reservation(self, reservation_id: str) -> None:
+            released.append(reservation_id)
+
+    monkeypatch.setattr(api_app, "TestNodeClient", FakeTestNodeClient)
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        router = RouterProfile(slug="r1-ltap-live", display_name="R1", kind=RouterKind.FAKE)
+        session.add_all(
+            [
+                router,
+                ServerProfile(
+                    slug="stockbot",
+                    display_name="Stockbot",
+                    control_api_url="http://stockbot",
+                ),
+            ]
+        )
+        session.flush()
+        session.add_all(
+            [
+                DbTestRun(
+                    run_id="run-lab",
+                    router=router,
+                    plan_slug="lab-current",
+                    state=RunState.RUNNING,
+                    resolved_plan={},
+                    summary={},
+                ),
+                DbTestRun(
+                    run_id="run-other",
+                    router=router,
+                    plan_slug="other-plan",
+                    state=RunState.RUNNING,
+                    resolved_plan={},
+                    summary={},
+                ),
+                DbTestRun(
+                    run_id="run-orphan-no-reservation",
+                    router=router,
+                    plan_slug="lab-current",
+                    state=RunState.RUNNING,
+                    resolved_plan={},
+                    summary={},
+                ),
+            ]
+        )
+        session.commit()
+
+        _recover_orphaned_lab_reservations(session)
+
+        lab_run = session.scalar(select(DbTestRun).where(DbTestRun.run_id == "run-lab"))
+        other_run = session.scalar(select(DbTestRun).where(DbTestRun.run_id == "run-other"))
+        orphan_run = session.scalar(
+            select(DbTestRun).where(DbTestRun.run_id == "run-orphan-no-reservation")
+        )
+
+        assert released == ["res-lab"]
+        assert lab_run is not None
+        assert lab_run.state == RunState.INTERRUPTED
+        assert lab_run.state_reason == "interrupted by web service restart"
+        assert other_run is not None
+        assert other_run.state == RunState.RUNNING
+        assert orphan_run is not None
+        assert orphan_run.state == RunState.INTERRUPTED
