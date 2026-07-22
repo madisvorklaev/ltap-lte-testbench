@@ -70,7 +70,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Stockbot reservations are enforced on TCP upload, UDP upload, and video traffic; long runs renew reservations and mark runs ineligible if renewal fails.
 - IRTT/iperf3 live execution is still pending as a future alternative to the built-in HTTP/UDP stages.
 - Alembic migrations are installed for production startup, with legacy SQLite backfill/stamping tests.
-- Web UI has command/control coverage but still needs richer guided forms.
+- Web UI has command/control coverage and guided repeatability/overnight presets; historical import is CLI-only for now.
 
 ## Recommended Next Step
 

@@ -213,6 +213,8 @@
           </label>
         </div>
         <div class="toolbar" style="margin-top: 12px;">
+          <button id="preset-repeatability" type="button">Repeatability 10/15</button>
+          <button id="preset-overnight" type="button">Overnight 20/25</button>
           <button id="create-batch" class="primary" type="button">Create Series</button>
           <button id="refresh-batches" type="button">Refresh Series</button>
         </div>
@@ -508,6 +510,32 @@
         const value = $("batch-deadline").value;
         return value ? new Date(value).toISOString() : null;
       };
+      const setLocalDateTime = (id, date) => {
+        const pad = (value) => String(value).padStart(2, "0");
+        $(id).value = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      };
+      const applyBatchPreset = (kind) => {
+        if (kind === "overnight") {
+          $("batch-name").value = "Overnight benchmark";
+          $("batch-target-valid").value = "20";
+          $("batch-max-attempts").value = "25";
+          $("batch-cooldown").value = "120";
+          $("batch-max-failures").value = "3";
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(7, 0, 0, 0);
+          setLocalDateTime("batch-deadline", tomorrow);
+          $("batch-message").textContent = "Preset: stop at 20 valid runs, 25 attempts, or tomorrow 07:00.";
+          return;
+        }
+        $("batch-name").value = "Repeatability benchmark";
+        $("batch-target-valid").value = "10";
+        $("batch-max-attempts").value = "15";
+        $("batch-cooldown").value = "120";
+        $("batch-max-failures").value = "3";
+        $("batch-deadline").value = "";
+        $("batch-message").textContent = "Preset: 10 valid runs with up to 15 attempts.";
+      };
       const syncBatchVariants = () => {
         const experimentId = $("batch-experiment").value;
         const variantSelect = $("batch-variant");
@@ -581,6 +609,8 @@
         finally { $("create-batch").disabled = false; }
       });
       $("batch-experiment").addEventListener("change", syncBatchVariants);
+      $("preset-repeatability").addEventListener("click", () => applyBatchPreset("repeatability"));
+      $("preset-overnight").addEventListener("click", () => applyBatchPreset("overnight"));
       $("refresh-batches").addEventListener("click", async () => {
         try { await renderBatches(); }
         catch (error) { $("batch-message").textContent = error.message; }

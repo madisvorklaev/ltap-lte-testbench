@@ -1058,6 +1058,8 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert "Test Series" in dashboard.text
         assert "batch-table" in dashboard.text
         assert "Create Series" in dashboard.text
+        assert "Repeatability 10/15" in dashboard.text
+        assert "Overnight 20/25" in dashboard.text
         assert "/experiments" in dashboard.text
         assert "batch-experiment" in dashboard.text
         assert "batch-variant" in dashboard.text
