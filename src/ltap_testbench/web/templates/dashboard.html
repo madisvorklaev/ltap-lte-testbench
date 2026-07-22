@@ -29,10 +29,13 @@
       button, .button { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; font: inherit; background: #fff; color: var(--text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
       button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
       button:disabled { opacity: .55; cursor: not-allowed; }
+      pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 340px; }
+      progress { width: 100%; height: 18px; accent-color: var(--brand); }
       table { border-collapse: collapse; width: 100%; table-layout: fixed; }
       th, td { border-bottom: 1px solid #e8edf3; text-align: left; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
       th { color: var(--muted); font-weight: 650; }
       .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+      .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
       .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
       .segmented { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
       .segmented button { border: 0; border-radius: 0; }
@@ -43,9 +46,16 @@
       .preview { display: grid; gap: 8px; }
       .bad { color: var(--bad); }
       .ok { color: var(--ok); }
+      .badge { display: inline-flex; min-height: 24px; align-items: center; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
+      .badge.completed { color: var(--ok); background: #f0fdf4; border-color: #86efac; }
+      .badge.failed, .badge.cancelled { color: var(--bad); background: #fff1f2; border-color: #fecaca; }
+      .badge.running, .badge.preflight, .badge.verifying_paths { color: #075985; background: #f0f9ff; border-color: #bae6fd; }
+      .metric { background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-height: 74px; }
+      .metric strong { display: block; font-size: 20px; margin-top: 3px; }
       .hidden { display: none; }
       @media (max-width: 760px) {
         main { padding: 12px; }
+        .split { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -166,6 +176,74 @@
           <tbody id="campaigns"></tbody>
         </table>
       </section>
+
+      <section>
+        <h2>Running test statistics</h2>
+        <div class="grid">
+          <div class="metric">
+            <span class="muted">Current test</span>
+            <strong id="current-test">none</strong>
+          </div>
+          <div class="metric">
+            <span class="muted">State</span>
+            <strong><span id="run-state" class="badge">IDLE</span></strong>
+          </div>
+          <div class="metric">
+            <span class="muted">Uploaded in phase</span>
+            <strong id="phase-uploaded">0 MB</strong>
+          </div>
+          <div class="metric">
+            <span class="muted">Progress</span>
+            <strong id="progress-label">0%</strong>
+          </div>
+        </div>
+        <progress id="progress" value="0" max="100" style="margin-top:10px;"></progress>
+        <div class="split" style="margin-top:14px;">
+          <div>
+            <h3>Live speed</h3>
+            <table>
+              <tr><th>Modem</th><th>Receiver rate</th><th>Average TCP</th><th>Average UDP</th></tr>
+              <tr><td>lte1</td><td id="lte1-current">-</td><td id="lte1-tcp">-</td><td id="lte1-udp">-</td></tr>
+              <tr><td>lte2</td><td id="lte2-current">-</td><td id="lte2-tcp">-</td><td id="lte2-udp">-</td></tr>
+            </table>
+          </div>
+          <div>
+            <h3>LTE parameters</h3>
+            <table>
+              <tr><th>Modem</th><th>Band</th><th>RSRP</th><th>RSRQ</th><th>SINR</th></tr>
+              <tr><td>lte1</td><td id="lte1-band">-</td><td id="lte1-rsrp">-</td><td id="lte1-rsrq">-</td><td id="lte1-sinr">-</td></tr>
+              <tr><td>lte2</td><td id="lte2-band">-</td><td id="lte2-rsrp">-</td><td id="lte2-rsrq">-</td><td id="lte2-sinr">-</td></tr>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <h3>Latency</h3>
+          <table>
+            <tr><th>Modem</th><th>Average</th><th>Min</th><th>Max</th><th>Loss</th></tr>
+            <tr><td>lte1</td><td id="lte1-lat-avg">-</td><td id="lte1-lat-min">-</td><td id="lte1-lat-max">-</td><td id="lte1-lat-loss">-</td></tr>
+            <tr><td>lte2</td><td id="lte2-lat-avg">-</td><td id="lte2-lat-min">-</td><td id="lte2-lat-max">-</td><td id="lte2-lat-loss">-</td></tr>
+          </table>
+        </div>
+        <div style="margin-top:14px;">
+          <h3>Video health</h3>
+          <table>
+            <tr><th>Modem</th><th id="video-frames-heading">Frames seen</th><th>Complete</th><th>Lost</th><th id="video-incomplete-heading">Partial</th><th id="video-success-heading">Complete among seen</th><th>p95 fragment span</th></tr>
+            <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-lost">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-success">-</td><td id="lte1-video-p95">-</td></tr>
+            <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-lost">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-success">-</td><td id="lte2-video-p95">-</td></tr>
+          </table>
+          <div class="muted" id="video-compare" style="margin-top:6px;">No video frame probe yet.</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Log</h2>
+        <pre id="backend-log">No run loaded.</pre>
+      </section>
+
+      <section>
+        <h2>Test results</h2>
+        <pre id="summary">No summary yet.</pre>
+      </section>
     </main>
     <script>
       const $ = (id) => document.getElementById(id);
@@ -173,6 +251,8 @@
       let targetMode = "streamed_time";
       let startMode = "now";
       let previewTimer = null;
+      let previousLiveSample = null;
+      let pollInFlight = false;
 
       const request = async (url, options = {}) => {
         const response = await fetch(url, {
@@ -184,6 +264,201 @@
         try { payload = text ? JSON.parse(text) : {}; } catch (_error) {}
         if (!response.ok) throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
         return payload;
+      };
+      const fmtMbit = (value) => {
+        if (value === null || value === undefined || value === "") return "-";
+        const n = Number(value);
+        if (!Number.isFinite(n)) return String(value);
+        return `${n.toFixed(2)} Mbit/s`;
+      };
+      const fmtMb = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(2)} MB` : "-";
+      };
+      const fmtMs = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(1)} ms` : "-";
+      };
+      const fmtPct = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? `${n.toFixed(1)}%` : "-";
+      };
+      const rateToMbit = (value) => {
+        if (value === null || value === undefined || value === "") return null;
+        if (typeof value === "number") return Number.isFinite(value) ? value / 1000000 : null;
+        const text = String(value).trim().toLowerCase().replace(/\s+/g, "");
+        const match = text.match(/^([0-9]+(?:\.[0-9]+)?)([kmgt]?)(?:bit\/s|bits\/s|bps)?$/);
+        if (!match) return null;
+        const n = Number(match[1]);
+        if (!Number.isFinite(n)) return null;
+        const multiplier = { "": 1, k: 1e3, m: 1e6, g: 1e9, t: 1e12 }[match[2] || ""];
+        return n * multiplier / 1000000;
+      };
+      const setText = (id, value) => { $(id).textContent = value ?? "-"; };
+      const latestEvent = (run, type) => [...(run.events || [])].reverse().find((event) => event.type === type);
+      const eventTime = (event) => event ? new Date(event.timestamp).getTime() / 1000 : null;
+      const progressFor = (run) => {
+        const state = String(run.state);
+        if (["COMPLETED", "FAILED", "CANCELLED", "INTERRUPTED"].includes(state)) return 100;
+        const videoStart = latestEvent(run, "video-probe-stage-started");
+        if (videoStart) {
+          const seconds = Number(videoStart.details.duration_seconds || 1);
+          const elapsed = Math.max(0, Date.now() / 1000 - eventTime(videoStart));
+          return Math.min(98, 70 + (elapsed / seconds) * 25);
+        }
+        const udpStart = latestEvent(run, "udp-upload-stage-started");
+        if (udpStart) {
+          const seconds = Number(udpStart.details.duration_seconds || 1);
+          const elapsed = Math.max(0, Date.now() / 1000 - eventTime(udpStart));
+          return Math.min(95, 55 + (elapsed / seconds) * 40);
+        }
+        if (latestEvent(run, "upload-stage-started")) return 45;
+        if (latestEvent(run, "latency-stage")) return 35;
+        if (latestEvent(run, "server-reservation")) return 25;
+        if (latestEvent(run, "path-verification")) return 15;
+        return 5;
+      };
+      const livePathBytes = (liveMetrics, pathId) => {
+        const path = (liveMetrics?.paths || {})[pathId] || {};
+        const phaseMb = Number(path.phase_uploaded_mb);
+        return Number.isFinite(phaseMb) ? phaseMb * 1024 * 1024 : null;
+      };
+      const liveDeltaRateMbit = (run, pathId) => {
+        const currentBytes = livePathBytes(run.live_metrics || {}, pathId);
+        if (!Number.isFinite(currentBytes)) return null;
+        const nowMs = Date.now();
+        const previous = previousLiveSample;
+        if (!previous || previous.runId !== run.run_id) return null;
+        const previousBytes = previous.bytesByPath[pathId];
+        const elapsedSeconds = (nowMs - previous.timestampMs) / 1000;
+        if (!Number.isFinite(previousBytes) || elapsedSeconds <= 0) return null;
+        const deltaBytes = currentBytes - previousBytes;
+        if (deltaBytes <= 0) return null;
+        return (deltaBytes * 8) / elapsedSeconds / 1000000;
+      };
+      const rememberLiveSample = (run) => {
+        const bytesByPath = {};
+        for (const id of ["lte1", "lte2"]) {
+          const bytes = livePathBytes(run.live_metrics || {}, id);
+          if (Number.isFinite(bytes)) bytesByPath[id] = bytes;
+        }
+        previousLiveSample = { runId: run.run_id, timestampMs: Date.now(), bytesByPath };
+      };
+      const applyTelemetry = (run) => {
+        const rows = run.telemetry || [];
+        for (const row of rows || []) {
+          const id = row.path_id;
+          if (!["lte1", "lte2"].includes(id)) continue;
+          const live = liveDeltaRateMbit(run, id);
+          const tx = rateToMbit(row.tx_rate);
+          const displayed = Number.isFinite(live) && live > 0 ? live : tx;
+          setText(`${id}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
+          setText(`${id}-band`, row.primary_band || "-");
+          setText(`${id}-rsrp`, row.rsrp || "-");
+          setText(`${id}-rsrq`, row.rsrq || "-");
+          setText(`${id}-sinr`, row.sinr || "-");
+        }
+      };
+      const applyAverages = (summary, liveMetrics) => {
+        for (const id of ["lte1", "lte2"]) {
+          const tcpRows = (summary.upload_results || []).filter((row) => row.path_id === id);
+          const udpRows = (summary.udp_upload_results || []).filter((row) => row.path_id === id);
+          const tcp = tcpRows.at(-1);
+          const udp = udpRows.at(-1);
+          const live = (liveMetrics?.paths || {})[id] || {};
+          setText(`${id}-tcp`, fmtMbit(live.tcp_average_mbit_s ?? tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
+          setText(`${id}-udp`, fmtMbit(live.udp_average_mbit_s ?? udp?.server_average_mbit_s ?? udp?.average_mbit_s));
+        }
+      };
+      const applyPhaseUpload = (liveMetrics) => {
+        const paths = liveMetrics?.paths || {};
+        const total = Object.values(paths).reduce((sum, row) => sum + Number(row.phase_uploaded_mb || 0), 0);
+        setText("phase-uploaded", fmtMb(total));
+      };
+      const latencyRows = (run, liveMetrics) => {
+        if ((liveMetrics?.latency_results || []).length) return liveMetrics.latency_results;
+        if ((run.summary?.latency_results || []).length) return run.summary.latency_results;
+        const latency = latestEvent(run, "latency-stage");
+        return latency?.details?.results || [];
+      };
+      const applyLatency = (run, liveMetrics) => {
+        for (const id of ["lte1", "lte2"]) {
+          const row = latencyRows(run, liveMetrics).find((item) => item.path_id === id);
+          setText(`${id}-lat-avg`, fmtMs(row?.avg_ms));
+          setText(`${id}-lat-min`, fmtMs(row?.min_ms));
+          setText(`${id}-lat-max`, fmtMs(row?.max_ms));
+          setText(`${id}-lat-loss`, fmtPct(row?.loss_percent));
+        }
+      };
+      const applyVideoHealth = (summary, liveMetrics) => {
+        const videoResults = summary.video_probe_results || {};
+        const liveVideo = liveMetrics?.video_probe || {};
+        const video = videoResults.receiver_summary || liveVideo || {};
+        const paths = videoResults.paths || {};
+        const finalMode = Object.keys(paths).length > 0;
+        setText("video-frames-heading", finalMode ? "Sent" : "Frames seen");
+        setText("video-incomplete-heading", finalMode ? "Not decodable" : "Partial");
+        setText("video-success-heading", finalMode ? "End-to-end success" : "Complete among seen");
+        for (const id of ["lte1", "lte2"]) {
+          const liveRow = (liveVideo.paths || {})[id] || {};
+          const row = paths[id] || liveRow;
+          const receiver = row.receiver || liveRow || {};
+          const complete = row.frames_complete ?? receiver.frames_complete;
+          const sentOrSeen = finalMode ? row.frames_sent : receiver.frames_seen;
+          const notDecodable = row.frames_not_decodable ?? receiver.frames_incomplete ?? receiver.frames_partial;
+          const successPercent = finalMode ? row.frame_success_percent : receiver.completion_among_seen_percent;
+          const fragmentSpanP95 = receiver.fragment_arrival_span_ms_p95 ?? receiver.frame_completion_ms_p95;
+          setText(`${id}-video-frames`, sentOrSeen ?? "-");
+          setText(`${id}-video-complete`, complete ?? "-");
+          setText(`${id}-video-lost`, row.frames_fully_lost ?? "-");
+          setText(`${id}-video-incomplete`, notDecodable ?? "-");
+          setText(`${id}-video-success`, fmtPct(successPercent));
+          setText(`${id}-video-p95`, fmtMs(fragmentSpanP95));
+        }
+        const winners = video.first_arrival_winners || {};
+        const ties = video.first_arrival_ties || 0;
+        const paired = video.paired_frames_complete ?? 0;
+        const delta = fmtMs(video.corrected_path_arrival_delta_ms_p95 ?? video.path_arrival_delta_ms_p95);
+        $("video-compare").textContent = paired
+          ? `Paired complete frames: ${paired}. Corrected winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}, ties ${ties}. p95 corrected difference: ${delta}.`
+          : (finalMode ? "No paired complete video frames yet." : "Live values are receiver-side only; final sent/lost comparison appears after video finalization.");
+      };
+      const renderRunStatus = (data) => {
+        if (!data.run) {
+          setText("current-test", "none");
+          $("run-state").textContent = "IDLE";
+          $("run-state").className = "badge";
+          $("progress").value = 0;
+          setText("progress-label", "0%");
+          setText("phase-uploaded", "0 MB");
+          $("backend-log").textContent = "No run loaded.";
+          $("summary").textContent = "No summary yet.";
+          return;
+        }
+        const run = data.run;
+        const desc = run.description || {};
+        const title = `${run.router_name || "router"} · ${desc.video_resolution || "profile"} ${desc.video_scenario || ""}`;
+        setText("current-test", title);
+        $("run-state").textContent = run.state;
+        $("run-state").className = `badge ${String(run.state).toLowerCase()}`;
+        const progress = Math.round(progressFor(run));
+        $("progress").value = progress;
+        setText("progress-label", `${progress}%`);
+        applyTelemetry(run);
+        applyAverages(run.summary || {}, run.live_metrics || {});
+        applyPhaseUpload(run.live_metrics || {});
+        applyLatency(run, run.live_metrics || {});
+        applyVideoHealth(run.summary || {}, run.live_metrics || {});
+        rememberLiveSample(run);
+        $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
+        $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
+      };
+      const pollRunStatus = async () => {
+        if (pollInFlight) return;
+        pollInFlight = true;
+        try { renderRunStatus(await request("/api/v1/lab/status")); }
+        catch (error) { $("backend-log").textContent = error.message; }
+        finally { pollInFlight = false; }
       };
       const fmtDuration = (seconds) => {
         const n = Math.round(Number(seconds) || 0);
@@ -340,6 +615,8 @@
       syncVariants();
       loadProfiles().catch((error) => { $("preview").textContent = error.message; });
       renderCampaigns().catch((error) => { $("message").textContent = error.message; });
+      pollRunStatus();
+      setInterval(pollRunStatus, 2500);
     </script>
   </body>
 </html>

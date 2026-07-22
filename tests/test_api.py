@@ -1238,6 +1238,11 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert "Start a test" in dashboard.text
         assert "Campaign preview" in dashboard.text
         assert "Recent test campaigns" in dashboard.text
+        assert "Running test statistics" in dashboard.text
+        assert "LTE parameters" in dashboard.text
+        assert "Live speed" in dashboard.text
+        assert "Latency" in dashboard.text
+        assert "Log" in dashboard.text
         assert "tcp-duration" not in dashboard.text
         assert "udp-bitrate" not in dashboard.text
         assert "video-fps" not in dashboard.text
