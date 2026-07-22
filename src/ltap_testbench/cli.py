@@ -9,6 +9,7 @@ from ltap_testbench.api.app import app as fastapi_app
 from ltap_testbench.core.config import get_settings
 from ltap_testbench.db.base import SessionLocal, init_db
 from ltap_testbench.db.models import RouterProfile, ServerProfile, TestPlan, TestRun
+from ltap_testbench.importers.legacy_csv import import_legacy_upload_csv
 from ltap_testbench.jobs.engine import create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.schemas import RouterProfileConfig, ServerProfileConfig, TestPlanConfig
@@ -174,6 +175,31 @@ def runs_artifacts(run_id: str, json_output: bool = typer.Option(False, "--json"
         if test_run is None:
             raise typer.BadParameter(f"unknown run: {run_id}")
         data = list_run_artifacts(test_run)
+    emit(data, json_output)
+
+
+@runs_app.command("import-legacy-csv")
+def runs_import_legacy_csv(
+    csv_file: Path = typer.Argument(..., exists=True, readable=True),
+    router_slug: str = typer.Option(..., "--router"),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    init_db()
+    with SessionLocal() as session:
+        imported = import_legacy_upload_csv(
+            session,
+            csv_path=csv_file,
+            router_slug=router_slug,
+        )
+        data = [
+            {
+                "run_id": run.run_id,
+                "state": run.state.value,
+                "comparison_eligible": run.comparison_eligible,
+                "exclusion_reasons": run.exclusion_reasons_json,
+            }
+            for run in imported
+        ]
     emit(data, json_output)
 
 

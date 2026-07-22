@@ -58,6 +58,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - UDP video probe traffic uses a deterministic trace seed, reservation tokens, dual-path receiver union metrics, one-second buckets, both-path loss percentage, and longest both-path outage metrics.
 - TCP and UDP stages run all configured LTE paths concurrently.
 - Run artifact bundles are downloadable as ZIP files and include protocol, environment, integrity, batch, metric samples, analytics summary, and human-readable reports.
+- Legacy upload CSV files can be imported with `ltap-testbench runs import-legacy-csv`; imported runs stay visible but schema-v1 and comparison-ineligible, with raw modem identifiers omitted.
 - Live run `run-bcea1fc5bab2` completed against `r1-ltap-live` with latency samples, 1 MiB TCP upload per LTE path, 10 seconds of 2 Mbit/s UDP sender traffic per LTE path, and LTE telemetry snapshots.
 
 ## Main Gaps
@@ -69,7 +70,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - Stockbot reservations are enforced on TCP upload, UDP upload, and video traffic; long runs renew reservations and mark runs ineligible if renewal fails.
 - IRTT/iperf3 live execution is still pending as a future alternative to the built-in HTTP/UDP stages.
 - Alembic migrations are installed for production startup, with legacy SQLite backfill/stamping tests.
-- Web UI has command/control coverage but still needs richer guided forms and historical-result import.
+- Web UI has command/control coverage but still needs richer guided forms.
 
 ## Recommended Next Step
 

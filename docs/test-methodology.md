@@ -12,6 +12,17 @@ The new methodology separates these concerns:
 
 Historical curl upload tests remain importable for comparison, but flat CSV is not the canonical schema for new runs.
 
+Import legacy CSV files deliberately:
+
+```bash
+ltap-testbench runs import-legacy-csv /path/to/lte_upload_*.csv --router demo-generic
+```
+
+Imported runs are marked `result_schema_version = 1`,
+`comparison_eligible = false`, and excluded from standard comparisons unless a
+future explicit legacy-only workflow opts into them. Raw modem identifiers from
+CSV files are omitted from the imported summary and environment snapshot.
+
 ## Current Live Measurement Semantics
 
 - TCP upload supports two modes. When `payload_bytes` is set, HTTP PUT is finite-payload and is considered valid when stockbot confirms the bytes it received for the per-path run ID. When `payload_bytes` is omitted, HTTP PUT is a timed stream for `duration_seconds`; stockbot records the partial stream and confirms received bytes, duration, source IP, and Mbit/s.
