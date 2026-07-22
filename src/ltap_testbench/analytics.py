@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from statistics import median
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from ltap_testbench.db.models import TestRun
 from ltap_testbench.profiles.protocols import protocol_metadata
@@ -15,6 +16,7 @@ COMPATIBILITY_FIELDS = (
     "site_id",
     "path_count",
 )
+LOCAL_TIMEZONE = ZoneInfo("Europe/Tallinn")
 
 
 def float_value(value: Any) -> float | None:
@@ -32,6 +34,16 @@ def percentile(values: list[float], pct: float) -> float | None:
         return None
     index = min(len(clean) - 1, max(0, round((len(clean) - 1) * pct)))
     return clean[index]
+
+
+def _local_hour(created_at: Any) -> float | None:
+    if created_at is None:
+        return None
+    try:
+        local_time = created_at.astimezone(LOCAL_TIMEZONE)
+    except (AttributeError, ValueError):
+        return None
+    return local_time.hour + local_time.minute / 60
 
 
 def aggregate(values: list[float | None]) -> dict[str, Any]:
@@ -202,6 +214,10 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
         "router": run.router.slug,
         "created_at": run.created_at.isoformat() if run.created_at else None,
         "updated_at": run.updated_at.isoformat() if run.updated_at else None,
+        "local_hour": _local_hour(run.created_at),
+        "local_date": run.created_at.astimezone(LOCAL_TIMEZONE).date().isoformat()
+        if run.created_at
+        else None,
         "protocol_id": protocol.get("protocol_id"),
         "protocol_version": protocol.get("protocol_version"),
         "protocol_hash": protocol.get("protocol_hash"),
@@ -273,6 +289,41 @@ def _bootstrap_median_delta_ci(
         "high": float(percentile(deltas, 0.975) or 0.0),
         "iterations": iterations,
     }
+
+
+def _time_of_night_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    hours = [float_value(row.get("local_hour")) for row in rows]
+    clean = [hour for hour in hours if hour is not None]
+    histogram: dict[str, int] = {}
+    for hour in clean:
+        bucket = f"{int(hour):02d}:00"
+        histogram[bucket] = histogram.get(bucket, 0) + 1
+    return {
+        "n": len(clean),
+        "median_local_hour": median(clean) if clean else None,
+        "min_local_hour": min(clean) if clean else None,
+        "max_local_hour": max(clean) if clean else None,
+        "histogram": dict(sorted(histogram.items())),
+    }
+
+
+def _time_of_night_warning(
+    baseline_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+) -> str | None:
+    baseline = _time_of_night_summary(baseline_rows)
+    candidate = _time_of_night_summary(candidate_rows)
+    if not baseline["n"] or not candidate["n"]:
+        return None
+    baseline_median = float(baseline["median_local_hour"])
+    candidate_median = float(candidate["median_local_hour"])
+    if abs(baseline_median - candidate_median) >= 2:
+        return "baseline and candidate local-hour distributions differ materially"
+    baseline_hours = set(baseline["histogram"])
+    candidate_hours = set(candidate["histogram"])
+    if baseline_hours and candidate_hours and not baseline_hours & candidate_hours:
+        return "baseline and candidate have no overlapping local-hour buckets"
+    return None
 
 
 def _compatibility_key(row: dict[str, Any]) -> tuple[Any, ...]:
@@ -372,6 +423,11 @@ def compare_cohorts(
     baseline = aggregate(baseline_values)
     candidate = aggregate(candidate_values)
     policy = _metric_policy(metric_name)
+    time_of_night = {
+        "baseline": _time_of_night_summary(baseline_rows),
+        "candidate": _time_of_night_summary(candidate_rows),
+        "warning": _time_of_night_warning(baseline_rows, candidate_rows),
+    }
     conclusion: dict[str, Any] = {
         "status": "INCONCLUSIVE",
         "reason": "minimum sample count was not met",
@@ -428,6 +484,13 @@ def compare_cohorts(
         conclusion["relative_delta"] = relative_delta
         conclusion["practical_threshold"] = threshold
         conclusion["bootstrap_95_ci"] = confidence_interval
+        if time_of_night["warning"] and conclusion["status"] != "INCONCLUSIVE":
+            conclusion = {
+                **conclusion,
+                "status": "INCONCLUSIVE",
+                "reason": str(time_of_night["warning"]),
+                "uncontrolled_status": conclusion["status"],
+            }
     return {
         "metric": metric_name,
         "path_id": path_id,
@@ -437,6 +500,7 @@ def compare_cohorts(
         "candidate": candidate,
         "policy": policy,
         "conclusion": conclusion,
+        "time_of_night": time_of_night,
         "compatibility": compatibility,
         "excluded_run_count": compatibility["excluded_count"],
         "exclusion_counts": compatibility["exclusion_counts"],

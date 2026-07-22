@@ -158,6 +158,8 @@
           <div class="metric"><span>Baseline median</span><strong id="compare-baseline">-</strong></div>
           <div class="metric"><span>Candidate median</span><strong id="compare-candidate">-</strong></div>
           <div class="metric"><span>Delta</span><strong id="compare-delta">-</strong></div>
+          <div class="metric"><span>Bootstrap 95% CI</span><strong id="compare-ci">-</strong></div>
+          <div class="metric"><span>Local hour</span><strong id="compare-hour">-</strong></div>
         </div>
         <p id="compare-note" class="muted"></p>
       </section>
@@ -339,7 +341,17 @@
         setMetric("compare-baseline", data.baseline?.median);
         setMetric("compare-candidate", data.candidate?.median);
         setMetric("compare-delta", data.conclusion?.delta);
-        $("compare-note").textContent = data.conclusion?.reason || "";
+        const ci = data.conclusion?.bootstrap_95_ci;
+        $("compare-ci").textContent = ci ? `${fmt(ci.low)} .. ${fmt(ci.high)}` : "-";
+        const baseHour = data.time_of_night?.baseline?.median_local_hour;
+        const candHour = data.time_of_night?.candidate?.median_local_hour;
+        $("compare-hour").textContent = Number.isFinite(Number(baseHour)) && Number.isFinite(Number(candHour))
+          ? `${fmt(baseHour)} -> ${fmt(candHour)}`
+          : "-";
+        $("compare-note").textContent = [
+          data.conclusion?.reason || "",
+          data.time_of_night?.warning ? `Time warning: ${data.time_of_night.warning}` : "",
+        ].filter(Boolean).join(" ");
       };
       const analyticsParams = () => {
         const params = new URLSearchParams();

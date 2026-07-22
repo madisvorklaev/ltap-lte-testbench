@@ -1477,6 +1477,8 @@ def _analytics_csv(rows: list[dict[str, Any]]) -> str:
         "state",
         "created_at",
         "updated_at",
+        "local_date",
+        "local_hour",
         "router",
         "protocol_id",
         "protocol_version",
@@ -1519,6 +1521,8 @@ def _analytics_csv(rows: list[dict[str, Any]]) -> str:
         "lost_on_both",
         "effective_redundant_success_percent",
         "both_path_loss_percent",
+        "longest_consecutive_both_lost_frames",
+        "longest_both_path_outage_seconds",
     ]
     path_ids = sorted({path_id for row in rows for path_id in row.get("paths", {})})
     fieldnames = [

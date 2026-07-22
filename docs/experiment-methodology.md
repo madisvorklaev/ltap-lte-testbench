@@ -53,5 +53,7 @@ Valid conclusion labels:
 - `LIKELY_REGRESSION`;
 - `INCONCLUSIVE`.
 
-The current analytics implementation reports explicit inconclusive reasons. The
-full baseline/candidate confidence engine is still future work.
+The analytics implementation reports explicit inconclusive reasons, median
+deltas, practical thresholds, bootstrap 95% confidence intervals, and
+time-of-night warnings. Treat a time-confounded result as inconclusive even when
+the raw median delta looks large.

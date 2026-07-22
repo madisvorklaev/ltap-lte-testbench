@@ -1,5 +1,6 @@
 import io
 import zipfile
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -191,6 +192,7 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
         router=router,
         plan_slug="lab-current",
         state=RunState.COMPLETED,
+        created_at=datetime(2026, 7, 21, 21, 30, tzinfo=UTC),
         resolved_plan={
             "metadata": {
                 "lab": {
@@ -238,6 +240,8 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
     row = _analytics_run_row(run)
 
     assert row["antenna"] == "window panel"
+    assert row["local_hour"] == 0.5
+    assert row["local_date"] == "2026-07-22"
     assert row["paths"]["lte1"]["tcp_mbit_s"] == 45.0
     assert row["paths"]["lte2"]["udp_mbit_s"] == 4.4
     assert row["paths"]["lte1"]["udp_loss_percent"] == 4.0
@@ -343,6 +347,7 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
         {
             "run_id": f"baseline-{index}",
             **compatibility,
+            "local_hour": 1.0,
             "paths": {"lte1": {"tcp_mbit_s": value}},
         }
         for index, value in enumerate([10, 11, 12, 13, 14], start=1)
@@ -351,6 +356,7 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
         {
             "run_id": f"candidate-{index}",
             **compatibility,
+            "local_hour": 1.0,
             "paths": {"lte1": {"tcp_mbit_s": value}},
         }
         for index, value in enumerate([20, 21, 22, 23, 24], start=1)
@@ -370,7 +376,52 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
     assert comparison["conclusion"]["bootstrap_95_ci"]["low"] > 0
     assert comparison["conclusion"]["bootstrap_95_ci"]["high"] > 0
     assert comparison["conclusion"]["bootstrap_95_ci"]["iterations"] == 1000
+    assert comparison["time_of_night"]["warning"] is None
+    assert comparison["time_of_night"]["baseline"]["histogram"] == {"01:00": 5}
     assert comparison["excluded_run_count"] == 0
+
+
+def test_compare_cohorts_downgrades_when_time_of_night_is_confounding() -> None:
+    compatibility = {
+        "protocol_hash": "aaa",
+        "result_schema_version": 2,
+        "application_measurement_version": "commit-a",
+        "test_node_version": "stockbot-a",
+        "site_id": 1,
+        "path_count": 2,
+        "comparison_eligible": True,
+    }
+    baseline_rows = [
+        {
+            "run_id": f"baseline-night-{index}",
+            **compatibility,
+            "local_hour": 1.0,
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([10, 11, 12, 13, 14], start=1)
+    ]
+    candidate_rows = [
+        {
+            "run_id": f"candidate-morning-{index}",
+            **compatibility,
+            "local_hour": 6.0,
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([20, 21, 22, 23, 24], start=1)
+    ]
+
+    comparison = compare_cohorts(
+        baseline_rows,
+        candidate_rows,
+        metric_name="tcp_mbit_s",
+        path_id="lte1",
+    )
+
+    assert comparison["conclusion"]["status"] == "INCONCLUSIVE"
+    assert comparison["conclusion"]["uncontrolled_status"] == "LIKELY_IMPROVEMENT"
+    assert "local-hour" in comparison["conclusion"]["reason"]
+    assert comparison["time_of_night"]["baseline"]["histogram"] == {"01:00": 5}
+    assert comparison["time_of_night"]["candidate"]["histogram"] == {"06:00": 5}
 
 
 def test_compare_cohorts_excludes_incompatible_metadata() -> None:
