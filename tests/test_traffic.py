@@ -143,11 +143,12 @@ def test_run_udp_upload(monkeypatch) -> None:
         "ltap_testbench.traffic.udp_upload.socket.socket", lambda *_args: FakeSocket()
     )
 
-    result = run_udp_upload("198.51.100.10", 18080, 1, 1.0, 1000)
+    result = run_udp_upload("198.51.100.10", 18080, 1, 1.0, 1000, run_id="run-a", token="t")
 
     assert result.target_port == 18080
     assert result.bytes_sent == len(sent) * 1000
     assert result.average_mbit_s > 0
+    assert b'"token":"t"' in sent[0]
 
 
 def test_run_timed_tcp_upload(monkeypatch) -> None:
@@ -179,13 +180,14 @@ def test_run_timed_tcp_upload(monkeypatch) -> None:
         lambda *_args, **_kwargs: FakeSocket(),
     )
 
-    result = run_timed_tcp_upload("198.51.100.10", 18080, "/upload/run-test", 1)
+    result = run_timed_tcp_upload("198.51.100.10", 18080, "/upload/run-test", 1, token="t")
 
     assert result.target_port == 18080
     assert result.bytes_sent == 3 * 64 * 1024
     assert result.average_mbit_s > 0
     assert result.response_head.startswith("HTTP/1.1 202")
     assert sent[0].startswith(b"PUT /upload/run-test HTTP/1.1")
+    assert b"X-Ltap-Token: t" in sent[0]
 
 
 def test_run_video_udp_probe(monkeypatch) -> None:
@@ -232,12 +234,14 @@ def test_run_video_udp_probe(monkeypatch) -> None:
         fps=25,
         resolution="1080p",
         scenario="city",
+        token="t",
     )
 
     assert result.target_port == 18080
     assert result.frames_sent > 0
     assert result.datagrams_sent == len(sent)
     assert sent[0].startswith(b"LTAPFRAME ")
+    assert b'"token":"t"' in sent[0]
 
 
 def test_run_video_udp_probe_matches_requested_datagram_bitrate(monkeypatch) -> None:

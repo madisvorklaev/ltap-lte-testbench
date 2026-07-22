@@ -1,5 +1,6 @@
 import gzip
 import json
+import zipfile
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -9,7 +10,11 @@ from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import MetricSample, RunState
 from ltap_testbench.jobs.engine import create_run, execute_run
 from ltap_testbench.profiles.defaults import seed_demo_data
-from ltap_testbench.reporting.artifacts import persist_run_artifacts, run_artifact_dir
+from ltap_testbench.reporting.artifacts import (
+    create_run_artifact_bundle,
+    persist_run_artifacts,
+    run_artifact_dir,
+)
 
 
 def test_run_artifacts_are_written(tmp_path) -> None:
@@ -62,6 +67,33 @@ def test_run_artifacts_are_written(tmp_path) -> None:
     report_json = json.loads((tmp_path / run.run_id / "report.json").read_text())
     assert report_json["run_id"] == run.run_id
     assert report_json["events"]
+
+
+def test_run_artifact_bundle_contains_required_benchmark_files(tmp_path) -> None:
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        seed_demo_data(session)
+        run = create_run(session, "demo-generic", "quick-check")
+        run = execute_run(session, run)
+        persist_run_artifacts(run, tmp_path)
+        bundle_path = create_run_artifact_bundle(run, tmp_path)
+
+    with zipfile.ZipFile(bundle_path) as bundle:
+        names = set(bundle.namelist())
+
+    assert {
+        "protocol.json",
+        "environment.json",
+        "integrity.json",
+        "batch.json",
+        "metric-samples.ndjson.gz",
+        "analytics-summary.json",
+        "report.json",
+        "report.md",
+    }.issubset(names)
+    assert f"{run.run_id}-bundle.zip" not in names
 
 
 def test_execute_run_artifacts_reflect_final_state(tmp_path, monkeypatch) -> None:

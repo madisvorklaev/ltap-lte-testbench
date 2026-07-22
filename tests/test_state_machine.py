@@ -48,6 +48,44 @@ class ConfirmingTestNodeClient:
         ]
 
 
+class UdpBucketTestNodeClient(ConfirmingTestNodeClient):
+    def run_connections(self, run_id: str) -> list[dict]:
+        return [
+            {
+                "run_id": run_id,
+                "protocol": "udp",
+                "bytes_received": 2400,
+                "datagrams_received": 2,
+                "unique_datagrams": 2,
+                "duplicates": 0,
+                "out_of_order": 0,
+                "missing_datagrams": 0,
+                "duration_seconds": 1.0,
+                "delivered_mbit_s": 0.0192,
+                "intervals": [
+                    {
+                        "offset_seconds": 0,
+                        "bytes": 1200,
+                        "datagrams_received": 1,
+                        "unique_datagrams": 1,
+                        "duplicates": 0,
+                        "out_of_order": 0,
+                        "delivered_mbit_s": 0.0096,
+                    },
+                    {
+                        "offset_seconds": 1,
+                        "bytes": 1200,
+                        "datagrams_received": 1,
+                        "unique_datagrams": 1,
+                        "duplicates": 0,
+                        "out_of_order": 0,
+                        "delivered_mbit_s": 0.0096,
+                    },
+                ],
+            }
+        ]
+
+
 def test_fake_run_completes() -> None:
     engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(engine)
@@ -76,7 +114,7 @@ def test_generic_run_completes() -> None:
 
 
 def test_tcp_upload_stage_invokes_timed_sender(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, str, int, int, Callable[[], bool] | None]] = []
+    calls: list[tuple[str, int, str, int, int, Callable[[], bool] | None, str | None]] = []
 
     def fake_timed_upload(
         host: str,
@@ -85,8 +123,9 @@ def test_tcp_upload_stage_invokes_timed_sender(monkeypatch: pytest.MonkeyPatch) 
         duration_seconds: int,
         chunk_bytes: int = 64 * 1024,
         should_cancel: Callable[[], bool] | None = None,
+        token: str | None = None,
     ) -> TcpTimedUploadResult:
-        calls.append((host, port, path, duration_seconds, chunk_bytes, should_cancel))
+        calls.append((host, port, path, duration_seconds, chunk_bytes, should_cancel, token))
         return TcpTimedUploadResult(host, port, path, duration_seconds, 1.0, 1024, 0.008, "")
 
     monkeypatch.setattr("ltap_testbench.jobs.engine.run_timed_tcp_upload", fake_timed_upload)
@@ -125,10 +164,9 @@ def test_tcp_upload_stage_invokes_timed_sender(monkeypatch: pytest.MonkeyPatch) 
         )
 
         assert calls
+        assert {call[6] for call in calls} == {"res-test"}
         assert len(run.summary["upload_results"]) == 2
-        assert {row["validity"] for row in run.summary["upload_results"]} == {
-            "server-confirmed"
-        }
+        assert {row["validity"] for row in run.summary["upload_results"]} == {"server-confirmed"}
 
 
 def test_cancel_created_run() -> None:

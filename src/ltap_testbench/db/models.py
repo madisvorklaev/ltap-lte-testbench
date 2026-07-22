@@ -1,7 +1,19 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ltap_testbench.core.time import utc_now
@@ -107,6 +119,7 @@ class AntennaProfile(Base):
     mimo_port_count: Mapped[int] = mapped_column(default=2)
     gain_source: Mapped[GainSource] = mapped_column(Enum(GainSource))
     nominal_peak_gain_dbi: Mapped[float | None] = mapped_column(nullable=True)
+    unknown_gain_reason: Mapped[str] = mapped_column(Text, default="")
     gain_by_band_json: Mapped[list] = mapped_column(JSON, default=list)
     cable_type: Mapped[str] = mapped_column(String(120), default="")
     cable_length_m: Mapped[float] = mapped_column(default=0.0)
@@ -181,6 +194,10 @@ class TestBatch(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     batch_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(160))
+    protocol_id: Mapped[int | None] = mapped_column(
+        ForeignKey("benchmark_protocols.id"),
+        nullable=True,
+    )
     protocol_slug: Mapped[str] = mapped_column(String(80), index=True)
     protocol_hash: Mapped[str] = mapped_column(String(64), index=True)
     router_slug: Mapped[str] = mapped_column(String(80))
@@ -204,7 +221,19 @@ class TestBatch(Base):
     inter_run_cooldown_seconds: Mapped[int] = mapped_column(default=120)
     retry_delay_seconds: Mapped[int] = mapped_column(default=300)
     max_consecutive_failures: Mapped[int] = mapped_column(default=3)
+    start_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    max_runtime_seconds: Mapped[int | None] = mapped_column(nullable=True)
+    expected_application_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    expected_application_git_commit: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    expected_test_node_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    expected_protocol_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    expected_variant_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    worker_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    last_heartbeat_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     notes: Mapped[str] = mapped_column(Text, default="")
     state_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
@@ -223,6 +252,7 @@ class TestBatch(Base):
 
 class BatchAttempt(Base):
     __tablename__ = "batch_attempts"
+    __table_args__ = (UniqueConstraint("batch_pk", "sequence_number"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     batch_pk: Mapped[int] = mapped_column(ForeignKey("test_batches.id"))
@@ -241,6 +271,7 @@ class BatchAttempt(Base):
     comparison_eligible: Mapped[bool] = mapped_column(default=False)
     outcome_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     outcome_details_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    environment_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     batch: Mapped[TestBatch] = relationship(back_populates="attempts")
@@ -301,7 +332,10 @@ class TestRun(Base):
     state_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolved_plan: Mapped[dict] = mapped_column(JSON, default=dict)
     summary: Mapped[dict] = mapped_column(JSON, default=dict)
-    benchmark_protocol_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    benchmark_protocol_id: Mapped[int | None] = mapped_column(
+        ForeignKey("benchmark_protocols.id"),
+        nullable=True,
+    )
     protocol_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     result_schema_version: Mapped[int] = mapped_column(default=1)
     experiment_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
@@ -345,6 +379,11 @@ class RunEvent(Base):
 
 class MetricSample(Base):
     __tablename__ = "metric_samples"
+    __table_args__ = (
+        Index("ix_metric_samples_run_offset", "run_pk", "offset_ms"),
+        Index("ix_metric_samples_run_metric", "run_pk", "metric_name"),
+        Index("ix_metric_samples_run_phase_path", "run_pk", "phase", "path_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     run_pk: Mapped[int] = mapped_column(ForeignKey("test_runs.id"), index=True)

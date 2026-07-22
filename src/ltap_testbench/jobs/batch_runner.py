@@ -7,6 +7,7 @@ from threading import Event
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ltap_testbench import __version__
 from ltap_testbench.core.time import utc_now
 from ltap_testbench.db.models import (
     BatchAttempt,
@@ -19,6 +20,7 @@ from ltap_testbench.db.models import (
     TestPlan,
     TestRun,
 )
+from ltap_testbench.jobs.engine import _application_git_commit as application_git_commit
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run
 from ltap_testbench.jobs.preconditions import StabilityResult, wait_for_stable_paths
 from ltap_testbench.profiles.schemas import TestPlanConfig
@@ -37,6 +39,105 @@ TERMINAL_RUN_STATES = {
     RunState.INTERRUPTED,
     RunState.RECOVERY_REQUIRED,
 }
+
+
+def _pause_batch_for_drift(
+    session: Session,
+    batch: TestBatch,
+    reason: str,
+    details: dict,
+) -> None:
+    batch.state = BatchState.PAUSED
+    batch.state_reason = reason
+    session.add(batch)
+    session.commit()
+
+
+def _ensure_expected_metadata(
+    session: Session,
+    batch: TestBatch,
+    protocol: BenchmarkProtocol,
+) -> None:
+    changed = False
+    if batch.protocol_id is None:
+        batch.protocol_id = protocol.id
+        changed = True
+    if not batch.expected_protocol_hash:
+        batch.expected_protocol_hash = protocol.protocol_hash
+        changed = True
+    if not batch.expected_application_version:
+        batch.expected_application_version = __version__
+        changed = True
+    if not batch.expected_application_git_commit:
+        batch.expected_application_git_commit = application_git_commit()
+        changed = True
+    if changed:
+        session.add(batch)
+        session.commit()
+
+
+def _measurement_code_drift(
+    batch: TestBatch, protocol: BenchmarkProtocol
+) -> tuple[str, dict] | None:
+    if batch.expected_protocol_hash and batch.expected_protocol_hash != protocol.protocol_hash:
+        return (
+            "PROTOCOL_HASH_CHANGED",
+            {
+                "expected": batch.expected_protocol_hash,
+                "actual": protocol.protocol_hash,
+            },
+        )
+    if batch.expected_application_version and batch.expected_application_version != __version__:
+        return (
+            "APPLICATION_VERSION_CHANGED",
+            {
+                "expected": batch.expected_application_version,
+                "actual": __version__,
+            },
+        )
+    current_commit = application_git_commit()
+    if (
+        batch.expected_application_git_commit
+        and current_commit
+        and batch.expected_application_git_commit != current_commit
+    ):
+        return (
+            "APPLICATION_VERSION_CHANGED",
+            {
+                "expected_git_commit": batch.expected_application_git_commit,
+                "actual_git_commit": current_commit,
+            },
+        )
+    return None
+
+
+def _record_run_environment_snapshot(
+    session: Session,
+    batch: TestBatch,
+    attempt: BatchAttempt,
+    run: TestRun,
+) -> tuple[str, dict] | None:
+    attempt.environment_snapshot_hash = run.environment_snapshot_hash
+    changed = False
+    if run.test_node_version and not batch.expected_test_node_version:
+        batch.expected_test_node_version = run.test_node_version
+        changed = True
+    if changed:
+        session.add(batch)
+    session.add(attempt)
+    if (
+        batch.expected_test_node_version
+        and run.test_node_version
+        and batch.expected_test_node_version != run.test_node_version
+    ):
+        return (
+            "TEST_NODE_VERSION_CHANGED",
+            {
+                "expected": batch.expected_test_node_version,
+                "actual": run.test_node_version,
+            },
+        )
+    return None
 
 
 def benchmark_plan_definition(protocol: BenchmarkProtocol, server_slug: str = "stockbot") -> dict:
@@ -242,6 +343,7 @@ def run_batch(
     if protocol is None:
         _finish_batch(session, batch, BatchState.FAILED, "benchmark protocol not found")
         return batch
+    _ensure_expected_metadata(session, batch, protocol)
     plan = ensure_batch_plan(session, protocol)
     preconditions = precondition_runner or _run_preconditions
     batch.state = BatchState.RUNNING
@@ -260,6 +362,11 @@ def run_batch(
             return batch
         if batch.state == BatchState.PAUSE_REQUESTED:
             _finish_batch(session, batch, BatchState.PAUSED, "user_paused")
+            return batch
+        drift = _measurement_code_drift(batch, protocol)
+        if drift is not None:
+            reason, details = drift
+            _pause_batch_for_drift(session, batch, reason, details)
             return batch
         if batch.valid_run_count >= batch.target_valid_runs:
             _finish_batch(session, batch, BatchState.COMPLETED, "target_reached")
@@ -309,6 +416,13 @@ def run_batch(
         session.commit()
         run = executor(session, run, cancel_event)
         _finish_attempt(session, batch, attempt, run)
+        drift = _record_run_environment_snapshot(session, batch, attempt, run)
+        if drift is not None:
+            reason, details = drift
+            session.add_all([batch, attempt])
+            session.commit()
+            _pause_batch_for_drift(session, batch, reason, details)
+            return batch
         session.add_all([batch, attempt])
         session.commit()
         session.refresh(batch)

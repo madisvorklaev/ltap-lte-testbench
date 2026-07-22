@@ -1,5 +1,6 @@
 import gzip
 import json
+import zipfile
 from pathlib import Path
 
 from sqlalchemy import select
@@ -238,6 +239,7 @@ def render_markdown_report(payload: dict) -> str:
                 )
             )
         winners = receiver_summary.get("first_arrival_winners") or {}
+        dual_path = video_probe.get("dual_path") or receiver_summary.get("dual_path") or {}
         lines.extend(
             [
                 "",
@@ -257,6 +259,18 @@ def render_markdown_report(payload: dict) -> str:
                 (
                     "- p95 raw path arrival difference ms: "
                     f"{_format_float(receiver_summary.get('path_arrival_delta_ms_p95'))}"
+                ),
+                (
+                    "- Either-path success percent: "
+                    f"{_format_float(dual_path.get('effective_redundant_success_percent'))}"
+                ),
+                (
+                    "- Both-path loss percent: "
+                    f"{_format_float(dual_path.get('both_path_loss_percent'))}"
+                ),
+                (
+                    "- Longest both-path outage seconds: "
+                    f"{_format_float(dual_path.get('longest_both_path_outage_seconds'), 3)}"
                 ),
                 "",
             ]
@@ -455,6 +469,19 @@ def persist_run_artifacts(run: TestRun, root: Path | None = None) -> dict[str, s
         "report_json": str(report_json_path),
         "report_markdown": str(report_markdown_path),
     }
+
+
+def create_run_artifact_bundle(run: TestRun, root: Path | None = None) -> Path:
+    directory = run_artifact_dir(run, root)
+    if not directory.exists():
+        persist_run_artifacts(run, root)
+    bundle_path = directory / f"{run.run_id}-bundle.zip"
+    with zipfile.ZipFile(bundle_path, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for path in sorted(item for item in directory.rglob("*") if item.is_file()):
+            if path == bundle_path:
+                continue
+            bundle.write(path, path.relative_to(directory))
+    return bundle_path
 
 
 def list_run_artifacts(run: TestRun) -> list[dict[str, str | int]]:

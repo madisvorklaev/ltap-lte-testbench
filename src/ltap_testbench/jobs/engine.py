@@ -5,13 +5,15 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from pathlib import Path
-from threading import Event
+from threading import Event, Thread
+from typing import Protocol
 from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from ltap_testbench import __version__
+from ltap_testbench.analytics import evaluate_run_integrity
 from ltap_testbench.core.time import utc_now
 from ltap_testbench.db.models import (
     RouterProfile,
@@ -47,6 +49,68 @@ VIDEO_PROBE_STAGE = "video-udp-probe"
 
 class RunCancelledError(RuntimeError):
     pass
+
+
+class ReservationLostError(RuntimeError):
+    pass
+
+
+class CancelToken(Protocol):
+    def is_set(self) -> bool: ...
+
+
+class CombinedCancelToken:
+    def __init__(self, *tokens: CancelToken | None):
+        self.tokens = [token for token in tokens if token is not None]
+
+    def is_set(self) -> bool:
+        return any(token.is_set() for token in self.tokens)
+
+
+class ReservationRenewalMonitor:
+    def __init__(self, client: TestNodeClient, reservation: TestNodeReservation):
+        self.client = client
+        self.reservation = reservation
+        self.stop_event = Event()
+        self.failure_event = Event()
+        self.history: list[dict] = []
+        self.interval_seconds = _reservation_renew_interval_seconds(reservation.ttl_seconds)
+        self.thread = Thread(target=self._run, name=f"renew-{reservation.id}", daemon=True)
+
+    def start(self) -> None:
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.stop_event.set()
+        self.thread.join(timeout=2)
+
+    def _run(self) -> None:
+        while not self.stop_event.wait(self.interval_seconds):
+            try:
+                response = self.client.renew_reservation(self.reservation.id)
+            except Exception as exc:
+                self.history.append(
+                    {
+                        "ok": False,
+                        "timestamp": utc_now().isoformat(),
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                    }
+                )
+                self.failure_event.set()
+                return
+            self.history.append(
+                {
+                    "ok": True,
+                    "timestamp": utc_now().isoformat(),
+                    "reservation_id": self.reservation.id,
+                    "ttl_seconds": response.get("ttl_seconds"),
+                }
+            )
+
+
+def _reservation_renew_interval_seconds(ttl_seconds: int) -> float:
+    return max(1.0, min(300.0, ttl_seconds / 3))
 
 
 def add_event(
@@ -219,7 +283,11 @@ def _reserve_server(
         add_event(session, run, "server-reservation", "No test node configured for this run.")
         return None, None
     client = client_factory(server.control_api_url)
-    reservation = client.create_reservation("ltap-testbench", run_id=run.run_id)
+    reservation = client.create_reservation(
+        "ltap-testbench",
+        run_id=run.run_id,
+        ttl_seconds=_reservation_ttl_seconds(run),
+    )
     add_event(
         session,
         run,
@@ -228,6 +296,29 @@ def _reserve_server(
         {"server": server.slug, "reservation_id": reservation.id},
     )
     return reservation, client
+
+
+def _reservation_ttl_seconds(run: TestRun) -> int:
+    plan = run.resolved_plan or {}
+    estimate = int(plan.get("estimated_duration_seconds") or 0)
+    if estimate <= 0:
+        estimate = 0
+        if _plan_has_upload_stage(run):
+            tcp = _tcp_upload_config(run)
+            rounds = int(tcp.get("count") or 1)
+            estimate += rounds * int(tcp.get("duration_seconds") or 30)
+        if _plan_has_udp_upload_stage(run):
+            udp = _udp_upload_config(run)
+            pattern = str(udp.get("pattern") or "end")
+            multiplier = (
+                int(_tcp_upload_config(run).get("count") or 1) if pattern == "after_each_tcp" else 1
+            )
+            estimate += multiplier * int(udp.get("duration_seconds") or 30)
+        if _plan_has_video_probe_stage(run):
+            video = _video_probe_config(run)
+            estimate += int(video.get("duration_seconds") or 30)
+            estimate += int(video.get("receiver_settle_seconds") or 5)
+    return max(600, estimate + 300)
 
 
 def _release_server(
@@ -386,16 +477,25 @@ def _metric_sampler_for_run(
     )
 
 
-def _is_cancel_requested(session: Session, run: TestRun, cancel_event: Event | None) -> bool:
+def _is_cancel_requested(session: Session, run: TestRun, cancel_event: CancelToken | None) -> bool:
     if cancel_event is not None and cancel_event.is_set():
         return True
     session.refresh(run)
     return run.state == RunState.CANCEL_REQUESTED
 
 
-def _raise_if_cancelled(session: Session, run: TestRun, cancel_event: Event | None) -> None:
+def _raise_if_cancelled(session: Session, run: TestRun, cancel_event: CancelToken | None) -> None:
     if _is_cancel_requested(session, run, cancel_event):
         raise RunCancelledError("run cancellation requested")
+
+
+def _raise_if_reservation_lost(monitor: ReservationRenewalMonitor | None) -> None:
+    if monitor is not None and monitor.failure_event.is_set():
+        raise ReservationLostError("test node reservation renewal failed")
+
+
+def _reservation_history(monitor: ReservationRenewalMonitor | None) -> list[dict]:
+    return list(monitor.history) if monitor is not None else []
 
 
 def _transition_cancelled(session: Session, run: TestRun) -> None:
@@ -438,7 +538,8 @@ def _execute_http_upload_stage(
     client: TestNodeClient | None,
     round_index: int = 1,
     total_rounds: int = 1,
-    cancel_event: Event | None = None,
+    reservation_token: str | None = None,
+    cancel_event: CancelToken | None = None,
 ) -> list[dict]:
     if server is None or client is None or not _plan_has_upload_stage(run):
         add_event(session, run, "upload-stage", "No live HTTP upload stage configured.")
@@ -491,6 +592,7 @@ def _execute_http_upload_stage(
                 f"/upload/{upload_run_id}",
                 duration_seconds,
                 should_cancel=cancel_event.is_set if cancel_event is not None else None,
+                token=reservation_token,
             )
             result = None
             summary = None
@@ -516,6 +618,8 @@ def _execute_http_upload_stage(
                     "--fail-with-body",
                     "--upload-file",
                     str(payload_path),
+                    "--header",
+                    f"X-Ltap-Token: {reservation_token or ''}",
                     "--output",
                     str(response_path),
                     "--write-out",
@@ -637,8 +741,10 @@ def _execute_udp_upload_stage(
     session: Session,
     run: TestRun,
     server: ServerProfile | None,
+    client: TestNodeClient | None = None,
     label: str = "end",
-    cancel_event: Event | None = None,
+    reservation_token: str | None = None,
+    cancel_event: CancelToken | None = None,
 ) -> list[dict]:
     if server is None or not _plan_has_udp_upload_stage(run):
         add_event(session, run, "udp-upload-stage", "No UDP upload stage configured.")
@@ -679,15 +785,20 @@ def _execute_udp_upload_stage(
             bitrate_mbit_s,
             datagram_bytes,
             run_id=udp_run_id,
+            token=reservation_token,
             should_cancel=cancel_event.is_set if cancel_event is not None else None,
         )
         connections = []
         if server.public_host and server:
             try:
-                connections = TestNodeClient(server.control_api_url).run_connections(udp_run_id)
+                test_node_client = client or TestNodeClient(server.control_api_url)
+                connections = test_node_client.run_connections(udp_run_id)
             except Exception:
                 connections = []
         receiver = connections[0] if connections else {}
+        receiver_intervals = receiver.get("intervals") if isinstance(receiver, dict) else []
+        if not isinstance(receiver_intervals, list):
+            receiver_intervals = []
         receiver_bytes = int(receiver.get("bytes_received") or 0)
         receiver_unique = int(
             receiver.get("unique_datagrams") or receiver.get("datagrams_received") or 0
@@ -736,11 +847,13 @@ def _execute_udp_upload_stage(
                 ),
                 "duration_seconds": receiver_duration,
                 "delivered_mbit_s": delivered_mbit_s,
+                "intervals": receiver_intervals,
             },
             "delivery": {
                 "packet_loss_percent": packet_loss_percent,
                 "byte_delivery_percent": byte_delivery_percent,
             },
+            "intervals": receiver_intervals,
             "server_average_mbit_s": delivered_mbit_s,
             "packet_loss_percent": packet_loss_percent,
             "byte_delivery_percent": byte_delivery_percent,
@@ -780,7 +893,9 @@ def _execute_video_probe_stage(
     session: Session,
     run: TestRun,
     server: ServerProfile | None,
-    cancel_event: Event | None = None,
+    client: TestNodeClient | None = None,
+    reservation_token: str | None = None,
+    cancel_event: CancelToken | None = None,
 ) -> dict:
     if server is None or not _plan_has_video_probe_stage(run):
         add_event(session, run, "video-probe-stage", "No UDP video frame probe configured.")
@@ -840,6 +955,7 @@ def _execute_video_probe_stage(
             traffic_seed=traffic_seed,
             trace_id=trace_id,
             generator_version=generator_version,
+            token=reservation_token,
             should_cancel=cancel_event.is_set if cancel_event is not None else None,
         )
         return {
@@ -902,7 +1018,8 @@ def _execute_video_probe_stage(
                 break
             time.sleep(min(0.25, settle_deadline - time.monotonic()))
     try:
-        receiver_summary = TestNodeClient(server.control_api_url).video_frame_stats(
+        test_node_client = client or TestNodeClient(server.control_api_url)
+        receiver_summary = test_node_client.video_frame_stats(
             f"{run.run_id}-video",
             finalize=True,
             delete=True,
@@ -954,10 +1071,20 @@ def _execute_video_probe_stage(
         complete_on_either = int(dual_path.get("complete_on_either") or 0)
         dual_path = {
             **dual_path,
+            **_video_dual_path_buckets(
+                dual_path,
+                frames_sent=max_frames_sent,
+                fps=fps,
+            ),
             "frames_sent": max_frames_sent,
             "lost_on_both": max(0, max_frames_sent - complete_on_either),
             "effective_redundant_success_percent": (
                 complete_on_either / max_frames_sent * 100 if max_frames_sent else None
+            ),
+            "both_path_loss_percent": (
+                max(0, max_frames_sent - complete_on_either) / max_frames_sent * 100
+                if max_frames_sent
+                else None
             ),
         }
     has_sender_traffic = any(int(row.get("bytes_sent") or 0) > 0 for row in sender_results)
@@ -974,6 +1101,60 @@ def _execute_video_probe_stage(
     }
 
 
+def _video_dual_path_buckets(
+    dual_path: dict,
+    *,
+    frames_sent: int,
+    fps: int,
+) -> dict:
+    path_ids = dual_path.get("paths")
+    complete_by_path = dual_path.get("complete_frame_ids_by_path") or {}
+    if (
+        not isinstance(path_ids, list)
+        or len(path_ids) < 2
+        or not isinstance(complete_by_path, dict)
+        or frames_sent <= 0
+        or fps <= 0
+    ):
+        return {"buckets": [], "longest_consecutive_both_lost_frames": 0}
+    left_id = str(path_ids[0])
+    right_id = str(path_ids[1])
+    left_complete = {int(frame_id) for frame_id in complete_by_path.get(left_id, [])}
+    right_complete = {int(frame_id) for frame_id in complete_by_path.get(right_id, [])}
+    either_complete = left_complete | right_complete
+    buckets = []
+    longest_both_lost = 0
+    current_both_lost = 0
+    for start in range(0, frames_sent, fps):
+        end = min(frames_sent, start + fps)
+        frame_ids = set(range(start, end))
+        left_count = len(frame_ids & left_complete)
+        right_count = len(frame_ids & right_complete)
+        either_count = len(frame_ids & either_complete)
+        both_lost = len(frame_ids) - either_count
+        buckets.append(
+            {
+                "offset_seconds": start // fps,
+                "frames_expected": len(frame_ids),
+                f"{left_id}_complete": left_count,
+                f"{right_id}_complete": right_count,
+                "either_complete": either_count,
+                "both_lost": both_lost,
+            }
+        )
+        for frame_id in range(start, end):
+            if frame_id in either_complete:
+                current_both_lost = 0
+            else:
+                current_both_lost += 1
+                longest_both_lost = max(longest_both_lost, current_both_lost)
+    return {
+        "buckets": buckets,
+        "longest_consecutive_both_lost_frames": longest_both_lost,
+        "longest_both_path_outage_seconds": longest_both_lost / fps,
+    }
+
+
 def execute_run(
     session: Session,
     run: TestRun,
@@ -985,6 +1166,7 @@ def execute_run(
     reservation: TestNodeReservation | None = None
     reservation_client: TestNodeClient | None = None
     metric_sampler: RunMetricSampler | None = None
+    renewal_monitor: ReservationRenewalMonitor | None = None
     try:
         transition(session, run, RunState.PREFLIGHT)
         server = _server_for_run(session, run)
@@ -1024,7 +1206,30 @@ def execute_run(
         _raise_if_cancelled(session, run, cancel_event)
         transition(session, run, RunState.WARMING_UP)
         reservation, reservation_client = _reserve_server(session, run, server, client_factory)
+        reservation_token = (
+            (reservation.token or reservation.id) if reservation is not None else None
+        )
+        if reservation is not None and reservation_client is not None:
+            renewal_monitor = ReservationRenewalMonitor(reservation_client, reservation)
+            renewal_monitor.start()
+            add_event(
+                session,
+                run,
+                "server-reservation-renewal",
+                "Started test node reservation renewal.",
+                {
+                    "reservation_id": reservation.id,
+                    "interval_seconds": renewal_monitor.interval_seconds,
+                    "ttl_seconds": reservation.ttl_seconds,
+                },
+            )
+        traffic_cancel_event: CancelToken | None = (
+            CombinedCancelToken(cancel_event, renewal_monitor.failure_event)
+            if renewal_monitor is not None
+            else cancel_event
+        )
         transition(session, run, RunState.RUNNING)
+        _raise_if_reservation_lost(renewal_monitor)
         _raise_if_cancelled(session, run, cancel_event)
         telemetry_before = _safe_router_telemetry(session, run, adapter, "before-traffic")
         metric_sampler = _metric_sampler_for_run(session, run, server)
@@ -1041,10 +1246,20 @@ def execute_run(
             if metric_sampler is not None:
                 metric_sampler.set_phase("udp", "beginning")
             udp_upload_results.extend(
-                _execute_udp_upload_stage(session, run, server, "beginning", cancel_event)
+                _execute_udp_upload_stage(
+                    session,
+                    run,
+                    server,
+                    reservation_client,
+                    "beginning",
+                    reservation_token=reservation_token,
+                    cancel_event=traffic_cancel_event,
+                )
             )
+            _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
         for round_index in range(1, tcp_rounds + 1):
+            _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
             if metric_sampler is not None:
                 metric_sampler.set_phase("tcp", f"round-{round_index}")
@@ -1056,29 +1271,55 @@ def execute_run(
                     reservation_client,
                     round_index=round_index,
                     total_rounds=tcp_rounds,
-                    cancel_event=cancel_event,
+                    reservation_token=reservation_token,
+                    cancel_event=traffic_cancel_event,
                 )
             )
+            _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
             if udp_pattern == "after_each_tcp":
                 if metric_sampler is not None:
                     metric_sampler.set_phase("udp", f"after-tcp-{round_index}")
                 udp_upload_results.extend(
                     _execute_udp_upload_stage(
-                        session, run, server, f"after-tcp-{round_index}", cancel_event
+                        session,
+                        run,
+                        server,
+                        reservation_client,
+                        f"after-tcp-{round_index}",
+                        reservation_token=reservation_token,
+                        cancel_event=traffic_cancel_event,
                     )
                 )
+                _raise_if_reservation_lost(renewal_monitor)
                 _raise_if_cancelled(session, run, cancel_event)
         if udp_pattern == "end":
             if metric_sampler is not None:
                 metric_sampler.set_phase("udp", "end")
             udp_upload_results.extend(
-                _execute_udp_upload_stage(session, run, server, "end", cancel_event)
+                _execute_udp_upload_stage(
+                    session,
+                    run,
+                    server,
+                    reservation_client,
+                    "end",
+                    reservation_token=reservation_token,
+                    cancel_event=traffic_cancel_event,
+                )
             )
+            _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
         if metric_sampler is not None:
             metric_sampler.set_phase("video", "video-probe")
-        video_probe_results = _execute_video_probe_stage(session, run, server, cancel_event)
+        video_probe_results = _execute_video_probe_stage(
+            session,
+            run,
+            server,
+            reservation_client,
+            reservation_token=reservation_token,
+            cancel_event=traffic_cancel_event,
+        )
+        _raise_if_reservation_lost(renewal_monitor)
         _raise_if_cancelled(session, run, cancel_event)
         if metric_sampler is not None:
             metric_sampler.set_phase("final_recovery", "after-traffic")
@@ -1114,20 +1355,19 @@ def execute_run(
             for connection in result.get("test_node_connections", [])
         ]
         protocol_info = run.resolved_plan.get("metadata", {}).get("protocol", {})
-        comparable_protocol_ids = {"comparable-benchmark", "comparable-v1"}
-        comparison_eligible = bool(
-            has_live_results and protocol_info.get("protocol_id") in comparable_protocol_ids
+        integrity = evaluate_run_integrity(
+            run,
+            has_live_results=has_live_results,
+            protocol=protocol_info,
         )
+        comparison_eligible = bool(integrity["comparison_eligible"])
         run.summary = {
             "validity": ("live-upload" if has_live_results else "simulated"),
             "result_schema_version": run.resolved_plan.get("result_schema_version", 2),
             "protocol": protocol_info,
             "comparison_eligible": comparison_eligible,
-            "exclusion_reasons": (
-                []
-                if comparison_eligible
-                else ["exploratory_or_legacy_protocol"]
-            ),
+            "exclusion_reasons": integrity["exclusion_reasons"],
+            "integrity": integrity,
             "warnings": controller_check.warnings,
             "message": (
                 "Run completed with live measured stages."
@@ -1135,6 +1375,8 @@ def execute_run(
                 else "MVP run completed using adapter checks and simulated measurements."
             ),
             "test_node_reserved": reservation is not None,
+            "reservation_renewals": _reservation_history(renewal_monitor),
+            "reservation_valid_entire_run": True,
             "latency_results": latency_results,
             "upload_results": upload_results,
             "udp_upload_results": udp_upload_results,
@@ -1149,9 +1391,11 @@ def execute_run(
         run.exclusion_reasons_json = run.summary["exclusion_reasons"]
         run.integrity_json = {
             **(run.integrity_json or {}),
-            "protocol_hash_verified": bool(run.protocol_hash),
-            "traffic_receiver_confirmed": has_live_results,
+            **integrity["checks"],
             "comparison_eligible": comparison_eligible,
+            "exclusion_reasons": integrity["exclusion_reasons"],
+            "reservation_renewals": _reservation_history(renewal_monitor),
+            "reservation_valid_entire_run": True,
         }
         session.add(run)
         session.commit()
@@ -1159,10 +1403,38 @@ def execute_run(
     except RunCancelledError as exc:
         add_event(session, run, "cancel", str(exc))
         _transition_cancelled(session, run)
+    except ReservationLostError as exc:
+        add_event(
+            session,
+            run,
+            "server-reservation-lost",
+            str(exc),
+            {"renewals": _reservation_history(renewal_monitor)},
+        )
+        run.summary = {
+            **(run.summary or {}),
+            "comparison_eligible": False,
+            "exclusion_reasons": ["RESERVATION_LOST"],
+            "reservation_renewals": _reservation_history(renewal_monitor),
+        }
+        run.comparison_eligible = False
+        run.exclusion_reasons_json = ["RESERVATION_LOST"]
+        run.integrity_json = {
+            **(run.integrity_json or {}),
+            "comparison_eligible": False,
+            "reservation_valid_entire_run": False,
+            "exclusion_reasons": ["RESERVATION_LOST"],
+            "reservation_renewals": _reservation_history(renewal_monitor),
+        }
+        session.add(run)
+        session.commit()
+        transition(session, run, RunState.FAILED, "RESERVATION_LOST")
     except Exception as exc:
         add_event(session, run, "error", str(exc), {"type": type(exc).__name__})
         transition(session, run, RunState.FAILED, str(exc))
     finally:
+        if renewal_monitor is not None:
+            renewal_monitor.stop()
         if metric_sampler is not None:
             metric_sampler.stop()
         try:

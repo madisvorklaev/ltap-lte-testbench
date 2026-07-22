@@ -22,8 +22,19 @@ the target. This is not treated as failure.
 
 A batch fails when `max_attempts` is reached before the valid target.
 
-A batch pauses after too many consecutive infrastructure failures or after
-restart recovery that requires operator review.
+A batch pauses after too many consecutive infrastructure failures, after restart
+recovery that requires operator review, or when measurement code drifts
+mid-batch.
+
+At batch creation/start, the runner stores the expected protocol hash,
+application version, and application Git commit. During execution it also stores
+the first observed test-node version. Later attempts are paused rather than
+continued when these controlled measurement fields change. Current pause reason
+codes include:
+
+- `APPLICATION_VERSION_CHANGED`
+- `TEST_NODE_VERSION_CHANGED`
+- `PROTOCOL_HASH_CHANGED`
 
 ## Cooldown And Stabilization
 
@@ -35,14 +46,24 @@ remain registered for the protocol's stabilization window. If not, the attempt i
 marked skipped with a machine-readable outcome code such as
 `MODEM_NOT_REGISTERED`.
 
+## Test-Node Reservations
+
+For runs using a configured test node, the worker reserves the node before
+traffic starts and sends a reservation token with TCP, UDP, and video traffic.
+The reservation TTL is derived from the estimated traffic plan plus cleanup
+margin. During active runs, the worker renews the reservation every
+`min(300 seconds, ttl / 3)`.
+
+If renewal fails, traffic cancellation is requested, the run is marked
+comparison-ineligible, and the exclusion reason is `RESERVATION_LOST`.
+
 ## Recovery
 
 After a controller restart, active batch attempts are reconciled. Non-terminal
 linked runs are marked interrupted, the attempt is marked failed with
 `WORKER_RESTARTED`, and the batch is paused.
 
-The operator should review the batch before resuming. Measurement code changes
-mid-batch should be treated as a reason to pause, not silently continue.
+The operator should review the batch before resuming.
 
 ## Experiment Design
 

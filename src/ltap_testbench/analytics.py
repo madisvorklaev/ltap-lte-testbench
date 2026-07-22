@@ -6,6 +6,15 @@ from typing import Any
 from ltap_testbench.db.models import TestRun
 from ltap_testbench.profiles.protocols import protocol_metadata
 
+COMPATIBILITY_FIELDS = (
+    "protocol_hash",
+    "result_schema_version",
+    "application_measurement_version",
+    "test_node_version",
+    "site_id",
+    "path_count",
+)
+
 
 def float_value(value: Any) -> float | None:
     try:
@@ -114,9 +123,8 @@ def _legacy_udp_connection_mbit(row: dict[str, Any]) -> float | None:
 def _udp_loss(row: dict[str, Any]) -> float | None:
     delivery_value = row.get("delivery")
     delivery: dict[str, Any] = delivery_value if isinstance(delivery_value, dict) else {}
-    return (
-        float_value(delivery.get("packet_loss_percent"))
-        or float_value(row.get("packet_loss_percent"))
+    return float_value(delivery.get("packet_loss_percent")) or float_value(
+        row.get("packet_loss_percent")
     )
 
 
@@ -124,6 +132,12 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
     lab = lab_metadata(run)
     summary = run.summary or {}
     protocol = protocol_info(run)
+    environment = run.environment_snapshot_json or {}
+    site_id = (
+        (run.resolved_plan.get("site_id") if run.resolved_plan else None)
+        or lab.get("site_id")
+        or environment.get("site_id")
+    )
     paths: dict[str, dict[str, Any]] = {
         path_id: {
             "tcp_mbit_s": None,
@@ -169,11 +183,13 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
         path = paths.setdefault(str(path_id), {})
         path["video_success_percent"] = float_value(row.get("frame_success_percent"))
         path["video_not_decodable"] = float_value(row.get("frames_not_decodable"))
-    dual_video = video_results.get("dual_path") or (
-        video_results.get("receiver_summary") or {}
-    ).get("dual_path") or {}
-    comparison_eligible = bool(summary.get("comparison_eligible"))
-    exclusion_reasons = list(summary.get("exclusion_reasons") or [])
+    dual_video = (
+        video_results.get("dual_path")
+        or (video_results.get("receiver_summary") or {}).get("dual_path")
+        or {}
+    )
+    comparison_eligible = bool(run.comparison_eligible or summary.get("comparison_eligible"))
+    exclusion_reasons = list(run.exclusion_reasons_json or summary.get("exclusion_reasons") or [])
     if not comparison_eligible and not exclusion_reasons:
         exclusion_reasons = ["legacy_or_custom_run"]
     return {
@@ -186,6 +202,14 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
         "protocol_version": protocol.get("protocol_version"),
         "protocol_hash": protocol.get("protocol_hash"),
         "result_schema_version": protocol.get("result_schema_version"),
+        "application_version": run.application_version,
+        "application_git_commit": run.application_git_commit,
+        "application_measurement_version": run.application_git_commit or run.application_version,
+        "test_node_version": run.test_node_version
+        or (environment.get("test_node") or {}).get("version")
+        or ((environment.get("test_node") or {}).get("health") or {}).get("version"),
+        "site_id": site_id,
+        "path_count": len(paths),
         "experiment_id": run.experiment_id,
         "variant_id": run.variant_id,
         "batch_id": run.batch_id,
@@ -223,6 +247,80 @@ def _metric_policy(metric_name: str) -> dict[str, Any]:
     return {"higher_is_better": True, "absolute_threshold": 0.0, "relative_threshold": 0.10}
 
 
+def _compatibility_key(row: dict[str, Any]) -> tuple[Any, ...]:
+    return tuple(row.get(field) for field in COMPATIBILITY_FIELDS)
+
+
+def _missing_compatibility_fields(row: dict[str, Any]) -> list[str]:
+    return [field for field in COMPATIBILITY_FIELDS if row.get(field) in (None, "")]
+
+
+def _compatibility_exclusion(
+    row: dict[str, Any],
+    *,
+    reference_key: tuple[Any, ...] | None,
+) -> list[str]:
+    reasons: list[str] = []
+    if row.get("comparison_eligible") is False:
+        reasons.append("run_not_comparison_eligible")
+    reasons.extend(f"{field}_missing" for field in _missing_compatibility_fields(row))
+    if not reasons and reference_key is not None:
+        for field, expected, actual in zip(
+            COMPATIBILITY_FIELDS,
+            reference_key,
+            _compatibility_key(row),
+            strict=True,
+        ):
+            if actual != expected:
+                reasons.append(f"{field}_mismatch")
+    return reasons
+
+
+def compatible_comparison_rows(
+    baseline_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    all_rows = [("baseline", row) for row in baseline_rows] + [
+        ("candidate", row) for row in candidate_rows
+    ]
+    complete_keys = {
+        _compatibility_key(row)
+        for _cohort, row in all_rows
+        if not _missing_compatibility_fields(row) and row.get("comparison_eligible") is not False
+    }
+    reference_key = next(iter(complete_keys)) if len(complete_keys) == 1 else None
+    included: dict[str, list[dict[str, Any]]] = {"baseline": [], "candidate": []}
+    excluded: list[dict[str, Any]] = []
+    exclusion_counts: dict[str, int] = {}
+    for cohort, row in all_rows:
+        reasons = _compatibility_exclusion(row, reference_key=reference_key)
+        if len(complete_keys) > 1 and not reasons:
+            reasons = ["cohort_metadata_incompatible"]
+        if reasons:
+            excluded.append(
+                {
+                    "cohort": cohort,
+                    "run_id": row.get("run_id"),
+                    "reasons": reasons,
+                }
+            )
+            for reason in reasons:
+                exclusion_counts[reason] = exclusion_counts.get(reason, 0) + 1
+            continue
+        included[cohort].append(row)
+    return {
+        "baseline_rows": included["baseline"],
+        "candidate_rows": included["candidate"],
+        "excluded": excluded,
+        "excluded_count": len(excluded),
+        "exclusion_counts": exclusion_counts,
+        "compatibility_key": dict(zip(COMPATIBILITY_FIELDS, reference_key, strict=True))
+        if reference_key is not None
+        else None,
+        "compatible": len(complete_keys) == 1 and not excluded,
+    }
+
+
 def compare_cohorts(
     baseline_rows: list[dict[str, Any]],
     candidate_rows: list[dict[str, Any]],
@@ -231,6 +329,9 @@ def compare_cohorts(
     path_id: str,
     min_runs: int = 5,
 ) -> dict[str, Any]:
+    compatibility = compatible_comparison_rows(baseline_rows, candidate_rows)
+    baseline_rows = compatibility["baseline_rows"]
+    candidate_rows = compatibility["candidate_rows"]
     baseline_hashes = {
         str(row.get("protocol_hash")) for row in baseline_rows if row.get("protocol_hash")
     }
@@ -249,6 +350,16 @@ def compare_cohorts(
     }
     if not baseline_rows or not candidate_rows:
         conclusion = {"status": "NO_DATA", "reason": "one or both cohorts are empty"}
+    if compatibility["excluded_count"]:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": "one or more runs were excluded by compatibility checks",
+        }
+    elif not compatibility["compatible"]:
+        conclusion = {
+            "status": "INCONCLUSIVE",
+            "reason": "baseline and candidate metadata are not compatible",
+        }
     elif len(hashes) != 1:
         conclusion = {
             "status": "INCONCLUSIVE",
@@ -296,8 +407,59 @@ def compare_cohorts(
         "candidate": candidate,
         "policy": policy,
         "conclusion": conclusion,
+        "compatibility": compatibility,
+        "excluded_run_count": compatibility["excluded_count"],
+        "exclusion_counts": compatibility["exclusion_counts"],
         "baseline_run_ids": [row.get("run_id") for row in baseline_rows],
         "candidate_run_ids": [row.get("run_id") for row in candidate_rows],
+    }
+
+
+def evaluate_run_integrity(
+    run: TestRun,
+    *,
+    has_live_results: bool,
+    protocol: dict[str, Any],
+) -> dict[str, Any]:
+    comparable_protocol_ids = {"comparable-benchmark", "comparable-v1"}
+    protocol_id = str(protocol.get("protocol_id") or "")
+    protocol_hash_value = protocol.get("protocol_hash") or run.protocol_hash
+    checks = {
+        "protocol_hash_verified": bool(protocol_hash_value),
+        "protocol_is_comparable": protocol_id in comparable_protocol_ids,
+        "environment_snapshot_complete": bool(
+            (run.integrity_json or {}).get("environment_snapshot_complete")
+        ),
+        "application_version_verified": bool(run.application_version),
+        "test_node_version_verified": bool(
+            run.test_node_version
+            or (run.environment_snapshot_json or {}).get("test_node", {}).get("health") is not None
+        ),
+        "traffic_receiver_confirmed": bool(has_live_results),
+        "latency_sample_count": len(
+            [sample for sample in run.metric_samples if sample.metric_name.startswith("latency_")]
+        ),
+        "radio_sample_count": len(
+            [sample for sample in run.metric_samples if sample.metric_name.startswith("radio_")]
+        ),
+    }
+    checks["receiver_measurements_present"] = bool(has_live_results)
+    exclusion_reasons = [
+        reason
+        for reason, ok in [
+            ("protocol_hash_missing", checks["protocol_hash_verified"]),
+            ("exploratory_or_legacy_protocol", checks["protocol_is_comparable"]),
+            ("environment_snapshot_incomplete", checks["environment_snapshot_complete"]),
+            ("application_version_missing", checks["application_version_verified"]),
+            ("traffic_not_receiver_confirmed", checks["receiver_measurements_present"]),
+        ]
+        if not ok
+    ]
+    comparison_eligible = not exclusion_reasons
+    return {
+        "comparison_eligible": comparison_eligible,
+        "checks": checks,
+        "exclusion_reasons": exclusion_reasons,
     }
 
 
@@ -328,9 +490,7 @@ def cohort_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
             ),
             "video_success_percent": aggregate(
                 [
-                    float_value(
-                        row.get("paths", {}).get(path_id, {}).get("video_success_percent")
-                    )
+                    float_value(row.get("paths", {}).get(path_id, {}).get("video_success_percent"))
                     for row in metric_rows
                 ]
             ),

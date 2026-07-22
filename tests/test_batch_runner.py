@@ -2,6 +2,7 @@ from collections.abc import Callable
 from datetime import timedelta
 from threading import Event
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -119,6 +120,24 @@ def _executor(outcomes: list[bool]) -> Callable[[Session, DbTestRun, Event | Non
             "comparison_eligible": eligible,
             "exclusion_reasons": [] if eligible else ["fixture_invalid"],
         }
+        session.add(run)
+        session.commit()
+        return run
+
+    return execute
+
+
+def _versioned_executor(
+    versions: list[str],
+) -> Callable[[Session, DbTestRun, Event | None], DbTestRun]:
+    remaining = iter(versions)
+
+    def execute(session: Session, run: DbTestRun, _cancel_event: Event | None) -> DbTestRun:
+        version = next(remaining)
+        run.state = RunState.COMPLETED
+        run.test_node_version = version
+        run.environment_snapshot_hash = f"snapshot-{version}"
+        run.summary = {"comparison_eligible": True, "exclusion_reasons": []}
         session.add(run)
         session.commit()
         return run
@@ -301,6 +320,53 @@ def test_batch_runner_links_attempt_to_run() -> None:
     assert run.batch_id == batch.batch_id
     assert run.batch_attempt_id == attempt.id
     assert run.protocol_hash == batch.protocol_hash
+
+
+def test_batch_runner_pauses_when_application_commit_drifts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=2, max_attempts=2)
+    commits = iter(["commit-a", "commit-a", "commit-b"])
+    monkeypatch.setattr(
+        "ltap_testbench.jobs.batch_runner.application_git_commit",
+        lambda: next(commits),
+    )
+
+    run_batch(
+        session,
+        batch,
+        run_executor=_executor([True, True]),
+        precondition_runner=_ok_preconditions,
+    )
+
+    assert batch.state == BatchState.PAUSED
+    assert batch.state_reason == "APPLICATION_VERSION_CHANGED"
+    assert batch.attempt_count == 1
+    assert batch.valid_run_count == 1
+
+
+def test_batch_runner_pauses_when_test_node_version_drifts() -> None:
+    session = _session()
+    batch = _batch(session, target_valid_runs=3, max_attempts=3)
+
+    run_batch(
+        session,
+        batch,
+        run_executor=_versioned_executor(["stockbot-a", "stockbot-b"]),
+        precondition_runner=_ok_preconditions,
+    )
+
+    assert batch.state == BatchState.PAUSED
+    assert batch.state_reason == "TEST_NODE_VERSION_CHANGED"
+    assert batch.attempt_count == 2
+    assert batch.valid_run_count == 2
+    assert batch.expected_test_node_version == "stockbot-a"
+    attempts = session.scalars(select(BatchAttempt).order_by(BatchAttempt.sequence_number)).all()
+    assert [attempt.environment_snapshot_hash for attempt in attempts] == [
+        "snapshot-stockbot-a",
+        "snapshot-stockbot-b",
+    ]
 
 
 def test_batch_precondition_failure_skips_attempt_without_creating_run() -> None:

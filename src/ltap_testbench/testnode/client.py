@@ -12,6 +12,7 @@ class TestNodeReservation:
     owner: str
     run_id: str | None
     ttl_seconds: int
+    token: str = ""
 
 
 class TestNodeClient:
@@ -96,7 +97,17 @@ class TestNodeClient:
                 owner=data["owner"],
                 run_id=data.get("run_id"),
                 ttl_seconds=data["ttl_seconds"],
+                token=data.get("token") or data["id"],
             )
+
+    def renew_reservation(self, reservation_id: str, ttl_seconds: int | None = None) -> dict:
+        with self._client() as client:
+            response = client.patch(
+                f"/api/v1/reservations/{reservation_id}/renew",
+                json={"ttl_seconds": ttl_seconds} if ttl_seconds is not None else {},
+            )
+            response.raise_for_status()
+            return response.json()
 
     def release_reservation(self, reservation_id: str) -> None:
         with self._client() as client:

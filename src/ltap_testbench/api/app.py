@@ -1,6 +1,5 @@
 import csv
 import io
-import time
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
@@ -43,6 +42,7 @@ from ltap_testbench.db.models import (
     TestSite,
 )
 from ltap_testbench.jobs.batch_runner import recover_interrupted_batches, run_batch
+from ltap_testbench.jobs.engine import _application_git_commit as application_git_commit
 from ltap_testbench.jobs.engine import add_event, create_run, execute_run, request_cancel
 from ltap_testbench.profiles.defaults import seed_demo_data
 from ltap_testbench.profiles.protocols import (
@@ -57,7 +57,11 @@ from ltap_testbench.profiles.service import (
     create_server_profile,
     create_test_plan,
 )
-from ltap_testbench.reporting.artifacts import list_run_artifacts, run_artifact_dir
+from ltap_testbench.reporting.artifacts import (
+    create_run_artifact_bundle,
+    list_run_artifacts,
+    run_artifact_dir,
+)
 from ltap_testbench.routers.factory import adapter_for
 from ltap_testbench.telemetry.controller import common_preflight
 from ltap_testbench.testnode.client import TestNodeClient
@@ -169,7 +173,6 @@ LAB_LOCK = Lock()
 LAB_ACTIVE_RUN_ID: str | None = None
 LAB_CANCEL_EVENTS: dict[str, Event] = {}
 BATCH_CANCEL_EVENTS: dict[str, Event] = {}
-LAB_LIVE_LATENCY_CACHE: dict[str, Any] = {"run_id": None, "timestamp": 0.0, "results": []}
 LAB_RESERVATION_OWNER = "ltap-testbench"
 TCP_FILE_SIZE_OPTIONS_MB = [5, 10, 25, 50, 100]
 TERMINAL_RUN_STATES = {
@@ -347,6 +350,7 @@ def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> d
         "state": batch.state.value,
         "protocol_slug": batch.protocol_slug,
         "protocol_hash": batch.protocol_hash,
+        "protocol_id": batch.protocol_id,
         "router_slug": batch.router_slug,
         "experiment_id": batch.experiment_id,
         "variant_id": batch.variant_id,
@@ -363,6 +367,11 @@ def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> d
         "estimated_attempt_seconds": estimated_attempt_seconds,
         "estimated_cycle_seconds": estimated_cycle_seconds,
         "deadline": batch.deadline.isoformat() if batch.deadline else None,
+        "expected_application_version": batch.expected_application_version,
+        "expected_application_git_commit": batch.expected_application_git_commit,
+        "expected_test_node_version": batch.expected_test_node_version,
+        "expected_protocol_hash": batch.expected_protocol_hash,
+        "expected_variant_snapshot_hash": batch.expected_variant_snapshot_hash,
         "state_reason": batch.state_reason,
         "created_at": batch.created_at.isoformat() if batch.created_at else None,
         "started_at": batch.started_at.isoformat() if batch.started_at else None,
@@ -513,9 +522,7 @@ def _recover_orphaned_lab_reservations(session: Session) -> None:
         if not reservation_id:
             continue
         run = (
-            session.scalar(select(TestRun).where(TestRun.run_id == str(run_id)))
-            if run_id
-            else None
+            session.scalar(select(TestRun).where(TestRun.run_id == str(run_id))) if run_id else None
         )
         if run is not None and run.plan_slug == "lab-current":
             reserved_lab_run_ids.add(str(run_id))
@@ -761,23 +768,34 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
     return metrics
 
 
-def _live_latency_results(session: Session, run: TestRun, adapter: Any) -> list[dict]:
-    now = time.monotonic()
-    cached_run_id = LAB_LIVE_LATENCY_CACHE.get("run_id")
-    cached_at = float(LAB_LIVE_LATENCY_CACHE.get("timestamp") or 0.0)
-    if cached_run_id == run.run_id and now - cached_at < 5:
-        return list(LAB_LIVE_LATENCY_CACHE.get("results") or [])
-    try:
-        server = _stockbot(session)
-        if not server.public_host:
-            return []
-        results = adapter.measure_latency(server.public_host, count=1)
-    except Exception:
-        results = []
-    LAB_LIVE_LATENCY_CACHE.update(
-        {"run_id": run.run_id, "timestamp": time.monotonic(), "results": results}
-    )
-    return results
+def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
+    latest_by_path: dict[str | None, MetricSample] = {}
+    samples = session.scalars(
+        select(MetricSample)
+        .where(
+            MetricSample.run_pk == run.id,
+            MetricSample.metric_name.in_(["latency_rtt_ms", "latency_avg_ms"]),
+        )
+        .order_by(MetricSample.offset_ms.desc(), MetricSample.id.desc())
+        .limit(200)
+    ).all()
+    for sample in samples:
+        if sample.path_id not in latest_by_path:
+            latest_by_path[sample.path_id] = sample
+    return [
+        {
+            "path_id": sample.path_id,
+            "target": sample.details_json.get("target"),
+            "phase": sample.phase,
+            "phase_instance": sample.phase_instance,
+            "offset_ms": sample.offset_ms,
+            "avg_ms": sample.value,
+            "rtt_ms": sample.value,
+            "validity": sample.validity,
+            "source": "metric_samples",
+        }
+        for sample in sorted(latest_by_path.values(), key=lambda item: item.path_id or "")
+    ]
 
 
 def _float_value(value: Any) -> float | None:
@@ -809,9 +827,7 @@ def _known_path_ids(run: TestRun) -> list[str]:
             if path_id and str(path_id) not in path_ids:
                 path_ids.append(str(path_id))
     video_paths = (
-        (run.summary.get("video_probe_results") or {}).get("paths", {})
-        if run.summary
-        else {}
+        (run.summary.get("video_probe_results") or {}).get("paths", {}) if run.summary else {}
     )
     for path_id in video_paths:
         if str(path_id) not in path_ids:
@@ -849,8 +865,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "id": variant.id,
             "experiment_id": variant.experiment_id,
             "label": (
-                f"{experiment_names.get(variant.experiment_id, 'Experiment')} · "
-                f"{variant.label}"
+                f"{experiment_names.get(variant.experiment_id, 'Experiment')} · {variant.label}"
             ),
         }
         for variant in variants
@@ -897,9 +912,7 @@ def batch_detail(
     variant = session.get(ExperimentVariant, batch.variant_id) if batch.variant_id else None
     site = session.get(TestSite, batch.site_id) if batch.site_id else None
     antenna_profile = (
-        session.get(AntennaProfile, batch.antenna_profile_id)
-        if batch.antenna_profile_id
-        else None
+        session.get(AntennaProfile, batch.antenna_profile_id) if batch.antenna_profile_id else None
     )
     return templates.TemplateResponse(
         request,
@@ -927,8 +940,7 @@ def analytics(request: Request, session: Session = Depends(get_session)) -> HTML
         {
             "id": variant.id,
             "label": (
-                f"{experiment_names.get(variant.experiment_id, 'Experiment')} · "
-                f"{variant.label}"
+                f"{experiment_names.get(variant.experiment_id, 'Experiment')} · {variant.label}"
             ),
         }
         for variant in variants
@@ -1217,6 +1229,7 @@ def create_test_batch(
     batch = TestBatch(
         batch_id=f"batch-{uuid4().hex[:12]}",
         name=payload.name,
+        protocol_id=protocol.id,
         protocol_slug=protocol.slug,
         protocol_hash=protocol.protocol_hash,
         router_slug=payload.router_slug,
@@ -1230,6 +1243,9 @@ def create_test_batch(
         inter_run_cooldown_seconds=payload.inter_run_cooldown_seconds,
         retry_delay_seconds=payload.retry_delay_seconds,
         max_consecutive_failures=payload.max_consecutive_failures,
+        expected_application_version=__version__,
+        expected_application_git_commit=application_git_commit(),
+        expected_protocol_hash=protocol.protocol_hash,
         deadline=deadline,
         notes=payload.notes,
     )
@@ -1750,16 +1766,10 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
     if run is None:
         return {"active": False, "run": None}
     active = run.state not in TERMINAL_RUN_STATES
-    adapter = adapter_for(run.router)
-    telemetry = []
-    if active:
-        try:
-            telemetry = adapter.collect_path_telemetry()
-        except Exception:
-            telemetry = []
+    telemetry: list[dict[str, Any]] = []
     live_metrics = _live_lab_metrics(session, run) if active else {}
     if active:
-        live_metrics["latency_results"] = _live_latency_results(session, run, adapter)
+        live_metrics["latency_results"] = _live_latency_results(session, run)
     events = [
         {
             "timestamp": event.timestamp.isoformat(),
@@ -1993,6 +2003,22 @@ def get_run_artifacts(run_id: str, session: Session = Depends(get_session)) -> l
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
     return list_run_artifacts(run)
+
+
+@app.get("/api/v1/runs/{run_id}/artifacts.zip")
+def download_run_artifact_bundle(
+    run_id: str,
+    session: Session = Depends(get_session),
+) -> FileResponse:
+    run = session.scalar(select(TestRun).where(TestRun.run_id == run_id))
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    bundle_path = create_run_artifact_bundle(run)
+    return FileResponse(
+        bundle_path,
+        media_type="application/zip",
+        filename=f"{run.run_id}-bundle.zip",
+    )
 
 
 @app.get("/api/v1/runs/{run_id}/artifacts/{relative_path:path}")

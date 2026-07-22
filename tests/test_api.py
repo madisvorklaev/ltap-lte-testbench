@@ -1,12 +1,14 @@
+import io
+import zipfile
+
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from ltap_testbench.analytics import cohort_summary, compare_cohorts
+from ltap_testbench.analytics import cohort_summary, compare_cohorts, evaluate_run_integrity
 from ltap_testbench.api import app as api_app
 from ltap_testbench.api.app import (
-    LAB_LIVE_LATENCY_CACHE,
     LabRecoveryError,
     LabRunCreate,
     _analytics_run_row,
@@ -17,6 +19,7 @@ from ltap_testbench.api.app import (
     app,
 )
 from ltap_testbench.benchmarks.defaults import seed_benchmark_protocols
+from ltap_testbench.core.config import get_settings
 from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
     BatchState,
@@ -39,6 +42,59 @@ def test_health() -> None:
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.json()["ok"] is True
+
+
+def test_run_artifact_bundle_download_api(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("LTAP_TESTBENCH_DATA_DIR", str(tmp_path))
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+
+    def override_session():
+        with session_factory() as session:
+            yield session
+
+    app.dependency_overrides[api_app.get_session] = override_session
+    try:
+        with session_factory() as session:
+            seed_demo_data(session)
+            router_id = session.scalar(select(RouterProfile.id))
+            assert router_id is not None
+            run = DbTestRun(
+                run_id="run-artifact-bundle",
+                router_id=router_id,
+                plan_slug="quick-check",
+                resolved_plan={"stages": []},
+                state=RunState.COMPLETED,
+                summary={
+                    "comparison_eligible": True,
+                    "exclusion_reasons": [],
+                    "validity": "server-confirmed",
+                },
+                environment_snapshot_json={"router": {"slug": "demo-generic"}},
+            )
+            session.add(run)
+            session.commit()
+
+        client = TestClient(app)
+        response = client.get("/api/v1/runs/run-artifact-bundle/artifacts.zip")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+        with zipfile.ZipFile(io.BytesIO(response.content)) as bundle:
+            names = set(bundle.namelist())
+        assert "protocol.json" in names
+        assert "environment.json" in names
+        assert "metric-samples.ndjson.gz" in names
+        assert "analytics-summary.json" in names
+    finally:
+        app.dependency_overrides.clear()
+        get_settings.cache_clear()
 
 
 def test_router_preflight_api() -> None:
@@ -189,6 +245,54 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
     assert row["paths"]["lte2"]["video_success_percent"] == 94.0
 
 
+def test_evaluate_run_integrity_accepts_comparable_run_with_persisted_hash() -> None:
+    run = DbTestRun(
+        run_id="run-integrity-ok",
+        state=RunState.COMPLETED,
+        protocol_hash="sha256-ok",
+        application_version="0.1.0",
+        integrity_json={"environment_snapshot_complete": True},
+        environment_snapshot_json={"test_node": {"health": {"version": "stockbot-test"}}},
+    )
+
+    integrity = evaluate_run_integrity(
+        run,
+        has_live_results=True,
+        protocol={"protocol_id": "comparable-v1", "result_schema_version": 2},
+    )
+
+    assert integrity["comparison_eligible"] is True
+    assert integrity["exclusion_reasons"] == []
+    assert integrity["checks"]["protocol_hash_verified"] is True
+    assert integrity["checks"]["traffic_receiver_confirmed"] is True
+    assert integrity["checks"]["receiver_measurements_present"] is True
+
+
+def test_evaluate_run_integrity_reports_machine_readable_exclusions() -> None:
+    run = DbTestRun(
+        run_id="run-integrity-bad",
+        state=RunState.COMPLETED,
+        integrity_json={"environment_snapshot_complete": False},
+    )
+
+    integrity = evaluate_run_integrity(
+        run,
+        has_live_results=False,
+        protocol={"protocol_id": "custom-lab"},
+    )
+
+    assert integrity["comparison_eligible"] is False
+    assert integrity["exclusion_reasons"] == [
+        "protocol_hash_missing",
+        "exploratory_or_legacy_protocol",
+        "environment_snapshot_incomplete",
+        "application_version_missing",
+        "traffic_not_receiver_confirmed",
+    ]
+    assert integrity["checks"]["latency_sample_count"] == 0
+    assert integrity["checks"]["radio_sample_count"] == 0
+
+
 def test_cohort_summary_flags_mixed_protocols() -> None:
     rows = [
         {"protocol_hash": "aaa", "comparison_eligible": True, "paths": {}},
@@ -225,10 +329,19 @@ def test_cohort_summary_requires_minimum_evidence_and_reports_variability() -> N
 
 
 def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> None:
+    compatibility = {
+        "protocol_hash": "aaa",
+        "result_schema_version": 2,
+        "application_measurement_version": "commit-a",
+        "test_node_version": "stockbot-a",
+        "site_id": 1,
+        "path_count": 2,
+        "comparison_eligible": True,
+    }
     baseline_rows = [
         {
             "run_id": f"baseline-{index}",
-            "protocol_hash": "aaa",
+            **compatibility,
             "paths": {"lte1": {"tcp_mbit_s": value}},
         }
         for index, value in enumerate([10, 11, 12, 13, 14], start=1)
@@ -236,7 +349,7 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
     candidate_rows = [
         {
             "run_id": f"candidate-{index}",
-            "protocol_hash": "aaa",
+            **compatibility,
             "paths": {"lte1": {"tcp_mbit_s": value}},
         }
         for index, value in enumerate([20, 21, 22, 23, 24], start=1)
@@ -253,6 +366,83 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
     assert comparison["candidate"]["n"] == 5
     assert comparison["conclusion"]["status"] == "LIKELY_IMPROVEMENT"
     assert comparison["conclusion"]["delta"] == 10.0
+    assert comparison["excluded_run_count"] == 0
+
+
+def test_compare_cohorts_excludes_incompatible_metadata() -> None:
+    base = {
+        "protocol_hash": "aaa",
+        "result_schema_version": 2,
+        "application_measurement_version": "commit-a",
+        "test_node_version": "stockbot-a",
+        "site_id": 1,
+        "path_count": 2,
+        "comparison_eligible": True,
+    }
+    baseline_rows = [
+        {"run_id": f"baseline-{index}", **base, "paths": {"lte1": {"tcp_mbit_s": value}}}
+        for index, value in enumerate([10, 11, 12, 13, 14], start=1)
+    ]
+    candidate_rows = [
+        {
+            "run_id": f"candidate-{index}",
+            **base,
+            "test_node_version": "stockbot-b",
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([20, 21, 22, 23, 24], start=1)
+    ]
+
+    comparison = compare_cohorts(
+        baseline_rows,
+        candidate_rows,
+        metric_name="tcp_mbit_s",
+        path_id="lte1",
+    )
+
+    assert comparison["conclusion"]["status"] == "INCONCLUSIVE"
+    assert comparison["excluded_run_count"] == 10
+    assert comparison["exclusion_counts"]["cohort_metadata_incompatible"] == 10
+
+
+def test_compare_cohorts_reports_missing_metadata_as_exclusion_reason() -> None:
+    baseline_rows = [
+        {
+            "run_id": f"baseline-{index}",
+            "protocol_hash": "aaa",
+            "result_schema_version": 2,
+            "test_node_version": "stockbot-a",
+            "site_id": 1,
+            "path_count": 2,
+            "comparison_eligible": True,
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([10, 11, 12, 13, 14], start=1)
+    ]
+    candidate_rows = [
+        {
+            "run_id": f"candidate-{index}",
+            "protocol_hash": "aaa",
+            "result_schema_version": 2,
+            "test_node_version": "stockbot-a",
+            "site_id": 1,
+            "path_count": 2,
+            "comparison_eligible": True,
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([20, 21, 22, 23, 24], start=1)
+    ]
+
+    comparison = compare_cohorts(
+        baseline_rows,
+        candidate_rows,
+        metric_name="tcp_mbit_s",
+        path_id="lte1",
+    )
+
+    assert comparison["conclusion"]["status"] == "INCONCLUSIVE"
+    assert comparison["excluded_run_count"] == 10
+    assert comparison["exclusion_counts"]["application_measurement_version_missing"] == 10
 
 
 def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
@@ -322,40 +512,21 @@ def test_live_lab_metrics_use_video_bytes_for_phase_upload(monkeypatch) -> None:
         assert metrics["paths"]["lte2"]["phase_uploaded_mb"] == 7.5
 
 
-def test_live_latency_results_are_cached() -> None:
+def test_live_latency_results_read_persisted_samples_without_router_polling() -> None:
     class FakeAdapter:
         def __init__(self) -> None:
             self.calls = 0
 
         def measure_latency(self, target_host: str, count: int = 5) -> list[dict]:
             self.calls += 1
-            return [
-                {
-                    "path_id": "lte1",
-                    "target_host": target_host,
-                    "sent": count,
-                    "received": count,
-                    "avg_ms": 24.0,
-                }
-            ]
+            raise AssertionError("live status must not trigger router latency probes")
 
     engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
-    LAB_LIVE_LATENCY_CACHE.update({"run_id": None, "timestamp": 0.0, "results": []})
     with session_factory() as session:
         router = RouterProfile(slug="r1-ltap-live", display_name="R1", kind=RouterKind.FAKE)
-        session.add_all(
-            [
-                router,
-                ServerProfile(
-                    slug="stockbot",
-                    display_name="Stockbot",
-                    control_api_url="http://stockbot",
-                    public_host="198.51.100.10",
-                ),
-            ]
-        )
+        session.add(router)
         session.flush()
         run = DbTestRun(
             run_id="run-live",
@@ -366,15 +537,30 @@ def test_live_latency_results_are_cached() -> None:
             summary={},
         )
         session.add(run)
+        session.flush()
+        session.add(
+            MetricSample(
+                run_pk=run.id,
+                offset_ms=1000,
+                path_id="lte1",
+                phase="tcp",
+                metric_name="latency_rtt_ms",
+                value=24.0,
+                unit="ms",
+                validity="valid",
+                details_json={"target": "198.51.100.10"},
+            )
+        )
         session.commit()
         adapter = FakeAdapter()
 
-        first = _live_latency_results(session, run, adapter)
-        second = _live_latency_results(session, run, adapter)
+        first = _live_latency_results(session, run)
+        second = _live_latency_results(session, run)
 
         assert first == second
         assert first[0]["avg_ms"] == 24.0
-        assert adapter.calls == 1
+        assert first[0]["source"] == "metric_samples"
+        assert adapter.calls == 0
 
 
 def test_recover_orphaned_lab_reservation_only_releases_owned_lab_run(monkeypatch) -> None:
@@ -914,8 +1100,13 @@ def test_analytics_compare_endpoint_compares_variant_cohorts() -> None:
                             plan_slug="quick-check",
                             state=RunState.COMPLETED,
                             protocol_hash=protocol_hash,
+                            result_schema_version=2,
+                            resolved_plan={"site_id": site.json()["id"]},
                             variant_id=variant_id,
                             comparison_eligible=True,
+                            application_version="0.1.0",
+                            application_git_commit="commit-a",
+                            test_node_version="stockbot-a",
                             summary={
                                 "comparison_eligible": True,
                                 "exclusion_reasons": [],

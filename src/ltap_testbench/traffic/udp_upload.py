@@ -25,6 +25,7 @@ def run_udp_upload(
     bitrate_mbit_s: float,
     datagram_bytes: int = 1200,
     run_id: str | None = None,
+    token: str | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> UdpUploadResult:
     if run_id and datagram_bytes < 160:
@@ -44,6 +45,8 @@ def run_udp_upload(
                     "sequence": datagrams,
                     "send_ns": time.time_ns(),
                 }
+                if token:
+                    header["token"] = token
                 prefix = b"LTAPUDP " + json.dumps(header, separators=(",", ":")).encode() + b"\n"
             else:
                 prefix = b""

@@ -27,6 +27,14 @@ def test_testnode_reservation_conflict_and_release() -> None:
     assert second.status_code == 409
 
     reservation_id = first.json()["id"]
+    assert first.json()["token"].startswith("tok-")
+    assert "token" not in client.get("/api/v1/status").json()["active_reservations"][0]
+    renewed = client.patch(
+        f"/api/v1/reservations/{reservation_id}/renew",
+        json={"ttl_seconds": 120},
+    )
+    assert renewed.status_code == 200
+    assert renewed.json()["ttl_seconds"] == 120
     deleted = client.delete(f"/api/v1/reservations/{reservation_id}")
     assert deleted.status_code == 200
     third = client.post("/api/v1/reservations", json={"owner": "pytest", "run_id": "run-c"})
@@ -38,10 +46,36 @@ def test_testnode_upload_sink_records_connection() -> None:
     RESERVATIONS.clear()
     client = TestClient(app)
 
-    response = client.put("/upload/run-upload", content=b"abc")
+    reservation = client.post(
+        "/api/v1/reservations",
+        json={"owner": "pytest", "run_id": "run-upload"},
+    )
+    token = reservation.json()["token"]
+
+    response = client.put("/upload/run-upload", content=b"abc", headers={"X-Ltap-Token": token})
     assert response.status_code == 200
     assert response.json()["bytes_received"] == 3
 
     run = client.get("/api/v1/runs/run-upload")
     assert run.status_code == 200
     assert run.json()["connections"][0]["bytes_received"] == 3
+
+
+def test_testnode_upload_sink_rejects_missing_or_mismatched_reservation() -> None:
+    RUNS.clear()
+    RESERVATIONS.clear()
+    client = TestClient(app)
+    reservation = client.post(
+        "/api/v1/reservations",
+        json={"owner": "pytest", "run_id": "run-a"},
+    )
+
+    missing = client.put("/upload/run-a", content=b"abc")
+    wrong_run = client.put(
+        "/upload/run-b",
+        content=b"abc",
+        headers={"X-Ltap-Token": reservation.json()["token"]},
+    )
+
+    assert missing.status_code == 401
+    assert wrong_run.status_code == 403

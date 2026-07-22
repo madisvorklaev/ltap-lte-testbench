@@ -1,9 +1,11 @@
 from collections.abc import Generator
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine, text
+from alembic.config import Config
+from sqlalchemy import Engine, create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+from alembic import command
 from ltap_testbench.core.config import get_settings
 
 
@@ -27,8 +29,48 @@ SessionLocal = sessionmaker(bind=ENGINE, class_=Session, expire_on_commit=False,
 def init_db() -> None:
     from ltap_testbench.db import models  # noqa: F401
 
-    Base.metadata.create_all(bind=ENGINE)
-    _migrate_sqlite(ENGINE)
+    run_migrations(ENGINE)
+
+
+def run_migrations(engine: Engine = ENGINE) -> None:
+    from ltap_testbench.db import models  # noqa: F401
+
+    if _is_in_memory_sqlite(engine):
+        Base.metadata.create_all(bind=engine)
+        return
+    if _needs_legacy_sqlite_stamp(engine):
+        Base.metadata.create_all(bind=engine)
+        _migrate_sqlite(engine)
+        _stamp_alembic_head(engine)
+        return
+    _upgrade_alembic(engine)
+
+
+def _alembic_config(engine: Engine) -> Config:
+    project_root = Path(__file__).resolve().parents[3]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("sqlalchemy.url", str(engine.url))
+    return config
+
+
+def _upgrade_alembic(engine: Engine) -> None:
+    command.upgrade(_alembic_config(engine), "head")
+
+
+def _stamp_alembic_head(engine: Engine) -> None:
+    command.stamp(_alembic_config(engine), "head")
+
+
+def _is_in_memory_sqlite(engine: Engine) -> bool:
+    return engine.dialect.name == "sqlite" and engine.url.database in {None, "", ":memory:"}
+
+
+def _needs_legacy_sqlite_stamp(engine: Engine) -> bool:
+    if engine.dialect.name != "sqlite":
+        return False
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    return bool(table_names - {"alembic_version"}) and "alembic_version" not in table_names
 
 
 def _migrate_sqlite(engine: Engine) -> None:
@@ -52,26 +94,56 @@ def _migrate_sqlite(engine: Engine) -> None:
         "test_node_version": "VARCHAR(80)",
     }
     batch_columns = {
+        "protocol_id": "INTEGER",
         "experiment_id": "INTEGER",
         "variant_id": "INTEGER",
         "site_id": "INTEGER",
+        "start_after": "DATETIME",
+        "max_runtime_seconds": "INTEGER",
+        "expected_application_version": "VARCHAR(80)",
+        "expected_application_git_commit": "VARCHAR(80)",
+        "expected_test_node_version": "VARCHAR(80)",
+        "expected_protocol_hash": "VARCHAR(64)",
+        "expected_variant_snapshot_hash": "VARCHAR(64)",
+        "worker_id": "VARCHAR(120)",
+        "last_heartbeat_at": "DATETIME",
+    }
+    antenna_columns = {
+        "unknown_gain_reason": "TEXT DEFAULT ''",
+    }
+    attempt_columns = {
+        "environment_snapshot_hash": "VARCHAR(64)",
     }
     with engine.begin() as connection:
         existing = {
-            row[1]
-            for row in connection.execute(text("PRAGMA table_info(test_runs)")).fetchall()
+            row[1] for row in connection.execute(text("PRAGMA table_info(test_runs)")).fetchall()
         }
         for name, definition in run_columns.items():
             if name not in existing:
                 connection.execute(text(f"ALTER TABLE test_runs ADD COLUMN {name} {definition}"))
         existing_batches = {
-            row[1]
-            for row in connection.execute(text("PRAGMA table_info(test_batches)")).fetchall()
+            row[1] for row in connection.execute(text("PRAGMA table_info(test_batches)")).fetchall()
         }
         for name, definition in batch_columns.items():
             if name not in existing_batches:
+                connection.execute(text(f"ALTER TABLE test_batches ADD COLUMN {name} {definition}"))
+        existing_antennas = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(antenna_profiles)")).fetchall()
+        }
+        for name, definition in antenna_columns.items():
+            if name not in existing_antennas:
                 connection.execute(
-                    text(f"ALTER TABLE test_batches ADD COLUMN {name} {definition}")
+                    text(f"ALTER TABLE antenna_profiles ADD COLUMN {name} {definition}")
+                )
+        existing_attempts = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(batch_attempts)")).fetchall()
+        }
+        for name, definition in attempt_columns.items():
+            if name not in existing_attempts:
+                connection.execute(
+                    text(f"ALTER TABLE batch_attempts ADD COLUMN {name} {definition}")
                 )
 
 

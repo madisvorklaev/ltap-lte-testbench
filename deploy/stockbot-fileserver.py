@@ -109,6 +109,30 @@ def prune_expired_reservations() -> None:
         RESERVATIONS.pop(reservation_id, None)
 
 
+def public_reservation(reservation: dict) -> dict:
+    return {key: value for key, value in reservation.items() if key != "token"}
+
+
+def run_matches_reservation(reserved_run_id: str | None, traffic_run_id: str) -> bool:
+    if not reserved_run_id:
+        return True
+    return traffic_run_id == reserved_run_id or traffic_run_id.startswith(f"{reserved_run_id}-")
+
+
+def reservation_authorized(run_id: str, token: str | None) -> tuple[bool, HTTPStatus, str]:
+    prune_expired_reservations()
+    if not token:
+        return False, HTTPStatus.UNAUTHORIZED, "missing reservation token"
+    with RUNS_LOCK:
+        for reservation in RESERVATIONS.values():
+            if reservation.get("token") != token:
+                continue
+            if not run_matches_reservation(reservation.get("run_id"), run_id):
+                return False, HTTPStatus.FORBIDDEN, "reservation run mismatch"
+            return True, HTTPStatus.OK, "ok"
+    return False, HTTPStatus.FORBIDDEN, "invalid reservation token"
+
+
 def record_udp_datagram(
     run_id: str,
     source: str,
@@ -116,6 +140,7 @@ def record_udp_datagram(
     size: int,
     sequence: int | None = None,
     send_ns: int | None = None,
+    token_present: bool = False,
 ) -> None:
     now = datetime.now(UTC)
     now_ns = time.time_ns()
@@ -155,24 +180,29 @@ def record_udp_datagram(
                 "delivered_mbit_s": 0.0,
                 "sender_timestamp_present": send_ns is not None,
                 "_seen_sequences": set(),
-                "token_present": False,
+                "_bucket_seen_sequences": {},
+                "intervals": [],
+                "token_present": token_present,
             }
             records.append(record)
+        record["token_present"] = bool(record.get("token_present") or token_present)
         record["bytes_received"] += size
         record["datagrams_received"] += 1
+        duplicate = False
+        previous_sequence = record.get("last_sequence")
         if sequence is None:
             record["unique_datagrams"] += 1
         else:
             seen_sequences = record.setdefault("_seen_sequences", set())
             if sequence in seen_sequences:
                 record["duplicates"] += 1
+                duplicate = True
             else:
                 seen_sequences.add(sequence)
                 record["unique_datagrams"] += 1
                 if record.get("first_sequence") is None:
                     record["first_sequence"] = sequence
-                last_sequence = record.get("last_sequence")
-                if last_sequence is not None and sequence < int(last_sequence):
+                if previous_sequence is not None and sequence < int(previous_sequence):
                     record["out_of_order"] += 1
                 record["last_sequence"] = sequence
                 record["max_sequence"] = max(int(record.get("max_sequence") or sequence), sequence)
@@ -182,12 +212,49 @@ def record_udp_datagram(
                     0, (max_sequence - first_sequence + 1) - int(record["unique_datagrams"])
                 )
         started_ns = int(record.get("start_epoch_ns") or now_ns)
+        bucket_index = int(max(0, now_ns - started_ns) // 1_000_000_000)
+        intervals = record.setdefault("intervals", [])
+        while len(intervals) <= bucket_index:
+            intervals.append(
+                {
+                    "offset_seconds": len(intervals),
+                    "bytes": 0,
+                    "datagrams_received": 0,
+                    "unique_datagrams": 0,
+                    "duplicates": 0,
+                    "out_of_order": 0,
+                    "delivered_mbit_s": 0.0,
+                }
+            )
+        bucket = intervals[bucket_index]
+        bucket["bytes"] += size
+        bucket["datagrams_received"] += 1
+        bucket["_start_epoch_ns"] = started_ns + bucket_index * 1_000_000_000
+        bucket["_last_epoch_ns"] = now_ns
+        if sequence is None:
+            bucket["unique_datagrams"] += 1
+        else:
+            bucket_seen = record.setdefault("_bucket_seen_sequences", {}).setdefault(
+                bucket_index, set()
+            )
+            if duplicate or sequence in bucket_seen:
+                bucket["duplicates"] += 1
+            else:
+                bucket_seen.add(sequence)
+                bucket["unique_datagrams"] += 1
+            if previous_sequence is not None and sequence < int(previous_sequence):
+                bucket["out_of_order"] += 1
         duration = max((now_ns - started_ns) / 1_000_000_000, 0.000001)
         record["ended_at"] = now.isoformat()
         record["last_epoch_ns"] = now_ns
         record["duration_seconds"] = duration
         record["average_mbit_s"] = record["bytes_received"] * 8 / duration / 1_000_000
         record["delivered_mbit_s"] = record["average_mbit_s"]
+        bucket_duration = max(
+            (int(bucket["_last_epoch_ns"]) - int(bucket["_start_epoch_ns"])) / 1_000_000_000,
+            0.000001,
+        )
+        bucket["delivered_mbit_s"] = bucket["bytes"] * 8 / bucket_duration / 1_000_000
 
 
 def percentile(values: list[float], pct: float) -> float | None:
@@ -204,6 +271,10 @@ def public_run_records(run_id: str) -> list[dict]:
         for record in RUNS.get(run_id, []):
             row = {key: value for key, value in record.items() if not key.startswith("_")}
             if row.get("protocol") == "udp":
+                row["intervals"] = [
+                    {key: value for key, value in bucket.items() if not key.startswith("_")}
+                    for bucket in row.get("intervals", [])
+                ]
                 unique = int(row.get("unique_datagrams") or row.get("datagrams_received") or 0)
                 missing = int(row.get("missing_datagrams") or 0)
                 expected = unique + missing
@@ -309,6 +380,9 @@ def record_video_frame_datagram(header: dict, source: str, port: int, size: int)
     path_id = str(header.get("path_id") or "")
     if not run_id or not path_id:
         return
+    ok, _status, _message = reservation_authorized(run_id, header.get("token"))
+    if not ok:
+        return
     try:
         frame_id = int(header["frame_id"])
         fragment_index = int(header["fragment_index"])
@@ -383,8 +457,7 @@ def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = F
                 if fragment_count and received >= fragment_count:
                     active_complete += 1
                     active_completion_ms.append(
-                        (int(frame["last_arrival_ns"]) - int(frame["first_arrival_ns"]))
-                        / 1_000_000
+                        (int(frame["last_arrival_ns"]) - int(frame["first_arrival_ns"])) / 1_000_000
                     )
                     active_first_arrivals[int(frame_id)] = int(frame["first_arrival_ns"])
                     if frame.get("first_send_ns") is not None:
@@ -454,6 +527,10 @@ def summarize_video_frames(run_id: str, finalize: bool = False, delete: bool = F
                 "complete_on_either": len(either),
                 f"{ids[0]}_only_complete": len(left_only),
                 f"{ids[1]}_only_complete": len(right_only),
+                "complete_frame_ids_by_path": {
+                    ids[0]: sorted(complete_by_path.get(ids[0], set())),
+                    ids[1]: sorted(complete_by_path.get(ids[1], set())),
+                },
             }
         else:
             dual_path = {}
@@ -545,8 +622,16 @@ class UdpUploadHandler(socketserver.BaseRequestHandler):
                 sequence = int(udp_header["sequence"])
             if udp_header.get("send_ns") is not None:
                 send_ns = int(udp_header["send_ns"])
+            ok, _status, _message = reservation_authorized(run_id, udp_header.get("token"))
+            if not ok:
+                return
+            token_present = bool(udp_header.get("token"))
         else:
             run_id = header_text
+            ok, _status, _message = reservation_authorized(run_id, None)
+            if not ok:
+                return
+            token_present = False
         if not run_id:
             return
         record_udp_datagram(
@@ -556,6 +641,7 @@ class UdpUploadHandler(socketserver.BaseRequestHandler):
             len(data),
             sequence=sequence,
             send_ns=send_ns,
+            token_present=token_present,
         )
 
 
@@ -616,7 +702,9 @@ class UploadHandler(BaseHTTPRequestHandler):
                     "utc": now_iso(),
                     "started_at_epoch": STARTED_AT,
                     "uptime_seconds": max(0.0, time.time() - STARTED_AT),
-                    "active_reservations": list(RESERVATIONS.values()),
+                    "active_reservations": [
+                        public_reservation(item) for item in RESERVATIONS.values()
+                    ],
                     "known_runs": sorted(RUNS),
                 },
             )
@@ -665,7 +753,7 @@ class UploadHandler(BaseHTTPRequestHandler):
             if reservation_id not in RESERVATIONS:
                 self.send_json(HTTPStatus.NOT_FOUND, {"detail": "reservation not found"})
                 return True
-            self.send_json(HTTPStatus.OK, RESERVATIONS[reservation_id])
+            self.send_json(HTTPStatus.OK, public_reservation(RESERVATIONS[reservation_id]))
             return True
         return False
 
@@ -738,6 +826,7 @@ class UploadHandler(BaseHTTPRequestHandler):
                 "created_at": now_iso(),
                 "created_epoch": time.time(),
                 "ttl_seconds": int(payload.get("ttl_seconds", 3600)),
+                "token": f"tok-{uuid4().hex}",
             }
             self.send_json(HTTPStatus.OK, RESERVATIONS[reservation_id])
             return
@@ -792,10 +881,35 @@ class UploadHandler(BaseHTTPRequestHandler):
             return
         self.send_error(HTTPStatus.NOT_FOUND, "not found")
 
+    def do_PATCH(self):
+        renew_match = re.fullmatch(
+            r"/api/v1/reservations/([^/]+)/renew",
+            urlparse(self.path).path,
+        )
+        if renew_match:
+            reservation_id = unquote(renew_match.group(1))
+            prune_expired_reservations()
+            if reservation_id not in RESERVATIONS:
+                self.send_json(HTTPStatus.NOT_FOUND, {"detail": "reservation not found"})
+                return
+            payload = self.read_json_body()
+            reservation = RESERVATIONS[reservation_id]
+            reservation["created_at"] = now_iso()
+            reservation["created_epoch"] = time.time()
+            if payload.get("ttl_seconds") is not None:
+                reservation["ttl_seconds"] = int(payload["ttl_seconds"])
+            self.send_json(HTTPStatus.OK, public_reservation(reservation))
+            return
+        self.send_error(HTTPStatus.NOT_FOUND, "not found")
+
     def do_PUT(self):
         upload_match = re.fullmatch(r"/upload/([^/]+)", urlparse(self.path).path)
         if upload_match:
             run_id = unquote(upload_match.group(1))
+            ok, status, message = reservation_authorized(run_id, self.headers.get("X-Ltap-Token"))
+            if not ok:
+                self.send_json(status, {"detail": message})
+                return
             started = datetime.now(UTC)
             length = int(self.headers.get("Content-Length", "0"))
             remaining = length

@@ -23,6 +23,7 @@ def frame_header(
 ) -> dict[str, object]:
     return {
         "run_id": "run-video",
+        "token": "tok-video",
         "path_id": path_id,
         "frame_id": frame_id,
         "fragment_index": fragment,
@@ -31,9 +32,22 @@ def frame_header(
     }
 
 
+def reserve_video_run(stockbot: ModuleType) -> None:
+    stockbot.RESERVATIONS.clear()
+    stockbot.RESERVATIONS["res-video"] = {
+        "id": "res-video",
+        "owner": "pytest",
+        "run_id": "run-video",
+        "created_epoch": stockbot.time.time(),
+        "ttl_seconds": 60,
+        "token": "tok-video",
+    }
+
+
 def test_video_receiver_corrects_sender_skew_and_ignores_duplicates(monkeypatch: Any) -> None:
     stockbot = load_stockbot_module()
     stockbot.VIDEO_FRAMES.clear()
+    reserve_video_run(stockbot)
     arrivals = iter([1_000_000_000, 1_005_000_000, 2_000_000_000])
     monkeypatch.setattr(stockbot.time, "monotonic_ns", lambda: next(arrivals))
 
@@ -48,15 +62,15 @@ def test_video_receiver_corrects_sender_skew_and_ignores_duplicates(monkeypatch:
     assert summary["path_arrival_delta_ms_p95"] == 5
     assert summary["corrected_path_arrival_delta_ms_p95"] == 0
     assert summary["paths"]["lte1"]["frames_seen"] == 1
+    assert summary["dual_path"]["complete_frame_ids_by_path"] == {"lte1": [1], "lte2": [1]}
 
 
 def test_video_receiver_rejects_invalid_fragment_index() -> None:
     stockbot = load_stockbot_module()
     stockbot.VIDEO_FRAMES.clear()
+    reserve_video_run(stockbot)
 
-    stockbot.record_video_frame_datagram(
-        frame_header("lte1", 1, 2, 2, 100_000_000), "a", 1, 1200
-    )
+    stockbot.record_video_frame_datagram(frame_header("lte1", 1, 2, 2, 100_000_000), "a", 1, 1200)
 
     assert stockbot.summarize_video_frames("run-video")["paths"] == {}
 
@@ -64,6 +78,7 @@ def test_video_receiver_rejects_invalid_fragment_index() -> None:
 def test_video_live_summary_does_not_finalize_partial_frame(monkeypatch: Any) -> None:
     stockbot = load_stockbot_module()
     stockbot.VIDEO_FRAMES.clear()
+    reserve_video_run(stockbot)
     arrivals = iter([1_000_000_000, 1_010_000_000])
     monkeypatch.setattr(stockbot.time, "monotonic_ns", lambda: next(arrivals))
 
@@ -82,6 +97,7 @@ def test_video_live_summary_does_not_finalize_partial_frame(monkeypatch: Any) ->
 def test_video_live_summary_skips_heavy_percentiles(monkeypatch: Any) -> None:
     stockbot = load_stockbot_module()
     stockbot.VIDEO_FRAMES.clear()
+    reserve_video_run(stockbot)
     stockbot.record_video_frame_datagram(frame_header("lte1", 1, 0, 1, 100_000_000), "a", 1, 1200)
 
     def fail_percentile(_values: list[float], _pct: float) -> float:
@@ -93,3 +109,13 @@ def test_video_live_summary_skips_heavy_percentiles(monkeypatch: Any) -> None:
 
     assert live["summary_mode"] == "live"
     assert live["paths"]["lte1"]["frames_seen"] == 1
+
+
+def test_video_receiver_rejects_missing_reservation_token() -> None:
+    stockbot = load_stockbot_module()
+    stockbot.VIDEO_FRAMES.clear()
+    stockbot.RESERVATIONS.clear()
+
+    stockbot.record_video_frame_datagram(frame_header("lte1", 1, 0, 1, 100_000_000), "a", 1, 1200)
+
+    assert stockbot.summarize_video_frames("run-video")["paths"] == {}

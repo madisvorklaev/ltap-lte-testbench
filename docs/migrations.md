@@ -2,15 +2,14 @@
 
 The live deployment currently uses SQLite.
 
-The application still calls SQLAlchemy `create_all()` for empty databases. For
-recent incremental run-metadata columns, startup also applies a small explicit
-SQLite compatibility migration.
+Production startup now uses Alembic. The baseline revision is:
 
-This is sufficient for the current prototype, but not for the full benchmark
-schema roadmap.
+```text
+20260722_0001_initial_schema
+```
 
-Before adding experiments, variants, metric samples, test sites, and richer
-result tables, add a proper migration framework such as Alembic.
+Development tests may still use SQLAlchemy `create_all()` for empty in-memory
+SQLite databases. File-backed databases should go through Alembic.
 
 Migration rules:
 
@@ -21,9 +20,22 @@ Migration rules:
 - schema changes should have rollback or backup notes;
 - production startup should not rely only on `create_all()`.
 
-Recommended next migration step:
+Startup behavior:
 
-1. Add Alembic configuration.
-2. Create a baseline revision for the current schema.
-3. Add a revision for current compatibility columns already applied in SQLite.
-4. Convert future DB changes into explicit revisions.
+1. Empty file-backed databases run `alembic upgrade head`.
+2. Pre-Alembic SQLite databases are detected by existing tables without an
+   `alembic_version` table.
+3. Legacy SQLite databases get compatibility columns for benchmark metadata,
+   batch worker fields, antenna unknown-gain reason, and attempt environment
+   snapshots.
+4. After compatibility backfill, legacy databases are stamped at the current
+   head revision.
+5. In-memory SQLite tests still use direct metadata creation.
+
+Operational notes:
+
+- Back up `var/ltap-testbench.sqlite3` before deploying a new migration.
+- Do not edit an existing revision after it has been used on a live database.
+- Add a new Alembic revision for every schema change.
+- Keep legacy result rows visible and comparison-ineligible unless their stored
+  protocol and integrity metadata proves otherwise.

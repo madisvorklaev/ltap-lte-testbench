@@ -24,12 +24,15 @@ def run_timed_tcp_upload(
     duration_seconds: int,
     chunk_bytes: int = 64 * 1024,
     should_cancel: Callable[[], bool] | None = None,
+    token: str | None = None,
 ) -> TcpTimedUploadResult:
     payload = b"\0" * chunk_bytes
+    token_header = f"X-Ltap-Token: {token}\r\n" if token else ""
     request_head = (
         f"PUT {path} HTTP/1.1\r\n"
         f"Host: {host}:{port}\r\n"
         "User-Agent: ltap-testbench-timed-uploader\r\n"
+        f"{token_header}"
         "Content-Type: application/octet-stream\r\n"
         "Content-Length: 999999999999\r\n"
         "Connection: close\r\n"

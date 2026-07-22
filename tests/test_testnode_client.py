@@ -22,8 +22,12 @@ def test_testnode_client_reservation() -> None:
                     "owner": "pytest",
                     "run_id": "run-1",
                     "ttl_seconds": 60,
+                    "token": "tok-test",
                 },
             )
+        if request.method == "PATCH":
+            assert request.url.path == "/api/v1/reservations/res-1/renew"
+            return httpx.Response(200, json={"id": "res-1", "ttl_seconds": 120})
         assert request.method == "DELETE"
         assert request.url.path == "/api/v1/reservations/res-1"
         return httpx.Response(200, json={"ok": True})
@@ -31,6 +35,8 @@ def test_testnode_client_reservation() -> None:
     client = TestNodeClient("http://testnode", transport=httpx.MockTransport(handler))
     reservation = client.create_reservation("pytest", run_id="run-1", ttl_seconds=60)
     assert reservation.id == "res-1"
+    assert reservation.token == "tok-test"
+    assert client.renew_reservation(reservation.id, ttl_seconds=120)["ttl_seconds"] == 120
     client.release_reservation(reservation.id)
 
 

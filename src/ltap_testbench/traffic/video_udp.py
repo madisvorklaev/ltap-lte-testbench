@@ -92,6 +92,7 @@ def _packet(
     fragment: int,
     fragments: int,
     send_ns: int,
+    token: str | None,
 ) -> bytes:
     header = {
         "run_id": run_id,
@@ -101,6 +102,8 @@ def _packet(
         "fragment_count": fragments,
         "send_ns": send_ns,
     }
+    if token:
+        header["token"] = token
     return b"LTAPFRAME " + json.dumps(header, separators=(",", ":")).encode() + b"\n"
 
 
@@ -118,6 +121,7 @@ def run_video_udp_probe(
     traffic_seed: str = "video-trace-v1",
     trace_id: str = "synthetic-city-v1",
     generator_version: str = "synthetic-video-v2",
+    token: str | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> VideoUdpProbeResult:
     if fps <= 0:
@@ -159,7 +163,15 @@ def run_video_udp_probe(
             for fragment in range(fragments):
                 if should_cancel and should_cancel():
                     break
-                packet = _packet(run_id, path_id, frames_sent, fragment, fragments, frame_send_ns)
+                packet = _packet(
+                    run_id,
+                    path_id,
+                    frames_sent,
+                    fragment,
+                    fragments,
+                    frame_send_ns,
+                    token,
+                )
                 packet_size = min(payload_bytes, remaining_frame_bytes)
                 if len(packet) < packet_size:
                     packet += b"\0" * (packet_size - len(packet))

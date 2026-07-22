@@ -1,6 +1,6 @@
 # Continuation Notes
 
-Last updated: 2026-07-20 Europe/Tallinn.
+Last updated: 2026-07-22 Europe/Tallinn.
 
 ## Current Local State
 
@@ -54,7 +54,10 @@ curl http://127.0.0.1:8787/api/v1/health
 - Plans with TCP upload stages can run server-confirmed HTTP upload tests to the configured stockbot server and attach test-node connection records to the run summary/report.
 - Plans with TCP upload stages can also run stockbot-confirmed timed streams when `tcp_upload.payload_bytes` is omitted.
 - Plans with UDP upload stages can run timed UDP uploads through the configured path ports.
+- UDP uploads use versioned sequence headers, stockbot receiver accounting, one-second receiver buckets, and server-confirmed delivery/loss metrics when the configured test-node reservation is valid.
+- UDP video probe traffic uses a deterministic trace seed, reservation tokens, dual-path receiver union metrics, one-second buckets, both-path loss percentage, and longest both-path outage metrics.
 - TCP and UDP stages run all configured LTE paths concurrently.
+- Run artifact bundles are downloadable as ZIP files and include protocol, environment, integrity, batch, metric samples, analytics summary, and human-readable reports.
 - Live run `run-bcea1fc5bab2` completed against `r1-ltap-live` with latency samples, 1 MiB TCP upload per LTE path, 10 seconds of 2 Mbit/s UDP sender traffic per LTE path, and LTE telemetry snapshots.
 
 ## Main Gaps
@@ -63,15 +66,15 @@ curl http://127.0.0.1:8787/api/v1/health
 - Worker currently runs synchronously in-process for the MVP.
 - HTTP/TCP upload execution, timed UDP sender execution, RouterOS latency sampling, and LTE telemetry snapshots are wired into the run engine.
 - Stockbot now runs the versioned fileserver as user service `stockbot-fileserver.service` from `/home/madis/stockbot-fileserver`; it listens on TCP and UDP `0.0.0.0:8088`.
-- UDP receiver-side confirmation is still pending on network forwarding: stockbot's UDP listener works locally, but Chateau still needs public UDP `18080`/`18081` dst-nat rules to `192.168.71.8:8088`.
+- Stockbot reservations are enforced on TCP upload, UDP upload, and video traffic; long runs renew reservations and mark runs ineligible if renewal fails.
 - IRTT/iperf3 live execution is still pending as a future alternative to the built-in HTTP/UDP stages.
-- SQLite schema is created directly; Alembic migrations are still needed.
+- Alembic migrations are installed for production startup, with legacy SQLite backfill/stamping tests.
 - Web UI has command/control coverage but still needs richer guided forms and historical-result import.
 
 ## Recommended Next Step
 
 Recommended next step:
 
-1. Add stockbot UDP receive accounting and public UDP forwards for `18080`/`18081`, then mark UDP results server-confirmed.
-2. Add Alembic migrations instead of direct `create_all`.
+1. Continue replacing legacy/live ad hoc measurement paths with phase-aware persisted samples.
+2. Add the remaining deep statistical comparison controls and report views.
 3. Split the worker into a separate service once the durable queue shape is tested.

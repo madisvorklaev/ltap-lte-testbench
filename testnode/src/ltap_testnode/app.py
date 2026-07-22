@@ -20,6 +20,10 @@ class ReservationCreate(BaseModel):
     ttl_seconds: int = 3600
 
 
+class ReservationRenew(BaseModel):
+    ttl_seconds: int | None = None
+
+
 def now_iso() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
 
@@ -35,6 +39,29 @@ def prune_expired_reservations() -> None:
         RESERVATIONS.pop(reservation_id, None)
 
 
+def public_reservation(reservation: dict) -> dict:
+    return {key: value for key, value in reservation.items() if key != "token"}
+
+
+def run_matches_reservation(reserved_run_id: str | None, traffic_run_id: str) -> bool:
+    if not reserved_run_id:
+        return True
+    return traffic_run_id == reserved_run_id or traffic_run_id.startswith(f"{reserved_run_id}-")
+
+
+def require_reservation(run_id: str, token: str | None) -> None:
+    prune_expired_reservations()
+    if not token:
+        raise HTTPException(status_code=401, detail="missing reservation token")
+    for reservation in RESERVATIONS.values():
+        if reservation.get("token") != token:
+            continue
+        if not run_matches_reservation(reservation.get("run_id"), run_id):
+            raise HTTPException(status_code=403, detail="reservation run mismatch")
+        return
+    raise HTTPException(status_code=403, detail="invalid reservation token")
+
+
 @app.get("/api/v1/health")
 def health() -> dict:
     return {"ok": True, "utc": now_iso(), "service": "ltap-testnode"}
@@ -48,7 +75,7 @@ def status() -> dict:
         "utc": now_iso(),
         "started_at_epoch": STARTED_AT,
         "uptime_seconds": max(0.0, time.time() - STARTED_AT),
-        "active_reservations": list(RESERVATIONS.values()),
+        "active_reservations": [public_reservation(item) for item in RESERVATIONS.values()],
         "known_runs": sorted(RUNS),
     }
 
@@ -76,6 +103,7 @@ def create_reservation(payload: ReservationCreate) -> dict:
         "created_at": now_iso(),
         "created_epoch": time.time(),
         "ttl_seconds": payload.ttl_seconds,
+        "token": f"tok-{uuid4().hex}",
     }
     return RESERVATIONS[reservation_id]
 
@@ -85,7 +113,20 @@ def get_reservation(reservation_id: str) -> dict:
     prune_expired_reservations()
     if reservation_id not in RESERVATIONS:
         raise HTTPException(status_code=404, detail="reservation not found")
-    return RESERVATIONS[reservation_id]
+    return public_reservation(RESERVATIONS[reservation_id])
+
+
+@app.patch("/api/v1/reservations/{reservation_id}/renew")
+def renew_reservation(reservation_id: str, payload: ReservationRenew) -> dict:
+    prune_expired_reservations()
+    if reservation_id not in RESERVATIONS:
+        raise HTTPException(status_code=404, detail="reservation not found")
+    reservation = RESERVATIONS[reservation_id]
+    reservation["created_at"] = now_iso()
+    reservation["created_epoch"] = time.time()
+    if payload.ttl_seconds is not None:
+        reservation["ttl_seconds"] = payload.ttl_seconds
+    return public_reservation(reservation)
 
 
 @app.delete("/api/v1/reservations/{reservation_id}")
@@ -110,6 +151,7 @@ async def upload_sink(
     request: Request,
     x_ltap_token: str | None = Header(default=None),
 ) -> dict:
+    require_reservation(run_id, x_ltap_token)
     started = datetime.now(UTC)
     byte_count = 0
     async for chunk in request.stream():
