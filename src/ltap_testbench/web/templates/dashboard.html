@@ -13,6 +13,7 @@
         --line: #d7dee8;
         --ok: #166534;
         --bad: #b91c1c;
+        --warn: #92400e;
         --brand: #0f766e;
       }
       * { box-sizing: border-box; }
@@ -46,6 +47,7 @@
       .preview { display: grid; gap: 8px; }
       .bad { color: var(--bad); }
       .ok { color: var(--ok); }
+      .warning { color: var(--warn); background: #fffbeb; border-color: #fde68a; }
       .badge { display: inline-flex; min-height: 24px; align-items: center; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
       .badge.completed { color: var(--ok); background: #f0fdf4; border-color: #86efac; }
       .badge.failed, .badge.cancelled { color: var(--bad); background: #fff1f2; border-color: #fecaca; }
@@ -165,6 +167,15 @@
         <div id="message" class="muted" style="margin-top:8px;"></div>
       </section>
 
+      <section id="active-campaign" class="warning hidden">
+        <h2>Test campaign is running</h2>
+        <div id="active-campaign-text"></div>
+        <div class="toolbar" style="margin-top:10px;">
+          <a id="active-campaign-link" class="button" href="#">View campaign</a>
+          <button id="active-campaign-cancel" type="button">Cancel running campaign</button>
+        </div>
+      </section>
+
       <section>
         <h2>Recent test campaigns</h2>
         <table>
@@ -262,8 +273,19 @@
         const text = await response.text();
         let payload = text;
         try { payload = text ? JSON.parse(text) : {}; } catch (_error) {}
-        if (!response.ok) throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
+        if (!response.ok) {
+          const error = new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
+          error.payload = payload;
+          throw error;
+        }
         return payload;
+      };
+      const errorMessage = (error) => {
+        const detail = error?.payload?.detail;
+        if (detail?.message) return detail.message;
+        if (Array.isArray(detail)) return detail.join(", ");
+        if (typeof detail === "string") return detail;
+        return error.message;
       };
       const fmtMbit = (value) => {
         if (value === null || value === undefined || value === "") return "-";
@@ -551,13 +573,30 @@
         }
         if ($("variant").selectedOptions[0]?.hidden) $("variant").value = "";
       };
+      const renderActiveCampaign = async () => {
+        const active = await request("/api/v1/test-batches/active");
+        $("active-campaign").classList.toggle("hidden", !active.active);
+        if (!active.active) return;
+        const batch = active.batch;
+        $("active-campaign-text").textContent = `${batch.name} is ${batch.state}. Cancel it before starting another test campaign.`;
+        $("active-campaign-link").href = `/test-batches/${batch.batch_id}`;
+        $("active-campaign-cancel").dataset.batchId = batch.batch_id;
+      };
       const renderCampaigns = async () => {
         const rows = await request("/api/v1/test-batches");
         $("campaigns").innerHTML = rows.slice(0, 20).map((row) => {
           const streamed = row.planned_stream_seconds
             ? `${fmtDuration((row.valid_run_count || 0) * (row.planned_stream_seconds / Math.max(1, row.target_valid_runs)))} / ${fmtDuration(row.planned_stream_seconds)}`
             : "-";
-          const actions = `<a href="/test-batches/${row.batch_id}">View</a>`;
+          const canDelete = ["DRAFT", "SCHEDULED"].includes(row.state) && !row.attempt_count;
+          const canStart = ["DRAFT", "SCHEDULED", "PAUSED"].includes(row.state);
+          const canCancel = ["RUNNING", "PAUSE_REQUESTED", "CANCEL_REQUESTED"].includes(row.state);
+          const actions = [
+            `<a href="/test-batches/${row.batch_id}">View</a>`,
+            canStart ? `<button type="button" data-action="start" data-batch-id="${row.batch_id}">Start</button>` : "",
+            canCancel ? `<button type="button" data-action="cancel" data-batch-id="${row.batch_id}">Cancel</button>` : "",
+            canDelete ? `<button type="button" data-action="delete" data-batch-id="${row.batch_id}">Delete</button>` : ""
+          ].filter(Boolean).join(" ");
           return `
             <tr>
               <td>${row.name}</td>
@@ -568,6 +607,7 @@
               <td>${actions}</td>
             </tr>`;
         }).join("") || "<tr><td colspan=\"6\" class=\"muted\">No campaigns yet.</td></tr>";
+        await renderActiveCampaign();
       };
       const loadProfiles = async () => {
         profiles = await request("/api/v1/test-profiles");
@@ -606,9 +646,45 @@
           $("message").textContent = `Created ${row.campaign_id}`;
           await renderCampaigns();
         } catch (error) {
-          $("message").textContent = error.message;
+          $("message").textContent = errorMessage(error);
         } finally {
           await renderPreview();
+        }
+      });
+      $("campaigns").addEventListener("click", async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const action = target.getAttribute("data-action");
+        const batchId = target.getAttribute("data-batch-id");
+        if (!action || !batchId) return;
+        target.setAttribute("disabled", "disabled");
+        try {
+          if (action === "delete") {
+            await request(`/api/v1/test-batches/${batchId}`, {method: "DELETE"});
+            $("message").textContent = `Deleted ${batchId}`;
+          } else {
+            await request(`/api/v1/test-batches/${batchId}/${action}`, {method: "POST"});
+            $("message").textContent = `${action === "start" ? "Started" : "Cancel requested for"} ${batchId}`;
+          }
+        } catch (error) {
+          $("message").textContent = errorMessage(error);
+        } finally {
+          await renderCampaigns();
+          await renderPreview();
+        }
+      });
+      $("active-campaign-cancel").addEventListener("click", async () => {
+        const batchId = $("active-campaign-cancel").dataset.batchId;
+        if (!batchId) return;
+        $("active-campaign-cancel").disabled = true;
+        try {
+          await request(`/api/v1/test-batches/${batchId}/cancel`, {method: "POST"});
+          $("message").textContent = `Cancel requested for ${batchId}`;
+        } catch (error) {
+          $("message").textContent = errorMessage(error);
+        } finally {
+          $("active-campaign-cancel").disabled = false;
+          await renderCampaigns();
         }
       });
       $("refresh-campaigns").addEventListener("click", renderCampaigns);

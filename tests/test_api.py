@@ -45,6 +45,51 @@ def test_health() -> None:
     assert response.json()["ok"] is True
 
 
+def test_stale_running_batch_cancel_finishes_without_worker() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+
+    def override_session():
+        with session_factory() as session:
+            yield session
+
+    app.dependency_overrides[api_app.get_session] = override_session
+    try:
+        with session_factory() as session:
+            seed_demo_data(session)
+            seed_benchmark_protocols(session)
+            protocol = session.scalar(select(api_app.BenchmarkProtocol))
+            assert protocol is not None
+            batch = TestBatch(
+                batch_id="batch-stale-running",
+                name="Stale running",
+                protocol_id=protocol.id,
+                protocol_slug=protocol.slug,
+                protocol_hash=protocol.protocol_hash,
+                router_slug="demo-generic",
+                state=BatchState.RUNNING,
+                target_valid_runs=1,
+                max_attempts=1,
+            )
+            session.add(batch)
+            session.commit()
+
+        client = TestClient(app)
+        response = client.post("/api/v1/test-batches/batch-stale-running/cancel")
+
+        assert response.status_code == 200
+        assert response.json()["state"] == "CANCELLED"
+        assert response.json()["state_reason"] == "user_cancelled"
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_run_artifact_bundle_download_api(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("LTAP_TESTBENCH_DATA_DIR", str(tmp_path))
     engine = create_engine(
@@ -1147,9 +1192,27 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert campaign_batch["planned_stream_seconds"] == 6 * 3600
         assert campaign_batch["estimated_minimum_wall_seconds"] == 25860
 
+        delete_draft = client.delete(f"/api/v1/test-batches/{campaign_batch['batch_id']}")
+        assert delete_draft.status_code == 200
+        assert delete_draft.json()["deleted"] is True
+        assert client.get(f"/api/v1/test-batches/{campaign_batch['batch_id']}").status_code == 404
+
         active = client.get("/api/v1/test-batches/active")
         assert active.status_code == 200
         assert active.json()["active"] is False
+
+        blocked_batch = client.post(
+            "/api/v1/test-batches",
+            json={
+                "name": "Blocked by active",
+                "experiment_id": experiment_id,
+                "variant_id": variant_id,
+                "antenna_profile_id": antenna_id,
+                "target_valid_runs": 1,
+                "max_attempts": 1,
+            },
+        )
+        assert blocked_batch.status_code == 200
 
         with session_factory() as session:
             stored_batch = session.scalar(
@@ -1164,6 +1227,15 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert active.status_code == 200
         assert active.json()["active"] is True
         assert active.json()["batch"]["batch_id"] == payload["batch_id"]
+
+        blocked_start = client.post(
+            f"/api/v1/test-batches/{blocked_batch.json()['batch_id']}/start"
+        )
+        assert blocked_start.status_code == 409
+        assert blocked_start.json()["detail"]["active_batch"]["batch_id"] == payload["batch_id"]
+        assert blocked_start.json()["detail"]["cancel_url"].endswith(
+            f"{payload['batch_id']}/cancel"
+        )
 
         pause = client.post(f"/api/v1/test-batches/{payload['batch_id']}/pause")
         assert pause.status_code == 200
@@ -1238,6 +1310,7 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert "Start a test" in dashboard.text
         assert "Campaign preview" in dashboard.text
         assert "Recent test campaigns" in dashboard.text
+        assert "Cancel running campaign" in dashboard.text
         assert "Running test statistics" in dashboard.text
         assert "LTE parameters" in dashboard.text
         assert "Live speed" in dashboard.text
