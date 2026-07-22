@@ -68,7 +68,7 @@ curl http://127.0.0.1:8787/api/v1/health
 - HTTP/TCP upload execution, timed UDP sender execution, RouterOS latency sampling, and LTE telemetry snapshots are wired into the run engine.
 - Stockbot now runs the versioned fileserver as user service `stockbot-fileserver.service` from `/home/madis/stockbot-fileserver`; it listens on TCP and UDP `0.0.0.0:8088`.
 - Stockbot reservations are enforced on TCP upload, UDP upload, and video traffic; long runs renew reservations and mark runs ineligible if renewal fails.
-- IRTT/iperf3 live execution is still pending as a future alternative to the built-in HTTP/UDP stages.
+- iperf3 and IRTT command execution wrappers exist, but standard benchmark engine plans still use the built-in stockbot-confirmed HTTP/UDP stages by default.
 - Alembic migrations are installed for production startup, with legacy SQLite backfill/stamping tests.
 - Web UI has command/control coverage and guided repeatability/overnight presets; historical import is CLI-only for now.
 

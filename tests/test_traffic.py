@@ -6,7 +6,7 @@ import pytest
 from ltap_testbench.traffic.commands import run_command
 from ltap_testbench.traffic.http_upload import parse_curl_write_out
 from ltap_testbench.traffic.iperf import build_iperf3_client_command, parse_iperf3_json
-from ltap_testbench.traffic.irtt import build_irtt_client_command, parse_irtt_json
+from ltap_testbench.traffic.irtt import build_irtt_client_command, parse_irtt_json, run_irtt_client
 from ltap_testbench.traffic.tcp_upload import run_timed_tcp_upload
 from ltap_testbench.traffic.udp_upload import run_udp_upload
 from ltap_testbench.traffic.video_udp import run_video_udp_probe
@@ -83,6 +83,45 @@ def test_parse_irtt_json() -> None:
     assert summary.loss_percent == 2
     assert summary.rtt_median_ms == 20
     assert summary.rtt_p95_ms == 80
+
+
+def test_run_irtt_client_parses_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_run_command(command: list[str], timeout_seconds: float | None = None):
+        assert command[:3] == ["irtt", "client", "198.51.100.10:5003"]
+        assert timeout_seconds == 70
+        return type(
+            "Result",
+            (),
+            {
+                "exit_code": 0,
+                "stdout": json.dumps(
+                    {
+                        "round_trips": {"sent": 10, "received": 9},
+                        "stats": {"rtt": {"median": 10_000_000, "p95": 20_000_000}},
+                    }
+                ),
+            },
+        )()
+
+    monkeypatch.setattr("ltap_testbench.traffic.irtt.run_command", fake_run_command)
+
+    result, summary = run_irtt_client("198.51.100.10", 5003, 60, timeout_seconds=70)
+
+    assert result.exit_code == 0
+    assert summary is not None
+    assert summary.loss_percent == 10
+    assert summary.rtt_median_ms == 10
+
+
+def test_run_irtt_client_returns_none_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_run_command(_command: list[str], timeout_seconds: float | None = None):
+        return type("Result", (), {"exit_code": 1, "stdout": ""})()
+
+    monkeypatch.setattr("ltap_testbench.traffic.irtt.run_command", fake_run_command)
+
+    _result, summary = run_irtt_client("198.51.100.10", 5003, 60)
+
+    assert summary is None
 
 
 def test_parse_curl_write_out() -> None:

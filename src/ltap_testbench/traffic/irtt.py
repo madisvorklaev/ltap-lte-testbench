@@ -1,6 +1,8 @@
 import json
 from dataclasses import dataclass
 
+from ltap_testbench.traffic.commands import CommandResult, run_command
+
 
 @dataclass(frozen=True)
 class IrttSummary:
@@ -57,3 +59,22 @@ def parse_irtt_json(output: str) -> IrttSummary:
         rtt_p99_ms=_duration_ns_to_ms(rtt.get("p99")),
         raw=data,
     )
+
+
+def run_irtt_client(
+    server: str,
+    port: int,
+    duration_seconds: int,
+    interval_ms: int = 100,
+    timeout_seconds: float | None = None,
+) -> tuple[CommandResult, IrttSummary | None]:
+    command = build_irtt_client_command(
+        server=server,
+        port=port,
+        duration_seconds=duration_seconds,
+        interval_ms=interval_ms,
+    )
+    result = run_command(command, timeout_seconds=timeout_seconds)
+    if result.exit_code != 0 or not result.stdout:
+        return result, None
+    return result, parse_irtt_json(result.stdout)
