@@ -26,6 +26,9 @@ RUNS: dict[str, list[dict]] = {}
 VIDEO_FRAMES: dict[str, dict] = {}
 RESERVATIONS: dict[str, dict] = {}
 STARTED_AT = time.time()
+TEST_NODE_VERSION = "stockbot-testnode-1.1"
+MEASUREMENT_IMPLEMENTATION_VERSION = "stockbot-measurement-v2"
+CAPABILITY_SCHEMA_VERSION = "1"
 RUNS_LOCK = threading.Lock()
 MAX_ACTIVE_VIDEO_FRAMES_PER_PATH = int(
     os.environ.get("STOCKBOT_VIDEO_MAX_ACTIVE_FRAMES_PER_PATH", "5000")
@@ -691,7 +694,15 @@ class UploadHandler(BaseHTTPRequestHandler):
         prune_expired_reservations()
         if path == "/api/v1/health":
             self.send_json(
-                HTTPStatus.OK, {"ok": True, "utc": now_iso(), "service": "stockbot-testnode"}
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "utc": now_iso(),
+                    "service": "stockbot-testnode",
+                    "version": TEST_NODE_VERSION,
+                    "measurement_implementation_version": MEASUREMENT_IMPLEMENTATION_VERSION,
+                    "capability_schema_version": CAPABILITY_SCHEMA_VERSION,
+                },
             )
             return True
         if path == "/api/v1/status":

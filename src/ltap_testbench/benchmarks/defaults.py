@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import hashlib
 from datetime import UTC
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ltap_testbench.benchmarks.protocols import protocol_hash
 from ltap_testbench.core.time import utc_now
 from ltap_testbench.db.models import BenchmarkProtocol, ProtocolStatus
-from ltap_testbench.profiles.protocols import canonical_json
 
 COMPARABLE_V1: dict[str, Any] = {
     "id": "comparable-v1",
@@ -118,7 +117,7 @@ def seed_benchmark_protocols(session: Session) -> None:
     now = utc_now().astimezone(UTC)
     for slug, (name, definition) in FROZEN_PROTOCOLS.items():
         existing = session.scalar(select(BenchmarkProtocol).where(BenchmarkProtocol.slug == slug))
-        digest = hashlib.sha256(canonical_json(definition).encode()).hexdigest()
+        digest = protocol_hash(definition)
         if existing is None:
             session.add(
                 BenchmarkProtocol(
@@ -134,8 +133,17 @@ def seed_benchmark_protocols(session: Session) -> None:
             )
             continue
         if existing.status == ProtocolStatus.FROZEN:
-            existing.definition_json = definition
-            existing.protocol_hash = digest
-            existing.result_schema_version = int(definition["result_schema_version"])
-            existing.version = str(definition["version"])
+            stored_digest = protocol_hash(existing.definition_json)
+            if existing.protocol_hash != stored_digest:
+                raise RuntimeError(f"frozen benchmark protocol {slug} has an invalid stored hash")
+            if existing.protocol_hash != digest:
+                raise RuntimeError(
+                    f"frozen benchmark protocol {slug} differs from the in-code definition; "
+                    "create a new protocol version instead of mutating it"
+                )
+            continue
+        existing.definition_json = definition
+        existing.protocol_hash = digest
+        existing.result_schema_version = int(definition["result_schema_version"])
+        existing.version = str(definition["version"])
     session.commit()

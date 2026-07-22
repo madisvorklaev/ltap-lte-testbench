@@ -28,6 +28,13 @@ def float_value(value: Any) -> float | None:
         return None
 
 
+def first_present(*values: float | None) -> float | None:
+    for value in values:
+        if value is not None:
+            return value
+    return None
+
+
 def percentile(values: list[float], pct: float) -> float | None:
     clean = sorted(value for value in values if value is not None)
     if not clean:
@@ -119,16 +126,19 @@ def known_path_ids(run: TestRun) -> list[str]:
 def _udp_receiver_mbit(row: dict[str, Any]) -> float | None:
     receiver_value = row.get("receiver")
     receiver: dict[str, Any] = receiver_value if isinstance(receiver_value, dict) else {}
-    return (
-        float_value(receiver.get("delivered_mbit_s"))
-        or float_value(row.get("server_average_mbit_s"))
-        or _legacy_udp_connection_mbit(row)
+    return first_present(
+        float_value(receiver.get("delivered_mbit_s")),
+        float_value(row.get("server_average_mbit_s")),
+        _legacy_udp_connection_mbit(row),
     )
 
 
 def _legacy_udp_connection_mbit(row: dict[str, Any]) -> float | None:
     values = [
-        float_value(connection.get("delivered_mbit_s") or connection.get("average_mbit_s"))
+        first_present(
+            float_value(connection.get("delivered_mbit_s")),
+            float_value(connection.get("average_mbit_s")),
+        )
         for connection in row.get("test_node_connections", [])
         if connection.get("protocol") == "udp"
     ]
@@ -139,8 +149,9 @@ def _legacy_udp_connection_mbit(row: dict[str, Any]) -> float | None:
 def _udp_loss(row: dict[str, Any]) -> float | None:
     delivery_value = row.get("delivery")
     delivery: dict[str, Any] = delivery_value if isinstance(delivery_value, dict) else {}
-    return float_value(delivery.get("packet_loss_percent")) or float_value(
-        row.get("packet_loss_percent")
+    return first_present(
+        float_value(delivery.get("packet_loss_percent")),
+        float_value(row.get("packet_loss_percent")),
     )
 
 
@@ -180,7 +191,10 @@ def analytics_run_row(run: TestRun) -> dict[str, Any]:
         ]
         paths[path_id]["tcp_mbit_s"] = aggregate(
             [
-                float_value(row.get("server_average_mbit_s") or row.get("speed_upload_mbit_s"))
+                first_present(
+                    float_value(row.get("server_average_mbit_s")),
+                    float_value(row.get("speed_upload_mbit_s")),
+                )
                 for row in tcp_rows
             ]
         ).get("median")
@@ -465,15 +479,34 @@ def compare_cohorts(
         )
         beneficial_delta = delta if policy["higher_is_better"] else -delta
         confidence_interval = _bootstrap_median_delta_ci(baseline_values, candidate_values)
-        if beneficial_delta >= threshold:
+        improvement_ci_clears_zero = False
+        regression_ci_clears_zero = False
+        if confidence_interval is not None:
+            if policy["higher_is_better"]:
+                improvement_ci_clears_zero = float(confidence_interval["low"]) > 0
+                regression_ci_clears_zero = float(confidence_interval["high"]) < 0
+            else:
+                improvement_ci_clears_zero = float(confidence_interval["high"]) < 0
+                regression_ci_clears_zero = float(confidence_interval["low"]) > 0
+        if beneficial_delta >= threshold and improvement_ci_clears_zero:
             conclusion = {
                 "status": "LIKELY_IMPROVEMENT",
-                "reason": "median delta exceeds the practical threshold",
+                "reason": "median delta exceeds the practical threshold and CI excludes zero",
             }
-        elif beneficial_delta <= -threshold:
+        elif beneficial_delta <= -threshold and regression_ci_clears_zero:
             conclusion = {
                 "status": "LIKELY_REGRESSION",
-                "reason": "median delta exceeds the practical threshold in the negative direction",
+                "reason": (
+                    "median delta exceeds the practical threshold in the negative direction "
+                    "and CI excludes zero"
+                ),
+            }
+        elif abs(beneficial_delta) >= threshold:
+            conclusion = {
+                "status": "INCONCLUSIVE",
+                "reason": (
+                    "median delta exceeds the practical threshold but bootstrap CI crosses zero"
+                ),
             }
         else:
             conclusion = {
@@ -525,10 +558,7 @@ def evaluate_run_integrity(
             (run.integrity_json or {}).get("environment_snapshot_complete")
         ),
         "application_version_verified": bool(run.application_version),
-        "test_node_version_verified": bool(
-            run.test_node_version
-            or (run.environment_snapshot_json or {}).get("test_node", {}).get("health") is not None
-        ),
+        "test_node_version_verified": bool(run.test_node_version),
         "traffic_receiver_confirmed": bool(has_live_results),
         "latency_sample_count": len(
             [sample for sample in run.metric_samples if sample.metric_name.startswith("latency_")]
@@ -545,6 +575,7 @@ def evaluate_run_integrity(
             ("exploratory_or_legacy_protocol", checks["protocol_is_comparable"]),
             ("environment_snapshot_incomplete", checks["environment_snapshot_complete"]),
             ("application_version_missing", checks["application_version_verified"]),
+            ("test_node_version_missing", checks["test_node_version_verified"]),
             ("traffic_not_receiver_confirmed", checks["receiver_measurements_present"]),
         ]
         if not ok

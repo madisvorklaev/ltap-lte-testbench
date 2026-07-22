@@ -12,6 +12,9 @@ app = FastAPI(title="LtAP Test Node")
 RUNS: dict[str, list[dict]] = {}
 RESERVATIONS: dict[str, dict] = {}
 STARTED_AT = time.time()
+TEST_NODE_VERSION = "ltap-testnode-0.1"
+MEASUREMENT_IMPLEMENTATION_VERSION = "ltap-testnode-measurement-v1"
+CAPABILITY_SCHEMA_VERSION = "1"
 
 
 class ReservationCreate(BaseModel):
@@ -64,7 +67,14 @@ def require_reservation(run_id: str, token: str | None) -> None:
 
 @app.get("/api/v1/health")
 def health() -> dict:
-    return {"ok": True, "utc": now_iso(), "service": "ltap-testnode"}
+    return {
+        "ok": True,
+        "utc": now_iso(),
+        "service": "ltap-testnode",
+        "version": TEST_NODE_VERSION,
+        "measurement_implementation_version": MEASUREMENT_IMPLEMENTATION_VERSION,
+        "capability_schema_version": CAPABILITY_SCHEMA_VERSION,
+    }
 
 
 @app.get("/api/v1/status")

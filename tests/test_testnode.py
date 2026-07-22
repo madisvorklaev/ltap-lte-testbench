@@ -7,6 +7,12 @@ def test_testnode_status_and_metrics() -> None:
     RESERVATIONS.clear()
     client = TestClient(app)
 
+    health = client.get("/api/v1/health")
+    assert health.status_code == 200
+    assert health.json()["version"]
+    assert health.json()["measurement_implementation_version"]
+    assert health.json()["capability_schema_version"]
+
     status = client.get("/api/v1/status")
     assert status.status_code == 200
     assert status.json()["ok"] is True

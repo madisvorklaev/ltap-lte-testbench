@@ -202,6 +202,8 @@ def _capture_environment_snapshot(
         },
         "test_node": {},
     }
+    if run.resolved_plan and run.resolved_plan.get("site_id") is not None:
+        snapshot["site_id"] = run.resolved_plan["site_id"]
     if server is not None:
         snapshot["test_node"] = {
             "slug": server.slug,
@@ -212,6 +214,12 @@ def _capture_environment_snapshot(
             snapshot["test_node"]["health"] = health
             snapshot["test_node"]["version"] = health.get("version")
             run.test_node_version = str(health.get("version")) if health.get("version") else None
+            snapshot["test_node"]["measurement_implementation_version"] = health.get(
+                "measurement_implementation_version"
+            )
+            snapshot["test_node"]["capability_schema_version"] = health.get(
+                "capability_schema_version"
+            )
         except Exception as exc:
             snapshot["test_node"]["health_error"] = {
                 "type": type(exc).__name__,

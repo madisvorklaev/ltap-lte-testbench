@@ -411,6 +411,12 @@ def run_batch(
         run.variant_id = batch.variant_id
         run.batch_id = batch.batch_id
         run.batch_attempt_id = attempt.id
+        if batch.site_id is not None:
+            run.resolved_plan = {**(run.resolved_plan or {}), "site_id": batch.site_id}
+            run.environment_snapshot_json = {
+                **(run.environment_snapshot_json or {}),
+                "site_id": batch.site_id,
+            }
         attempt.run_id = run.run_id
         session.add_all([attempt, run])
         session.commit()

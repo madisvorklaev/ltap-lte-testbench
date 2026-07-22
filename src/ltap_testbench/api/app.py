@@ -108,6 +108,7 @@ class AntennaProfileCreate(BaseModel):
     mimo_port_count: int = 2
     gain_source: str = "unknown"
     nominal_peak_gain_dbi: float | None = None
+    unknown_gain_reason: str = ""
     gain_by_band: list[dict[str, Any]] = Field(default_factory=list)
     cable_type: str = ""
     cable_length_m: float = 0.0
@@ -228,9 +229,11 @@ def _antenna_profile_id(payload: LabRunCreate) -> str:
 def _antenna_effective_gain(payload: LabRunCreate) -> float | None:
     if payload.antenna_gain_dbi is None:
         return None
-    cable_loss = payload.antenna_cable_loss_db or 0.0
-    connector_loss = payload.antenna_connector_loss_db or 0.0
-    return payload.antenna_gain_dbi - cable_loss - connector_loss
+    if payload.antenna_cable_loss_db is None or payload.antenna_connector_loss_db is None:
+        return None
+    return (
+        payload.antenna_gain_dbi - payload.antenna_cable_loss_db - payload.antenna_connector_loss_db
+    )
 
 
 def _protocol_row(protocol: BenchmarkProtocol) -> dict[str, Any]:
@@ -248,13 +251,18 @@ def _protocol_row(protocol: BenchmarkProtocol) -> dict[str, Any]:
 
 
 def _antenna_row(profile: AntennaProfile) -> dict[str, Any]:
-    effective_gain = (
-        profile.nominal_peak_gain_dbi
-        - (profile.estimated_cable_loss_db or 0.0)
-        - (profile.connector_loss_db or 0.0)
-        if profile.nominal_peak_gain_dbi is not None
-        else None
-    )
+    effective_gain = None
+    effective_gain_unknown_reason = None
+    if profile.nominal_peak_gain_dbi is None:
+        effective_gain_unknown_reason = "nominal_gain_unknown"
+    elif profile.estimated_cable_loss_db is None or profile.connector_loss_db is None:
+        effective_gain_unknown_reason = "cable_and_or_connector_loss_unknown"
+    else:
+        effective_gain = (
+            profile.nominal_peak_gain_dbi
+            - profile.estimated_cable_loss_db
+            - profile.connector_loss_db
+        )
     return {
         "id": profile.id,
         "slug": profile.slug,
@@ -264,7 +272,9 @@ def _antenna_row(profile: AntennaProfile) -> dict[str, Any]:
         "mimo_port_count": profile.mimo_port_count,
         "gain_source": profile.gain_source.value,
         "nominal_peak_gain_dbi": profile.nominal_peak_gain_dbi,
+        "unknown_gain_reason": profile.unknown_gain_reason,
         "effective_gain_dbi": effective_gain,
+        "effective_gain_unknown_reason": effective_gain_unknown_reason,
         "gain_by_band": profile.gain_by_band_json,
         "cable_type": profile.cable_type,
         "cable_length_m": profile.cable_length_m,
@@ -1040,6 +1050,8 @@ def create_antenna_profile(
         raise HTTPException(status_code=400, detail="unsupported gain source") from exc
     if gain_source != GainSource.UNKNOWN and payload.nominal_peak_gain_dbi is None:
         raise HTTPException(status_code=400, detail="numeric gain is required")
+    if gain_source == GainSource.UNKNOWN and not payload.unknown_gain_reason.strip():
+        raise HTTPException(status_code=400, detail="unknown_gain_reason is required")
     existing = session.scalar(select(AntennaProfile).where(AntennaProfile.slug == payload.slug))
     if existing is not None:
         raise HTTPException(status_code=409, detail="antenna profile already exists")
@@ -1051,6 +1063,7 @@ def create_antenna_profile(
         mimo_port_count=payload.mimo_port_count,
         gain_source=gain_source,
         nominal_peak_gain_dbi=payload.nominal_peak_gain_dbi,
+        unknown_gain_reason=payload.unknown_gain_reason,
         gain_by_band_json=payload.gain_by_band,
         cable_type=payload.cable_type,
         cable_length_m=payload.cable_length_m,
@@ -1622,6 +1635,8 @@ def analytics_compare(
     candidate_variant = session.get(ExperimentVariant, candidate_variant_id)
     if baseline_variant is None or candidate_variant is None:
         raise HTTPException(status_code=404, detail="experiment variant not found")
+    if baseline_variant.experiment_id != candidate_variant.experiment_id:
+        raise HTTPException(status_code=400, detail="variants must belong to the same experiment")
     min_runs = max(1, min(min_runs, 100))
     runs = session.scalars(
         select(TestRun).where(

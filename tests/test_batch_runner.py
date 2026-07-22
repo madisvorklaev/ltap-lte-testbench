@@ -20,6 +20,7 @@ from ltap_testbench.db.models import (
     ExperimentVariant,
     GainSource,
     RunState,
+    TestSite,
 )
 from ltap_testbench.db.models import (
     TestBatch as DbTestBatch,
@@ -305,6 +306,12 @@ def test_batch_cancel_during_cooldown_is_responsive() -> None:
 def test_batch_runner_links_attempt_to_run() -> None:
     session = _session()
     batch = _batch(session, target_valid_runs=1, max_attempts=1)
+    site = TestSite(slug="current-location", name="Current location")
+    session.add(site)
+    session.flush()
+    batch.site_id = site.id
+    session.add(batch)
+    session.commit()
 
     run_batch(
         session,
@@ -320,6 +327,8 @@ def test_batch_runner_links_attempt_to_run() -> None:
     assert run.batch_id == batch.batch_id
     assert run.batch_attempt_id == attempt.id
     assert run.protocol_hash == batch.protocol_hash
+    assert run.resolved_plan["site_id"] == site.id
+    assert run.environment_snapshot_json["site_id"] == site.id
 
 
 def test_batch_runner_pauses_when_application_commit_drifts(

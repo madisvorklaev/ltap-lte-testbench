@@ -168,6 +168,7 @@ def test_comparable_lab_plan_uses_fixed_protocol_and_requires_antenna() -> None:
                 antenna="roof panel",
                 antenna_gain_dbi=6.5,
                 antenna_cable_loss_db=1.2,
+                antenna_connector_loss_db=0.0,
             ),
         )
 
@@ -217,14 +218,16 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
                 {
                     "path_id": "lte1",
                     "average_mbit_s": 5.0,
-                    "receiver": {"delivered_mbit_s": 4.8},
-                    "delivery": {"packet_loss_percent": 4.0},
+                    "receiver": {"delivered_mbit_s": 0.0},
+                    "server_average_mbit_s": 4.8,
+                    "delivery": {"packet_loss_percent": 0.0},
+                    "packet_loss_percent": 4.0,
                 },
                 {
                     "path_id": "lte2",
                     "average_mbit_s": 5.0,
                     "test_node_connections": [
-                        {"protocol": "udp", "average_mbit_s": 4.4},
+                        {"protocol": "udp", "delivered_mbit_s": 0.0, "average_mbit_s": 4.4},
                     ],
                 },
             ],
@@ -243,8 +246,9 @@ def test_analytics_run_row_extracts_path_metrics() -> None:
     assert row["local_hour"] == 0.5
     assert row["local_date"] == "2026-07-22"
     assert row["paths"]["lte1"]["tcp_mbit_s"] == 45.0
-    assert row["paths"]["lte2"]["udp_mbit_s"] == 4.4
-    assert row["paths"]["lte1"]["udp_loss_percent"] == 4.0
+    assert row["paths"]["lte1"]["udp_mbit_s"] == 0.0
+    assert row["paths"]["lte2"]["udp_mbit_s"] == 0.0
+    assert row["paths"]["lte1"]["udp_loss_percent"] == 0.0
     assert row["paths"]["lte1"]["latency_avg_ms"] == 24.0
     assert row["paths"]["lte2"]["video_success_percent"] == 94.0
 
@@ -255,6 +259,7 @@ def test_evaluate_run_integrity_accepts_comparable_run_with_persisted_hash() -> 
         state=RunState.COMPLETED,
         protocol_hash="sha256-ok",
         application_version="0.1.0",
+        test_node_version="stockbot-test",
         integrity_json={"environment_snapshot_complete": True},
         environment_snapshot_json={"test_node": {"health": {"version": "stockbot-test"}}},
     )
@@ -291,6 +296,7 @@ def test_evaluate_run_integrity_reports_machine_readable_exclusions() -> None:
         "exploratory_or_legacy_protocol",
         "environment_snapshot_incomplete",
         "application_version_missing",
+        "test_node_version_missing",
         "traffic_not_receiver_confirmed",
     ]
     assert integrity["checks"]["latency_sample_count"] == 0
@@ -422,6 +428,42 @@ def test_compare_cohorts_downgrades_when_time_of_night_is_confounding() -> None:
     assert "local-hour" in comparison["conclusion"]["reason"]
     assert comparison["time_of_night"]["baseline"]["histogram"] == {"01:00": 5}
     assert comparison["time_of_night"]["candidate"]["histogram"] == {"06:00": 5}
+
+
+def test_compare_cohorts_requires_bootstrap_interval_to_exclude_zero() -> None:
+    compatibility = {
+        "protocol_hash": "aaa",
+        "result_schema_version": 2,
+        "application_measurement_version": "commit-a",
+        "test_node_version": "stockbot-a",
+        "site_id": 1,
+        "path_count": 2,
+        "comparison_eligible": True,
+        "local_hour": 1.0,
+    }
+    baseline_rows = [
+        {"run_id": f"baseline-{index}", **compatibility, "paths": {"lte1": {"tcp_mbit_s": value}}}
+        for index, value in enumerate([10, 10, 10, 10, 100], start=1)
+    ]
+    candidate_rows = [
+        {
+            "run_id": f"candidate-{index}",
+            **compatibility,
+            "paths": {"lte1": {"tcp_mbit_s": value}},
+        }
+        for index, value in enumerate([12, 12, 12, 12, 0], start=1)
+    ]
+
+    comparison = compare_cohorts(
+        baseline_rows,
+        candidate_rows,
+        metric_name="tcp_mbit_s",
+        path_id="lte1",
+    )
+
+    assert comparison["conclusion"]["status"] == "INCONCLUSIVE"
+    assert "CI crosses zero" in comparison["conclusion"]["reason"]
+    assert comparison["conclusion"]["bootstrap_95_ci"]["low"] < 0
 
 
 def test_compare_cohorts_excludes_incompatible_metadata() -> None:
@@ -894,6 +936,39 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         antenna_id = antenna.json()["id"]
         assert antenna.json()["effective_gain_dbi"] == 5.5
 
+        unknown_loss = client.post(
+            "/api/v1/antenna-profiles",
+            json={
+                "slug": "window-unknown-loss",
+                "manufacturer": "Generic",
+                "model": "2 dBi window",
+                "gain_source": "estimated",
+                "nominal_peak_gain_dbi": 2.0,
+                "cable_type": "unknown",
+                "cable_length_m": 2.0,
+                "mounting_location": "window",
+                "orientation": "current",
+            },
+        )
+        assert unknown_loss.status_code == 200
+        assert unknown_loss.json()["effective_gain_dbi"] is None
+        assert (
+            unknown_loss.json()["effective_gain_unknown_reason"]
+            == "cable_and_or_connector_loss_unknown"
+        )
+
+        missing_reason = client.post(
+            "/api/v1/antenna-profiles",
+            json={
+                "slug": "unknown-gain",
+                "manufacturer": "Generic",
+                "model": "unknown",
+                "gain_source": "unknown",
+            },
+        )
+        assert missing_reason.status_code == 400
+        assert "unknown_gain_reason" in missing_reason.json()["detail"]
+
         site = client.post(
             "/api/v1/test-sites",
             json={
@@ -1140,6 +1215,21 @@ def test_analytics_compare_endpoint_compares_variant_cohorts() -> None:
         assert candidate.status_code == 200
         baseline_id = baseline.json()["id"]
         candidate_id = candidate.json()["id"]
+        other_experiment = client.post(
+            "/api/v1/experiments",
+            json={
+                "name": "Other experiment",
+                "comparison_dimension": "firmware",
+                "protocol_slug": "comparable-v1",
+                "site_id": site.json()["id"],
+            },
+        )
+        assert other_experiment.status_code == 200
+        other_variant = client.post(
+            f"/api/v1/experiments/{other_experiment.json()['id']}/variants",
+            json={"label": "other"},
+        )
+        assert other_variant.status_code == 200
         with session_factory() as session:
             router = session.scalar(
                 select(RouterProfile).where(RouterProfile.slug == "demo-generic")
@@ -1194,6 +1284,16 @@ def test_analytics_compare_endpoint_compares_variant_cohorts() -> None:
         assert payload["baseline"]["n"] == 5
         assert payload["candidate"]["median"] == 22
         assert payload["conclusion"]["status"] == "LIKELY_IMPROVEMENT"
+
+        cross_experiment = client.get(
+            "/api/v1/analytics/compare",
+            params={
+                "baseline_variant_id": baseline_id,
+                "candidate_variant_id": other_variant.json()["id"],
+            },
+        )
+        assert cross_experiment.status_code == 400
+        assert "same experiment" in cross_experiment.json()["detail"]
 
         export = client.get(
             "/api/v1/analytics/export.csv",
