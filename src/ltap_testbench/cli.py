@@ -221,9 +221,14 @@ def _server_health(server: ServerProfile | None) -> tuple[dict, list[str]]:
     except Exception:
         return {}, ["test_node_unavailable"]
     errors = []
-    if not health.get("version"):
+    if not _test_node_version(health):
         errors.append("test_node_version_missing")
     return health, errors
+
+
+def _test_node_version(health: dict[str, Any]) -> str | None:
+    value = health.get("version") or health.get("service")
+    return str(value) if value else None
 
 
 def _validation_errors(
@@ -504,7 +509,7 @@ def _sample_configuration(
             retry_delay_seconds=300,
             max_consecutive_failures=3,
             expected_application_version=__version__,
-            expected_test_node_version=health.get("version"),
+            expected_test_node_version=_test_node_version(health),
             expected_protocol_hash=protocol.protocol_hash if protocol else None,
             expected_variant_snapshot_hash=_stable_hash(variant_snapshot),
             notes=(
@@ -521,7 +526,7 @@ def _sample_configuration(
         batch.site_id = site.id
         batch.antenna_profile_id = antenna.id
         batch.expected_variant_snapshot_hash = _stable_hash(variant_snapshot)
-        batch.expected_test_node_version = health.get("version")
+        batch.expected_test_node_version = _test_node_version(health)
     duration_seconds = protocol_duration_seconds(protocol.definition_json) if protocol else 0
     cycle_seconds = duration_seconds + batch.inter_run_cooldown_seconds
     warnings = [

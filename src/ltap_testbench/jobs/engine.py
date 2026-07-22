@@ -211,9 +211,10 @@ def _capture_environment_snapshot(
         }
         try:
             health = client_factory(server.control_api_url).health()
+            test_node_version = _test_node_version(health)
             snapshot["test_node"]["health"] = health
-            snapshot["test_node"]["version"] = health.get("version")
-            run.test_node_version = str(health.get("version")) if health.get("version") else None
+            snapshot["test_node"]["version"] = test_node_version
+            run.test_node_version = test_node_version
             snapshot["test_node"]["measurement_implementation_version"] = health.get(
                 "measurement_implementation_version"
             )
@@ -256,6 +257,11 @@ def _capture_environment_snapshot(
             "test_node_version": run.test_node_version,
         },
     )
+
+
+def _test_node_version(health: dict[str, object]) -> str | None:
+    value = health.get("version") or health.get("service")
+    return str(value) if value else None
 
 
 def _normalize_plan_definition(definition: dict) -> dict:

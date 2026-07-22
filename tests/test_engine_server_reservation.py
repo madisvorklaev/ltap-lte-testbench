@@ -11,6 +11,7 @@ from ltap_testbench.jobs.engine import (
     _execute_udp_upload_stage,
     _execute_video_probe_stage,
     _reservation_renew_interval_seconds,
+    _test_node_version,
     create_run,
     execute_run,
 )
@@ -46,6 +47,14 @@ class RecordingTestNodeClient:
 
     def release_reservation(self, reservation_id: str) -> None:
         self.released.append(reservation_id)
+
+
+def test_engine_accepts_legacy_stockbot_health_service_as_version() -> None:
+    assert _test_node_version({"version": "stockbot-v1", "service": "stockbot-testnode"}) == (
+        "stockbot-v1"
+    )
+    assert _test_node_version({"service": "stockbot-testnode"}) == "stockbot-testnode"
+    assert _test_node_version({}) is None
 
 
 class FailingRenewalTestNodeClient(RecordingTestNodeClient):

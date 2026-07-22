@@ -4,7 +4,12 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 import ltap_testbench.cli as cli
-from ltap_testbench.cli import _sample_configuration, _stable_hash, _stable_modem_snapshot
+from ltap_testbench.cli import (
+    _sample_configuration,
+    _stable_hash,
+    _stable_modem_snapshot,
+    _test_node_version,
+)
 from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
     AntennaProfile,
@@ -92,6 +97,14 @@ def test_stable_modem_snapshot_hash_ignores_radio_but_tracks_identity() -> None:
     assert _stable_hash(_stable_modem_snapshot(base, paths)) != _stable_hash(
         _stable_modem_snapshot(modem_changed, paths)
     )
+
+
+def test_sample_configuration_accepts_legacy_stockbot_health_version() -> None:
+    assert _test_node_version({"version": "stockbot-v1", "service": "legacy-stockbot"}) == (
+        "stockbot-v1"
+    )
+    assert _test_node_version({"service": "stockbot-testnode"}) == "stockbot-testnode"
+    assert _test_node_version({}) is None
 
 
 class _FakeAdapter:
