@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from statistics import median
 from typing import Any
 
@@ -39,13 +40,16 @@ def aggregate(values: list[float | None]) -> dict[str, Any]:
         return {"n": 0}
     mean = sum(clean) / len(clean)
     variance = sum((value - mean) ** 2 for value in clean) / len(clean)
+    p25 = percentile(clean, 0.25)
+    p75 = percentile(clean, 0.75)
     return {
         "n": len(clean),
         "mean": mean,
         "median": median(clean),
         "p10": percentile(clean, 0.10),
-        "p25": percentile(clean, 0.25),
-        "p75": percentile(clean, 0.75),
+        "p25": p25,
+        "p75": p75,
+        "iqr": (p75 - p25) if p25 is not None and p75 is not None else None,
         "p90": percentile(clean, 0.90),
         "p95": percentile(clean, 0.95),
         "min": min(clean),
@@ -247,6 +251,30 @@ def _metric_policy(metric_name: str) -> dict[str, Any]:
     return {"higher_is_better": True, "absolute_threshold": 0.0, "relative_threshold": 0.10}
 
 
+def _bootstrap_median_delta_ci(
+    baseline_values: list[float | None],
+    candidate_values: list[float | None],
+    *,
+    iterations: int = 1000,
+    seed: int = 1001,
+) -> dict[str, Any] | None:
+    baseline_clean = [float(value) for value in baseline_values if value is not None]
+    candidate_clean = [float(value) for value in candidate_values if value is not None]
+    if not baseline_clean or not candidate_clean:
+        return None
+    rng = random.Random(seed)
+    deltas = []
+    for _index in range(iterations):
+        baseline_sample = [rng.choice(baseline_clean) for _row in baseline_clean]
+        candidate_sample = [rng.choice(candidate_clean) for _row in candidate_clean]
+        deltas.append(median(candidate_sample) - median(baseline_sample))
+    return {
+        "low": float(percentile(deltas, 0.025) or 0.0),
+        "high": float(percentile(deltas, 0.975) or 0.0),
+        "iterations": iterations,
+    }
+
+
 def _compatibility_key(row: dict[str, Any]) -> tuple[Any, ...]:
     return tuple(row.get(field) for field in COMPATIBILITY_FIELDS)
 
@@ -380,6 +408,7 @@ def compare_cohorts(
             abs(baseline_median) * float(policy["relative_threshold"]),
         )
         beneficial_delta = delta if policy["higher_is_better"] else -delta
+        confidence_interval = _bootstrap_median_delta_ci(baseline_values, candidate_values)
         if beneficial_delta >= threshold:
             conclusion = {
                 "status": "LIKELY_IMPROVEMENT",
@@ -398,6 +427,7 @@ def compare_cohorts(
         conclusion["delta"] = delta
         conclusion["relative_delta"] = relative_delta
         conclusion["practical_threshold"] = threshold
+        conclusion["bootstrap_95_ci"] = confidence_interval
     return {
         "metric": metric_name,
         "path_id": path_id,

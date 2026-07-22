@@ -326,6 +326,7 @@ def test_cohort_summary_requires_minimum_evidence_and_reports_variability() -> N
     assert summary["metrics"]["lte1"]["tcp_mbit_s"]["median"] == 30
     assert summary["metrics"]["lte1"]["tcp_mbit_s"]["p25"] == 20
     assert summary["metrics"]["lte1"]["tcp_mbit_s"]["p75"] == 40
+    assert summary["metrics"]["lte1"]["tcp_mbit_s"]["iqr"] == 20
 
 
 def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> None:
@@ -366,6 +367,9 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
     assert comparison["candidate"]["n"] == 5
     assert comparison["conclusion"]["status"] == "LIKELY_IMPROVEMENT"
     assert comparison["conclusion"]["delta"] == 10.0
+    assert comparison["conclusion"]["bootstrap_95_ci"]["low"] > 0
+    assert comparison["conclusion"]["bootstrap_95_ci"]["high"] > 0
+    assert comparison["conclusion"]["bootstrap_95_ci"]["iterations"] == 1000
     assert comparison["excluded_run_count"] == 0
 
 
