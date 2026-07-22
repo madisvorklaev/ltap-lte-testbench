@@ -71,11 +71,14 @@ curl http://127.0.0.1:8787/api/v1/health
 - iperf3 and IRTT command execution wrappers exist, but standard benchmark engine plans still use the built-in stockbot-confirmed HTTP/UDP stages by default.
 - Alembic migrations are installed for production startup, with legacy SQLite backfill/stamping tests.
 - Web UI has command/control coverage and guided repeatability/overnight presets; historical import is CLI-only for now.
+- Main dashboard uses the simplified profile-driven `Start a test` workflow.
+- Test profiles are backed by immutable benchmark protocols; see `docs/simple-test-workflow.md`.
+- The old measurement-property workflow is treated as advanced/exploratory and linked from `/advanced-tests`.
 
 ## Recommended Next Step
 
 Recommended next step:
 
 1. Continue replacing legacy/live ad hoc measurement paths with phase-aware persisted samples.
-2. Add the remaining deep statistical comparison controls and report views.
+2. Add campaign/profile filters to the analytics UI once more campaign data exists.
 3. Split the worker into a separate service once the durable queue shape is tested.

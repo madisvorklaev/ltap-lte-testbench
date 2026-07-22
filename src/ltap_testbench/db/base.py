@@ -105,6 +105,16 @@ def _migrate_sqlite(engine: Engine) -> None:
         "expected_test_node_version": "VARCHAR(80)",
         "expected_protocol_hash": "VARCHAR(64)",
         "expected_variant_snapshot_hash": "VARCHAR(64)",
+        "test_profile_id": "INTEGER",
+        "test_profile_slug": "VARCHAR(80)",
+        "test_profile_version": "VARCHAR(40)",
+        "resolved_profile_snapshot_json": "JSON DEFAULT '{}'",
+        "target_mode": "VARCHAR(40)",
+        "requested_target_value": "FLOAT",
+        "requested_target_unit": "VARCHAR(40)",
+        "planned_stream_seconds": "INTEGER",
+        "estimated_minimum_wall_seconds": "INTEGER",
+        "estimated_worst_case_wall_seconds": "INTEGER",
         "worker_id": "VARCHAR(120)",
         "last_heartbeat_at": "DATETIME",
     }
@@ -145,6 +155,35 @@ def _migrate_sqlite(engine: Engine) -> None:
                 connection.execute(
                     text(f"ALTER TABLE batch_attempts ADD COLUMN {name} {definition}")
                 )
+        table_names = {
+            row[0]
+            for row in connection.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+        }
+        if "test_profiles" not in table_names:
+            connection.execute(
+                text(
+                    """
+                    CREATE TABLE test_profiles (
+                        id INTEGER NOT NULL PRIMARY KEY,
+                        slug VARCHAR(80) NOT NULL UNIQUE,
+                        name VARCHAR(160) NOT NULL,
+                        description TEXT NOT NULL,
+                        protocol_id INTEGER NOT NULL,
+                        protocol_hash VARCHAR(64) NOT NULL,
+                        profile_version VARCHAR(40) NOT NULL,
+                        is_comparable BOOLEAN NOT NULL,
+                        is_default BOOLEAN NOT NULL,
+                        display_order INTEGER NOT NULL,
+                        default_target_mode VARCHAR(40) NOT NULL,
+                        default_target_value FLOAT NOT NULL,
+                        default_inter_run_cooldown_seconds INTEGER NOT NULL,
+                        default_max_consecutive_failures INTEGER NOT NULL,
+                        created_at DATETIME NOT NULL,
+                        retired_at DATETIME
+                    )
+                    """
+                )
+            )
 
 
 def get_session() -> Generator[Session, None, None]:

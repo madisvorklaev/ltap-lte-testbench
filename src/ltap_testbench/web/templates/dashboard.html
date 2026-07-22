@@ -3,353 +3,177 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LtAP Lab Test</title>
+    <title>Start a test</title>
     <style>
       :root {
         --bg: #f4f6f8;
-        --surface: #ffffff;
-        --text: #18212f;
-        --muted: #617083;
+        --surface: #fff;
+        --text: #172033;
+        --muted: #64748b;
         --line: #d7dee8;
         --ok: #166534;
-        --warn: #9a3412;
         --bad: #b91c1c;
-        --blue: #075985;
+        --brand: #0f766e;
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
       header { background: #172033; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-      main { max-width: 1180px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+      main { max-width: 980px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
       section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
       h1, h2, h3 { margin: 0; letter-spacing: 0; }
       h1 { font-size: 20px; }
-      h2 { font-size: 16px; margin-bottom: 10px; }
-      h3 { font-size: 14px; margin-bottom: 6px; }
+      h2 { font-size: 18px; margin-bottom: 10px; }
+      h3 { font-size: 14px; margin: 10px 0 6px; }
       label { display: grid; gap: 4px; font-size: 12px; font-weight: 650; color: var(--muted); }
       input, select { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; color: var(--text); background: #fff; width: 100%; }
       button, .button { min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; font: inherit; background: #fff; color: var(--text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-      button.primary { background: #0f766e; border-color: #0f766e; color: #fff; }
-      button.danger { background: #fff1f2; border-color: #fecaca; color: var(--bad); }
-      button:disabled { opacity: .55; cursor: wait; }
-      pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 340px; }
+      button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+      button:disabled { opacity: .55; cursor: not-allowed; }
       table { border-collapse: collapse; width: 100%; table-layout: fixed; }
       th, td { border-bottom: 1px solid #e8edf3; text-align: left; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
       th { color: var(--muted); font-weight: 650; }
-      progress { width: 100%; height: 18px; accent-color: #0f766e; }
-      code { background: #edf2f7; padding: 2px 4px; border-radius: 4px; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-      .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .segmented { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+      .segmented button { border: 0; border-radius: 0; }
+      .segmented button.active { background: #e6fffb; color: #115e59; font-weight: 700; }
+      .quick button { min-height: 30px; padding: 4px 8px; }
       .muted { color: var(--muted); }
-      .badge { display: inline-flex; min-height: 24px; align-items: center; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); font-size: 12px; font-weight: 650; }
-      .badge.completed { color: var(--ok); background: #f0fdf4; border-color: #86efac; }
-      .badge.failed, .badge.cancelled { color: var(--bad); background: #fff1f2; border-color: #fecaca; }
-      .badge.running, .badge.preflight, .badge.verifying_paths { color: var(--blue); background: #f0f9ff; border-color: #bae6fd; }
-      .metric { background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-height: 74px; }
-      .metric strong { display: block; font-size: 20px; margin-top: 3px; }
-      @media (max-width: 820px) {
+      .summary { background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+      .preview { display: grid; gap: 8px; }
+      .bad { color: var(--bad); }
+      .ok { color: var(--ok); }
+      .hidden { display: none; }
+      @media (max-width: 760px) {
         main { padding: 12px; }
-        .split { grid-template-columns: 1fr; }
       }
     </style>
   </head>
   <body>
     <header>
-      <h1>LtAP Lab Test</h1>
+      <h1>Start a test</h1>
       <div class="toolbar">
-        <a class="button" href="/experiments">Experiments</a>
-        <a class="button" href="/antennas">Antennas</a>
         <a class="button" href="/analytics">Analytics</a>
+        <a class="button" href="/advanced-tests">Advanced</a>
         <span>v{{ version }}</span>
       </div>
     </header>
     <main>
       <section>
-        <h2>Prepare Test</h2>
+        <h2>Start a test</h2>
         <div class="grid">
-          <label>Router IP
-            <input id="router-ip" value="192.168.101.254" inputmode="numeric">
+          <label>Test profile
+            <select id="profile"></select>
           </label>
-          <label>Profile
-            <select id="benchmark-profile">
-              <option value="custom" selected>Custom exploratory</option>
-              <option value="comparable-v1">Comparable Benchmark v1</option>
-            </select>
-          </label>
-          <label>TCP mode
-            <select id="tcp-mode">
-              <option value="payload" selected>Payload transfer</option>
-              <option value="timed">Timed window</option>
-            </select>
-          </label>
-          <label>TCP file size
-            <select id="tcp-file-size">
-              {% for size in tcp_file_size_options_mb %}
-              <option value="{{ size }}" {% if size == 25 %}selected{% endif %}>{{ size }} MB</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>TCP upload count
-            <input id="tcp-upload-count" type="number" min="1" max="20" value="1">
-          </label>
-          <label>TCP duration
-            <input id="tcp-duration" type="number" min="1" max="3600" value="120">
-          </label>
-          <label>UDP duration
-            <input id="udp-duration" type="number" min="1" max="3600" value="60">
-          </label>
-          <label>UDP bitrate
-            <input id="udp-bitrate" type="number" min="0.1" max="50" step="0.1" value="5">
-          </label>
-          <label>UDP test pattern
-            <select id="udp-pattern">
-              <option value="end">once in the end</option>
-              <option value="beginning">once in the beginning</option>
-              <option value="after_each_tcp">after every TCP round</option>
-            </select>
-          </label>
-          <label>Video resolution
-            <select id="video-resolution">
-              <option value="1080p" selected>1080p FullHD</option>
-              <option value="720p">720p</option>
-              <option value="1440p">1440p</option>
-              <option value="4k">4K</option>
-            </select>
-          </label>
-          <label>Video duration
-            <input id="video-duration" type="number" min="1" max="3600" value="60">
-          </label>
-          <label>Video FPS
-            <select id="video-fps">
-              <option value="25" selected>25 fps</option>
-              <option value="30">30 fps</option>
-              <option value="50">50 fps</option>
-            </select>
-          </label>
-          <label>Driving scenario
-            <select id="video-scenario">
-              <option value="city" selected>city driving</option>
-              <option value="parked">parked / low motion</option>
-              <option value="highway">highway</option>
-              <option value="rough-road">rough road / high motion</option>
-            </select>
-          </label>
-          <label>Antenna and placement
-            <input id="antenna" list="antenna-options" placeholder="Outdoor panel, attic window, etc.">
-            <datalist id="antenna-options">
-              {% for value in antenna_options %}
-              <option value="{{ value }}"></option>
-              {% endfor %}
-            </datalist>
-          </label>
-          <label>Antenna gain
-            <input id="antenna-gain" type="number" step="0.1" placeholder="dBi">
-          </label>
-          <label>Cable loss
-            <input id="antenna-cable-loss" type="number" min="0" step="0.1" placeholder="dB">
-          </label>
-          <label>Mounting
-            <input id="antenna-mounting" placeholder="roof, window, mast">
+          <label>Campaign name
+            <input id="campaign-name" placeholder="Generated automatically">
           </label>
         </div>
-        <div class="toolbar" style="margin-top: 12px;">
-          <button id="start-lab" class="primary" type="button">Start / Restart Test</button>
-          <button id="refresh-status" type="button">Refresh</button>
-          <a id="open-run" class="button" href="#" style="display:none;">Open Run</a>
-        </div>
-      </section>
+        <p id="profile-description" class="muted"></p>
+        <div id="profile-summary" class="summary"></div>
 
-      <section>
-        <h2>Test Series</h2>
-        <div class="grid">
-          <label>Series name
-            <input id="batch-name" value="Overnight benchmark">
+        <h3>Campaign target</h3>
+        <div class="toolbar">
+          <div class="segmented">
+            <button id="mode-streamed" type="button" class="active">Total streamed time</button>
+            <button id="mode-runs" type="button">Number of valid runs</button>
+          </div>
+          <label id="streamed-target">Value
+            <input id="target-value" type="number" min="0.1" step="0.1" value="6">
           </label>
-          <label>Benchmark protocol
-            <select id="batch-protocol">
-              {% for protocol in benchmark_protocols %}
-              <option value="{{ protocol.slug }}">{{ protocol.name }} · {{ protocol.version }}</option>
+          <label id="streamed-unit">Unit
+            <select id="target-unit">
+              <option value="hours" selected>hours</option>
+              <option value="minutes">minutes</option>
+            </select>
+          </label>
+          <label id="run-target" class="hidden">Valid runs
+            <input id="target-runs" type="number" min="1" step="1" value="12">
+          </label>
+        </div>
+        <div class="toolbar quick" style="margin-top:8px;">
+          <button type="button" data-hours="1">1 h</button>
+          <button type="button" data-hours="2">2 h</button>
+          <button type="button" data-hours="4">4 h</button>
+          <button type="button" data-hours="6">6 h</button>
+          <button type="button" data-hours="8">8 h</button>
+          <button type="button" data-hours="12">12 h</button>
+        </div>
+
+        <h3>Start</h3>
+        <div class="toolbar">
+          <div class="segmented">
+            <button id="start-now" type="button" class="active">Start now</button>
+            <button id="start-schedule" type="button">Schedule</button>
+          </div>
+          <label id="schedule-field" class="hidden">Local start time
+            <input id="start-at" type="datetime-local">
+          </label>
+        </div>
+
+        <h3>Context</h3>
+        <div class="grid">
+          <label>Router
+            <select id="router">
+              {% for router in routers %}
+              <option value="{{ router.slug }}">{{ router.display_name }} · {{ router.slug }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Antenna
+            <select id="antenna">
+              <option value="">Choose antenna</option>
+              {% for profile in antenna_profiles %}
+              <option value="{{ profile.id }}">{{ profile.manufacturer }} {{ profile.model }}</option>
               {% endfor %}
             </select>
           </label>
           <label>Experiment
-            <select id="batch-experiment">
-              <option value="">No experiment</option>
+            <select id="experiment">
+              <option value="">None</option>
               {% for experiment in experiments %}
               <option value="{{ experiment.id }}">{{ experiment.name }}</option>
               {% endfor %}
             </select>
           </label>
           <label>Variant
-            <select id="batch-variant">
-              <option value="">No variant</option>
+            <select id="variant">
+              <option value="">None</option>
               {% for variant in variant_options %}
               <option value="{{ variant.id }}" data-experiment-id="{{ variant.experiment_id }}">{{ variant.label }}</option>
               {% endfor %}
             </select>
           </label>
-          <label>Antenna profile
-            <select id="batch-antenna">
-              <option value="">Choose profile</option>
-              {% for profile in antenna_profiles %}
-              <option value="{{ profile.id }}">{{ profile.manufacturer }} {{ profile.model }} · {{ profile.mounting_location }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>Target valid runs
-            <input id="batch-target-valid" type="number" min="1" max="100" value="10">
-          </label>
-          <label>Maximum attempts
-            <input id="batch-max-attempts" type="number" min="1" max="150" value="15">
-          </label>
-          <label>Inter-run cooldown
-            <input id="batch-cooldown" type="number" min="0" max="3600" value="120">
-          </label>
-          <label>Max consecutive failures
-            <input id="batch-max-failures" type="number" min="1" max="20" value="3">
-          </label>
-          <label>Deadline
-            <input id="batch-deadline" type="datetime-local">
-          </label>
         </div>
-        <div class="toolbar" style="margin-top: 12px;">
-          <button id="preset-repeatability" type="button">Repeatability 10/15</button>
-          <button id="preset-overnight" type="button">Overnight 20/25</button>
-          <button id="create-batch" class="primary" type="button">Create Series</button>
-          <button id="refresh-batches" type="button">Refresh Series</button>
+
+        <h3>Campaign preview</h3>
+        <div id="preview" class="preview summary">Loading preview...</div>
+        <div class="toolbar" style="margin-top:12px;">
+          <button id="create-campaign" class="primary" type="button">Start test campaign</button>
+          <button id="refresh-campaigns" type="button">Refresh campaigns</button>
         </div>
-        <div class="muted" id="batch-message" style="margin-top:8px;">
-          Standard series require a structured antenna profile.
-        </div>
-        <div style="margin-top:14px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Series</th><th>State</th><th>Progress</th><th>Estimate</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="batch-table">
-              {% for batch in batches %}
-              <tr>
-                <td><a href="/test-batches/{{ batch.batch_id }}">{{ batch.name }}</a><br><span class="muted">{{ batch.batch_id }}</span></td>
-                <td>{{ batch.state.value }}{% if batch.state_reason %}<br><span class="muted">{{ batch.state_reason }}</span>{% endif %}</td>
-                <td>{{ batch.valid_run_count }}/{{ batch.target_valid_runs }} valid<br>{{ batch.attempt_count }}/{{ batch.max_attempts }} attempts</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <div id="message" class="muted" style="margin-top:8px;"></div>
       </section>
 
       <section>
-        <h2>Running Test</h2>
-        <div class="grid">
-          <div class="metric">
-            <span class="muted">Current test</span>
-            <strong id="current-test">none</strong>
-          </div>
-          <div class="metric">
-            <span class="muted">State</span>
-            <strong><span id="run-state" class="badge">IDLE</span></strong>
-          </div>
-          <div class="metric">
-            <span class="muted">Uploaded in phase</span>
-            <strong id="phase-uploaded">0 MB</strong>
-          </div>
-          <div class="metric">
-            <span class="muted">Progress</span>
-            <strong id="progress-label">0%</strong>
-          </div>
-        </div>
-        <progress id="progress" value="0" max="100" style="margin-top:10px;"></progress>
-        <div class="split" style="margin-top:14px;">
-          <div>
-            <h3>Live Speed</h3>
-            <table>
-              <tr><th>Modem</th><th>Test receiver rate</th><th>Average TCP</th><th>Average UDP</th></tr>
-              <tr><td>lte1</td><td id="lte1-current">-</td><td id="lte1-tcp">-</td><td id="lte1-udp">-</td></tr>
-              <tr><td>lte2</td><td id="lte2-current">-</td><td id="lte2-tcp">-</td><td id="lte2-udp">-</td></tr>
-            </table>
-          </div>
-          <div>
-            <h3>Signal Quality</h3>
-            <table>
-              <tr><th>Modem</th><th>Band</th><th>RSRP</th><th>RSRQ</th><th>SINR</th></tr>
-              <tr><td>lte1</td><td id="lte1-band">-</td><td id="lte1-rsrp">-</td><td id="lte1-rsrq">-</td><td id="lte1-sinr">-</td></tr>
-              <tr><td>lte2</td><td id="lte2-band">-</td><td id="lte2-rsrp">-</td><td id="lte2-rsrq">-</td><td id="lte2-sinr">-</td></tr>
-            </table>
-          </div>
-        </div>
-        <div style="margin-top:14px;">
-          <h3>Latency</h3>
-          <table>
-            <tr><th>Modem</th><th>Average</th><th>Min</th><th>Max</th><th>Loss</th></tr>
-            <tr><td>lte1</td><td id="lte1-lat-avg">-</td><td id="lte1-lat-min">-</td><td id="lte1-lat-max">-</td><td id="lte1-lat-loss">-</td></tr>
-            <tr><td>lte2</td><td id="lte2-lat-avg">-</td><td id="lte2-lat-min">-</td><td id="lte2-lat-max">-</td><td id="lte2-lat-loss">-</td></tr>
-          </table>
-        </div>
-        <div style="margin-top:14px;">
-          <h3>Video Health</h3>
-          <table>
-            <tr><th>Modem</th><th id="video-frames-heading">Frames seen</th><th>Complete</th><th>Lost</th><th id="video-incomplete-heading">Partial</th><th id="video-success-heading">Complete among seen</th><th>p95 fragment span</th></tr>
-            <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-lost">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-success">-</td><td id="lte1-video-p95">-</td></tr>
-            <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-lost">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-success">-</td><td id="lte2-video-p95">-</td></tr>
-          </table>
-          <div class="muted" id="video-compare" style="margin-top:6px;">No video frame probe yet.</div>
-        </div>
-      </section>
-
-      <section>
-        <h2>Log</h2>
-        <pre id="backend-log">No run loaded.</pre>
-      </section>
-
-      <section>
-        <h2>Test Results</h2>
-        <pre id="summary">No summary yet.</pre>
+        <h2>Recent test campaigns</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Profile</th><th>Progress</th><th>Streamed time</th><th>State</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="campaigns"></tbody>
+        </table>
       </section>
     </main>
     <script>
       const $ = (id) => document.getElementById(id);
-      let pollTimer = null;
-      let previousLiveSample = null;
-      let pollInFlight = false;
+      let profiles = [];
+      let targetMode = "streamed_time";
+      let startMode = "now";
+      let previewTimer = null;
 
-      const fmtMbit = (value) => {
-        if (value === null || value === undefined || value === "") return "-";
-        const n = Number(value);
-        if (!Number.isFinite(n)) return String(value);
-        return `${n.toFixed(2)} Mbit/s`;
-      };
-      const fmtMb = (value) => {
-        const n = Number(value);
-        return Number.isFinite(n) ? `${n.toFixed(2)} MB` : "-";
-      };
-      const fmtMs = (value) => {
-        const n = Number(value);
-        return Number.isFinite(n) ? `${n.toFixed(1)} ms` : "-";
-      };
-      const fmtPct = (value) => {
-        const n = Number(value);
-        return Number.isFinite(n) ? `${n.toFixed(1)}%` : "-";
-      };
-      const rateToMbit = (value) => {
-        if (value === null || value === undefined || value === "") return null;
-        if (typeof value === "number") return Number.isFinite(value) ? value / 1000000 : null;
-        const text = String(value).trim().toLowerCase().replace(/\s+/g, "");
-        const match = text.match(/^([0-9]+(?:\.[0-9]+)?)([kmgt]?)(?:bit\/s|bits\/s|bps)?$/);
-        if (!match) return null;
-        const n = Number(match[1]);
-        if (!Number.isFinite(n)) return null;
-        const multiplier = { "": 1, k: 1e3, m: 1e6, g: 1e9, t: 1e12 }[match[2] || ""];
-        return n * multiplier / 1000000;
-      };
-      const bitsToMbit = (value) => {
-        const n = rateToMbit(value);
-        return Number.isFinite(n) ? `${n.toFixed(2)} Mbit/s` : "-";
-      };
       const request = async (url, options = {}) => {
         const response = await fetch(url, {
           headers: {"Content-Type": "application/json", ...(options.headers || {})},
@@ -361,347 +185,161 @@
         if (!response.ok) throw new Error(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
         return payload;
       };
-      const latestEvent = (run, type) => [...run.events].reverse().find((event) => event.type === type);
-      const eventTime = (event) => event ? new Date(event.timestamp).getTime() / 1000 : null;
-      const progressFor = (run) => {
-        const state = String(run.state);
-        if (["COMPLETED"].includes(state)) return 100;
-        if (["FAILED", "CANCELLED", "INTERRUPTED"].includes(state)) return 100;
-        const videoStart = latestEvent(run, "video-probe-stage-started");
-        if (videoStart) {
-          const seconds = Number(videoStart.details.duration_seconds || 1);
-          const elapsed = Math.max(0, Date.now() / 1000 - eventTime(videoStart));
-          return Math.min(98, 70 + (elapsed / seconds) * 25);
-        }
-        const udpStart = latestEvent(run, "udp-upload-stage-started");
-        if (udpStart) {
-          const seconds = Number(udpStart.details.duration_seconds || 1);
-          const elapsed = Math.max(0, Date.now() / 1000 - eventTime(udpStart));
-          return Math.min(95, 55 + (elapsed / seconds) * 40);
-        }
-        if (latestEvent(run, "upload-stage-started")) return 45;
-        if (latestEvent(run, "latency-stage")) return 35;
-        if (latestEvent(run, "server-reservation")) return 25;
-        if (latestEvent(run, "path-verification")) return 15;
-        return 5;
-      };
-      const setText = (id, value) => { $(id).textContent = value ?? "-"; };
-      const livePathBytes = (liveMetrics, pathId) => {
-        const path = (liveMetrics?.paths || {})[pathId] || {};
-        const phaseMb = Number(path.phase_uploaded_mb);
-        return Number.isFinite(phaseMb) ? phaseMb * 1024 * 1024 : null;
-      };
-      const liveDeltaRateMbit = (run, pathId) => {
-        const currentBytes = livePathBytes(run.live_metrics || {}, pathId);
-        if (!Number.isFinite(currentBytes)) return null;
-        const nowMs = Date.now();
-        const previous = previousLiveSample;
-        if (!previous || previous.runId !== run.run_id) return null;
-        const previousBytes = previous.bytesByPath[pathId];
-        const elapsedSeconds = (nowMs - previous.timestampMs) / 1000;
-        if (!Number.isFinite(previousBytes) || elapsedSeconds <= 0) return null;
-        const deltaBytes = currentBytes - previousBytes;
-        if (deltaBytes <= 0) return null;
-        return (deltaBytes * 8) / elapsedSeconds / 1000000;
-      };
-      const rememberLiveSample = (run) => {
-        const bytesByPath = {};
-        for (const id of ["lte1", "lte2"]) {
-          const bytes = livePathBytes(run.live_metrics || {}, id);
-          if (Number.isFinite(bytes)) bytesByPath[id] = bytes;
-        }
-        previousLiveSample = {
-          runId: run.run_id,
-          timestampMs: Date.now(),
-          bytesByPath,
-        };
-      };
-      const applyTelemetry = (run) => {
-        const rows = run.telemetry || [];
-        for (const row of rows || []) {
-          const id = row.path_id;
-          if (!["lte1", "lte2"].includes(id)) continue;
-          const live = liveDeltaRateMbit(run, id);
-          const tx = rateToMbit(row.tx_rate);
-          const displayed = Number.isFinite(live) && live > 0 ? live : tx;
-          setText(`${id}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
-          setText(`${id}-band`, row.primary_band || "-");
-          setText(`${id}-rsrp`, row.rsrp || "-");
-          setText(`${id}-rsrq`, row.rsrq || "-");
-          setText(`${id}-sinr`, row.sinr || "-");
-        }
-      };
-      const applyAverages = (summary, liveMetrics) => {
-        for (const id of ["lte1", "lte2"]) {
-          const tcpRows = (summary.upload_results || []).filter((row) => row.path_id === id);
-          const udpRows = (summary.udp_upload_results || []).filter((row) => row.path_id === id);
-          const tcp = tcpRows.at(-1);
-          const udp = udpRows.at(-1);
-          const live = (liveMetrics?.paths || {})[id] || {};
-          setText(`${id}-tcp`, fmtMbit(live.tcp_average_mbit_s ?? tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
-          setText(`${id}-udp`, fmtMbit(live.udp_average_mbit_s ?? udp?.server_average_mbit_s ?? udp?.average_mbit_s));
-        }
-      };
-      const applyPhaseUpload = (liveMetrics) => {
-        const paths = liveMetrics?.paths || {};
-        const total = Object.values(paths).reduce((sum, row) => sum + Number(row.phase_uploaded_mb || 0), 0);
-        setText("phase-uploaded", fmtMb(total));
-      };
-      const latencyRows = (run, liveMetrics) => {
-        if ((liveMetrics?.latency_results || []).length) return liveMetrics.latency_results;
-        if ((run.summary?.latency_results || []).length) return run.summary.latency_results;
-        const latency = latestEvent(run, "latency-stage");
-        return latency?.details?.results || [];
-      };
-      const applyLatency = (run, liveMetrics) => {
-        for (const id of ["lte1", "lte2"]) {
-          const row = latencyRows(run, liveMetrics).find((item) => item.path_id === id);
-          setText(`${id}-lat-avg`, fmtMs(row?.avg_ms));
-          setText(`${id}-lat-min`, fmtMs(row?.min_ms));
-          setText(`${id}-lat-max`, fmtMs(row?.max_ms));
-          setText(`${id}-lat-loss`, fmtPct(row?.loss_percent));
-        }
-      };
-      const applyVideoHealth = (summary, liveMetrics) => {
-        const videoResults = summary.video_probe_results || {};
-        const liveVideo = liveMetrics?.video_probe || {};
-        const video = videoResults.receiver_summary || liveVideo || {};
-        const paths = videoResults.paths || {};
-        const finalMode = Object.keys(paths).length > 0;
-        setText("video-frames-heading", finalMode ? "Sent" : "Frames seen");
-        setText("video-incomplete-heading", finalMode ? "Not decodable" : "Partial");
-        setText("video-success-heading", finalMode ? "End-to-end success" : "Complete among seen");
-        for (const id of ["lte1", "lte2"]) {
-          const liveRow = (liveVideo.paths || {})[id] || {};
-          const row = paths[id] || liveRow;
-          const receiver = row.receiver || liveRow || {};
-          const complete = row.frames_complete ?? receiver.frames_complete;
-          const sentOrSeen = finalMode ? row.frames_sent : receiver.frames_seen;
-          const notDecodable = row.frames_not_decodable ?? receiver.frames_incomplete ?? receiver.frames_partial;
-          const successPercent = finalMode
-            ? row.frame_success_percent
-            : receiver.completion_among_seen_percent;
-          const fragmentSpanP95 = receiver.fragment_arrival_span_ms_p95 ?? receiver.frame_completion_ms_p95;
-          setText(`${id}-video-frames`, sentOrSeen ?? "-");
-          setText(`${id}-video-complete`, complete ?? "-");
-          setText(`${id}-video-lost`, row.frames_fully_lost ?? "-");
-          setText(`${id}-video-incomplete`, notDecodable ?? "-");
-          setText(`${id}-video-success`, fmtPct(successPercent));
-          setText(`${id}-video-p95`, fmtMs(fragmentSpanP95));
-        }
-        const winners = video.first_arrival_winners || {};
-        const ties = video.first_arrival_ties || 0;
-        const paired = video.paired_frames_complete ?? 0;
-        const delta = fmtMs(
-          video.corrected_path_arrival_delta_ms_p95 ?? video.path_arrival_delta_ms_p95
-        );
-        $("video-compare").textContent = paired
-          ? `Paired complete frames: ${paired}. Corrected winners: lte1 ${winners.lte1 || 0}, lte2 ${winners.lte2 || 0}, ties ${ties}. p95 corrected difference: ${delta}.`
-          : (finalMode ? "No paired complete video frames yet." : "Live values are receiver-side only; final sent/lost comparison appears after video finalization.");
-      };
       const fmtDuration = (seconds) => {
-        const n = Number(seconds);
-        if (!Number.isFinite(n) || n <= 0) return "-";
-        const minutes = Math.floor(n / 60);
-        const rem = Math.round(n % 60);
-        return minutes ? `${minutes}m ${rem}s` : `${rem}s`;
+        const n = Math.round(Number(seconds) || 0);
+        const h = Math.floor(n / 3600);
+        const m = Math.floor((n % 3600) / 60);
+        if (h && m) return `${h} h ${m} min`;
+        if (h) return `${h} h`;
+        if (m) return `${m} min`;
+        return `${n} s`;
       };
-      const batchDeadlineIso = () => {
-        const value = $("batch-deadline").value;
-        return value ? new Date(value).toISOString() : null;
-      };
-      const setLocalDateTime = (id, date) => {
-        const pad = (value) => String(value).padStart(2, "0");
-        $(id).value = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-      };
-      const applyBatchPreset = (kind) => {
-        if (kind === "overnight") {
-          $("batch-name").value = "Overnight benchmark";
-          $("batch-target-valid").value = "20";
-          $("batch-max-attempts").value = "25";
-          $("batch-cooldown").value = "120";
-          $("batch-max-failures").value = "3";
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          tomorrow.setHours(7, 0, 0, 0);
-          setLocalDateTime("batch-deadline", tomorrow);
-          $("batch-message").textContent = "Preset: stop at 20 valid runs, 25 attempts, or tomorrow 07:00.";
-          return;
-        }
-        $("batch-name").value = "Repeatability benchmark";
-        $("batch-target-valid").value = "10";
-        $("batch-max-attempts").value = "15";
-        $("batch-cooldown").value = "120";
-        $("batch-max-failures").value = "3";
-        $("batch-deadline").value = "";
-        $("batch-message").textContent = "Preset: 10 valid runs with up to 15 attempts.";
-      };
-      const syncBatchVariants = () => {
-        const experimentId = $("batch-experiment").value;
-        const variantSelect = $("batch-variant");
-        for (const option of variantSelect.options) {
-          option.hidden = Boolean(option.value && experimentId && option.dataset.experimentId !== experimentId);
-        }
-        if (variantSelect.selectedOptions[0]?.hidden) variantSelect.value = "";
-      };
-      const renderBatches = async () => {
-        const rows = await request("/api/v1/test-batches");
-        const tbody = $("batch-table");
-        tbody.innerHTML = "";
-        if (!rows.length) {
-          tbody.innerHTML = "<tr><td colspan=\"5\" class=\"muted\">No test series yet.</td></tr>";
-          return;
-        }
-        for (const row of rows) {
-          const tr = document.createElement("tr");
-          const progress = `${row.valid_run_count}/${row.target_valid_runs} valid<br>${row.attempt_count}/${row.max_attempts} attempts`;
-          const state = `${row.state}${row.state_reason ? `<br><span class="muted">${row.state_reason}</span>` : ""}`;
-          const estimate = `${fmtDuration(row.estimated_attempt_seconds)} attempt<br><span class="muted">${fmtDuration(row.estimated_cycle_seconds)} cycle</span>`;
-          const canStart = ["DRAFT", "SCHEDULED", "PAUSED"].includes(row.state);
-          const canCancel = !["CANCELLED", "COMPLETED", "FAILED"].includes(row.state);
-          tr.innerHTML = `
-            <td><a href="/test-batches/${row.batch_id}">${row.name}</a><br><span class="muted">${row.batch_id}</span></td>
-            <td>${state}</td>
-            <td>${progress}</td>
-            <td>${estimate}</td>
-            <td>
-              <div class="toolbar">
-                <button type="button" data-batch-start="${row.batch_id}" ${canStart ? "" : "disabled"}>Start</button>
-                <button type="button" class="danger" data-batch-cancel="${row.batch_id}" ${canCancel ? "" : "disabled"}>Cancel</button>
-                <button type="button" data-batch-attempts="${row.batch_id}">Attempts</button>
-              </div>
-            </td>`;
-          tbody.appendChild(tr);
-        }
-      };
-      const showBatchAttempts = async (batchId) => {
-        const rows = await request(`/api/v1/test-batches/${batchId}/attempts`);
-        $("batch-message").textContent = rows.length
-          ? rows.map((row) => `${row.sequence_number}: ${row.state} ${row.outcome_code || ""} ${row.run_id || ""}`).join(" · ")
-          : "No attempts yet.";
-      };
-      const createBatch = async () => {
-        const experimentId = $("batch-experiment").value;
-        const variantId = $("batch-variant").value;
-        const payload = {
-          name: $("batch-name").value.trim() || "Benchmark series",
-          protocol_slug: $("batch-protocol").value,
+      const payload = () => {
+        const experimentId = $("experiment").value;
+        const variantId = $("variant").value;
+        return {
+          profile_slug: $("profile").value,
+          target_mode: targetMode,
+          target_value: targetMode === "streamed_time" ? Number($("target-value").value) : Number($("target-runs").value),
+          target_unit: targetMode === "streamed_time" ? $("target-unit").value : "runs",
+          router_slug: $("router").value,
+          antenna_profile_id: $("antenna").value ? Number($("antenna").value) : null,
           experiment_id: experimentId ? Number(experimentId) : null,
           variant_id: variantId ? Number(variantId) : null,
-          antenna_profile_id: $("batch-antenna").value ? Number($("batch-antenna").value) : null,
-          target_valid_runs: Number($("batch-target-valid").value),
-          max_attempts: Number($("batch-max-attempts").value),
-          inter_run_cooldown_seconds: Number($("batch-cooldown").value),
-          max_consecutive_failures: Number($("batch-max-failures").value),
-          deadline: batchDeadlineIso(),
+          start_at: startMode === "schedule" ? $("start-at").value : null,
+          name: $("campaign-name").value.trim() || null
         };
-        const row = await request("/api/v1/test-batches", {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        $("batch-message").textContent = `Created ${row.batch_id}`;
-        await renderBatches();
       };
-      $("create-batch").addEventListener("click", async () => {
-        $("create-batch").disabled = true;
-        try { await createBatch(); }
-        catch (error) { $("batch-message").textContent = error.message; }
-        finally { $("create-batch").disabled = false; }
-      });
-      $("batch-experiment").addEventListener("change", syncBatchVariants);
-      $("preset-repeatability").addEventListener("click", () => applyBatchPreset("repeatability"));
-      $("preset-overnight").addEventListener("click", () => applyBatchPreset("overnight"));
-      $("refresh-batches").addEventListener("click", async () => {
-        try { await renderBatches(); }
-        catch (error) { $("batch-message").textContent = error.message; }
-      });
-      $("batch-table").addEventListener("click", async (event) => {
+      const renderProfile = () => {
+        const profile = profiles.find((row) => row.slug === $("profile").value);
+        if (!profile) return;
+        $("profile-description").textContent = profile.description;
+        const summary = profile.summary || {};
+        $("profile-summary").innerHTML = `
+          Video: ${summary.video_bitrate_mbit_s ?? "-"} Mbps · ${summary.video_fps ?? "-"} fps · ${summary.scenario || "-"}<br>
+          Per run: ${fmtDuration(profile.per_run_stream_seconds)} streamed video<br>
+          Paths: both LTE paths in parallel<br>
+          Cooldown: ${fmtDuration(summary.cooldown_seconds)}<br>
+          Comparable: ${profile.comparable ? "yes" : "no"}<br>
+          Profile version: v${profile.version}
+        `;
+      };
+      const renderPreview = async () => {
+        try {
+          const data = await request("/api/v1/test-campaigns/preview", {
+            method: "POST",
+            body: JSON.stringify(payload())
+          });
+          const errors = data.blocking_errors || [];
+          const warnings = data.warnings || [];
+          $("preview").innerHTML = `
+            <strong>${data.profile.name} v${data.profile.version}</strong><br>
+            ${data.target_valid_runs} valid runs · ${fmtDuration(data.planned_stream_seconds)} planned streamed video<br>
+            ${fmtDuration(data.estimated_successful_run_wall_seconds)} estimated per successful run<br>
+            ${fmtDuration(data.estimated_minimum_campaign_wall_seconds)} minimum wall-clock time<br>
+            ${fmtDuration(data.estimated_worst_case_campaign_wall_seconds)} worst-case wall-clock time<br>
+            Stop conditions: ${data.target_valid_runs} valid runs, ${data.max_attempts} attempts, scheduled deadline, ${data.max_consecutive_failures} consecutive failures<br>
+            ${warnings.length ? `<span class="muted">Warnings: ${warnings.join(", ")}</span><br>` : ""}
+            ${errors.length ? `<span class="bad">Blocking: ${errors.join(", ")}</span>` : `<span class="ok">Ready to create</span>`}
+          `;
+          $("create-campaign").disabled = errors.length > 0;
+          $("create-campaign").textContent = startMode === "schedule" ? "Schedule test campaign" : "Start test campaign";
+        } catch (error) {
+          $("preview").textContent = error.message;
+          $("create-campaign").disabled = true;
+        }
+      };
+      const schedulePreview = () => {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(renderPreview, 120);
+      };
+      const setTargetMode = (mode) => {
+        targetMode = mode;
+        $("mode-streamed").classList.toggle("active", mode === "streamed_time");
+        $("mode-runs").classList.toggle("active", mode === "valid_runs");
+        $("streamed-target").classList.toggle("hidden", mode !== "streamed_time");
+        $("streamed-unit").classList.toggle("hidden", mode !== "streamed_time");
+        $("run-target").classList.toggle("hidden", mode !== "valid_runs");
+        schedulePreview();
+      };
+      const setStartMode = (mode) => {
+        startMode = mode;
+        $("start-now").classList.toggle("active", mode === "now");
+        $("start-schedule").classList.toggle("active", mode === "schedule");
+        $("schedule-field").classList.toggle("hidden", mode !== "schedule");
+        schedulePreview();
+      };
+      const syncVariants = () => {
+        const experimentId = $("experiment").value;
+        for (const option of $("variant").options) {
+          option.hidden = Boolean(option.value && experimentId && option.dataset.experimentId !== experimentId);
+        }
+        if ($("variant").selectedOptions[0]?.hidden) $("variant").value = "";
+      };
+      const renderCampaigns = async () => {
+        const rows = await request("/api/v1/test-batches");
+        $("campaigns").innerHTML = rows.slice(0, 20).map((row) => {
+          const streamed = row.planned_stream_seconds
+            ? `${fmtDuration((row.valid_run_count || 0) * (row.planned_stream_seconds / Math.max(1, row.target_valid_runs)))} / ${fmtDuration(row.planned_stream_seconds)}`
+            : "-";
+          const actions = `<a href="/test-batches/${row.batch_id}">View</a>`;
+          return `
+            <tr>
+              <td>${row.name}</td>
+              <td>${row.test_profile_slug || row.protocol_slug}</td>
+              <td>${row.valid_run_count} / ${row.target_valid_runs} valid runs</td>
+              <td>${streamed}</td>
+              <td>${row.state}</td>
+              <td>${actions}</td>
+            </tr>`;
+        }).join("") || "<tr><td colspan=\"6\" class=\"muted\">No campaigns yet.</td></tr>";
+      };
+      const loadProfiles = async () => {
+        profiles = await request("/api/v1/test-profiles");
+        $("profile").innerHTML = profiles.map((profile) => `
+          <option value="${profile.slug}" ${profile.default ? "selected" : ""}>${profile.name}</option>
+        `).join("");
+        renderProfile();
+        await renderPreview();
+      };
+      $("mode-streamed").addEventListener("click", () => setTargetMode("streamed_time"));
+      $("mode-runs").addEventListener("click", () => setTargetMode("valid_runs"));
+      $("start-now").addEventListener("click", () => setStartMode("now"));
+      $("start-schedule").addEventListener("click", () => setStartMode("schedule"));
+      $("profile").addEventListener("change", () => { renderProfile(); schedulePreview(); });
+      for (const id of ["target-value", "target-unit", "target-runs", "router", "antenna", "experiment", "variant", "start-at"]) {
+        $(id).addEventListener("input", () => { syncVariants(); schedulePreview(); });
+        $(id).addEventListener("change", () => { syncVariants(); schedulePreview(); });
+      }
+      document.querySelector(".quick").addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
-        const startId = target.getAttribute("data-batch-start");
-        const cancelId = target.getAttribute("data-batch-cancel");
-        const attemptsId = target.getAttribute("data-batch-attempts");
-        try {
-          if (startId) {
-            await request(`/api/v1/test-batches/${startId}/start`, {method: "POST"});
-            $("batch-message").textContent = `Started ${startId}`;
-            await renderBatches();
-          } else if (cancelId) {
-            await request(`/api/v1/test-batches/${cancelId}/cancel`, {method: "POST"});
-            $("batch-message").textContent = `Cancel requested for ${cancelId}`;
-            await renderBatches();
-          } else if (attemptsId) {
-            await showBatchAttempts(attemptsId);
-          }
-        } catch (error) {
-          $("batch-message").textContent = error.message;
-        }
+        const hours = target.getAttribute("data-hours");
+        if (!hours) return;
+        setTargetMode("streamed_time");
+        $("target-unit").value = "hours";
+        $("target-value").value = hours;
+        schedulePreview();
       });
-      const render = (data) => {
-        if (!data.run) return;
-        const run = data.run;
-        const desc = run.description || {};
-        const title = `${run.router_name || "router"} · TCP ${desc.tcp_file_size_mb || "-"} MB × ${desc.tcp_upload_count || 1} · UDP/video ${desc.udp_duration_seconds || "-"} s @ ${desc.udp_bitrate_mbit_s || "-"} Mbit/s · ${desc.video_resolution || "1080p"} ${desc.video_scenario || "city"}`;
-        setText("current-test", title);
-        $("run-state").textContent = run.state;
-        $("run-state").className = `badge ${String(run.state).toLowerCase()}`;
-        const progress = Math.round(progressFor(run));
-        $("progress").value = progress;
-        setText("progress-label", `${progress}%`);
-        $("open-run").href = `/runs/${run.run_id}`;
-        $("open-run").style.display = "inline-flex";
-        applyTelemetry(run);
-        applyAverages(run.summary || {}, run.live_metrics || {});
-        applyPhaseUpload(run.live_metrics || {});
-        applyLatency(run, run.live_metrics || {});
-        applyVideoHealth(run.summary || {}, run.live_metrics || {});
-        rememberLiveSample(run);
-        $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
-        $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
-      };
-      const poll = async () => {
-        if (pollInFlight) return;
-        pollInFlight = true;
-        try { render(await request("/api/v1/lab/status")); }
-        catch (error) { $("backend-log").textContent = error.message; }
-        finally { pollInFlight = false; }
-      };
-      $("start-lab").addEventListener("click", async () => {
-        $("start-lab").disabled = true;
+      $("create-campaign").addEventListener("click", async () => {
+        $("create-campaign").disabled = true;
         try {
-          const payload = {
-            router_ip: $("router-ip").value.trim(),
-            benchmark_profile: $("benchmark-profile").value,
-            tcp_mode: $("tcp-mode").value,
-            tcp_file_size_mb: Number($("tcp-file-size").value),
-            tcp_upload_count: Number($("tcp-upload-count").value),
-            tcp_duration_seconds: Number($("tcp-duration").value),
-            udp_duration_seconds: Number($("udp-duration").value),
-            udp_bitrate_mbit_s: Number($("udp-bitrate").value),
-            udp_pattern: $("udp-pattern").value,
-            video_duration_seconds: Number($("video-duration").value),
-            video_resolution: $("video-resolution").value,
-            video_fps: Number($("video-fps").value),
-            video_scenario: $("video-scenario").value,
-            antenna: $("antenna").value.trim(),
-            antenna_gain_dbi: $("antenna-gain").value ? Number($("antenna-gain").value) : null,
-            antenna_cable_loss_db: $("antenna-cable-loss").value ? Number($("antenna-cable-loss").value) : null,
-            antenna_mounting: $("antenna-mounting").value.trim()
-          };
-          const started = await request("/api/v1/lab/start", {method: "POST", body: JSON.stringify(payload)});
-          $("backend-log").textContent = `Started ${started.run_id}`;
-          await poll();
+          const row = await request("/api/v1/test-campaigns", {
+            method: "POST",
+            body: JSON.stringify(payload())
+          });
+          $("message").textContent = `Created ${row.campaign_id}`;
+          await renderCampaigns();
         } catch (error) {
-          $("backend-log").textContent = error.message;
+          $("message").textContent = error.message;
         } finally {
-          $("start-lab").disabled = false;
+          await renderPreview();
         }
       });
-      $("refresh-status").addEventListener("click", poll);
-      syncBatchVariants();
-      poll();
-      renderBatches().catch((error) => { $("batch-message").textContent = error.message; });
-      pollTimer = setInterval(poll, 2500);
+      $("refresh-campaigns").addEventListener("click", renderCampaigns);
+      syncVariants();
+      loadProfiles().catch((error) => { $("preview").textContent = error.message; });
+      renderCampaigns().catch((error) => { $("message").textContent = error.message; });
     </script>
   </body>
 </html>

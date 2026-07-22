@@ -28,9 +28,10 @@ def test_alembic_initializes_empty_sqlite_database() -> None:
             ).scalar_one()
 
         assert "benchmark_protocols" in tables
+        assert "test_profiles" in tables
         assert "test_batches" in tables
         assert "metric_samples" in tables
-        assert revision == "20260722_0001"
+        assert revision == "20260722_0002"
 
 
 def test_legacy_sqlite_database_is_stamped_and_backfilled() -> None:
@@ -64,6 +65,8 @@ def test_legacy_sqlite_database_is_stamped_and_backfilled() -> None:
 
         assert "protocol_hash" in run_columns
         assert "expected_protocol_hash" in batch_columns
+        assert "test_profile_slug" in batch_columns
+        assert "planned_stream_seconds" in batch_columns
         assert "unknown_gain_reason" in antenna_columns
         assert "environment_snapshot_hash" in attempt_columns
-        assert revision == "20260722_0001"
+        assert revision == "20260722_0002"

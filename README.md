@@ -27,6 +27,11 @@ ltap-testbench serve --host 127.0.0.1 --port 8787
 
 Open <http://127.0.0.1:8787>.
 
+The main dashboard now starts profile-driven test campaigns. Choose a fixed test
+profile, select total streamed time or valid-run count, review the wall-clock
+estimate, then create or start the campaign. Detailed measurement overrides live
+under `/advanced-tests`.
+
 ## What The App Can Do Now
 
 - Create/list router, server, and test-plan profiles.
@@ -39,6 +44,7 @@ Open <http://127.0.0.1:8787>.
 - Measure router-originated ping latency to the test node.
 - Generate `report.md`, `report.json`, `summary.json`, `events.jsonl`, and plan metadata for each run.
 - Show and download reports from the web UI run-detail page.
+- Create simple profile-driven test campaigns from frozen benchmark protocols.
 
 Finite-payload and timed TCP upload results are server-confirmed by stockbot connection records. UDP results are currently sender-side until Chateau forwards public UDP `18080`/`18081` to stockbot.
 

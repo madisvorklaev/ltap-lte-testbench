@@ -891,6 +891,14 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
     with session_factory() as session:
         seed_demo_data(session)
         seed_benchmark_protocols(session)
+        session.add(
+            ServerProfile(
+                slug="stockbot",
+                display_name="Stockbot",
+                control_api_url="http://stockbot",
+            )
+        )
+        session.commit()
 
     def override_session():
         with session_factory() as session:
@@ -1042,6 +1050,103 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
         assert payload["site_id"] == site_id
         assert payload["estimated_attempt_seconds"] > 900
 
+        profiles = client.get("/api/v1/test-profiles")
+        assert profiles.status_code == 200
+        profile_rows = profiles.json()
+        assert profile_rows[0]["slug"] == "video-city-5mbps-25fps"
+        assert profile_rows[0]["summary"]["video_bitrate_mbit_s"] == 5.0
+        assert profile_rows[0]["summary"]["video_fps"] == 25
+        assert profile_rows[0]["summary"]["scenario"] == "city"
+        assert profile_rows[0]["per_run_stream_seconds"] == 1800
+        assert any(
+            row["slug"] == "quick-connection-check" and row["comparable"] is False
+            for row in profile_rows
+        )
+
+        preview = client.post(
+            "/api/v1/test-campaigns/preview",
+            json={
+                "profile_slug": "video-city-5mbps-25fps",
+                "target_mode": "streamed_time",
+                "target_value": 6,
+                "target_unit": "hours",
+                "router_slug": "demo-fake-ltap",
+                "antenna_profile_id": antenna_id,
+                "experiment_id": experiment_id,
+                "variant_id": variant_id,
+                "site_id": site_id,
+            },
+        )
+        assert preview.status_code == 200
+        assert preview.json()["target_valid_runs"] == 12
+        assert preview.json()["max_attempts"] == 15
+        assert preview.json()["planned_stream_seconds"] == 6 * 3600
+        assert preview.json()["estimated_successful_run_wall_seconds"] == 2045
+        assert preview.json()["estimated_minimum_campaign_wall_seconds"] == 25860
+        assert preview.json()["ready_to_create"] is True
+
+        rounded_preview = client.post(
+            "/api/v1/test-campaigns/preview",
+            json={
+                "profile_slug": "video-city-5mbps-25fps",
+                "target_mode": "streamed_time",
+                "target_value": 310,
+                "target_unit": "minutes",
+                "router_slug": "demo-fake-ltap",
+                "antenna_profile_id": antenna_id,
+                "experiment_id": experiment_id,
+                "variant_id": variant_id,
+                "site_id": site_id,
+            },
+        )
+        assert rounded_preview.status_code == 200
+        assert rounded_preview.json()["target_valid_runs"] == 11
+        assert rounded_preview.json()["planned_stream_seconds"] == 330 * 60
+        assert rounded_preview.json()["warnings"]
+
+        override_attempt = client.post(
+            "/api/v1/test-campaigns/preview",
+            json={
+                "profile_slug": "video-city-5mbps-25fps",
+                "target_mode": "streamed_time",
+                "target_value": 6,
+                "target_unit": "hours",
+                "router_slug": "demo-fake-ltap",
+                "antenna_profile_id": antenna_id,
+                "experiment_id": experiment_id,
+                "variant_id": variant_id,
+                "site_id": site_id,
+                "video_duration_seconds": 60,
+                "udp_bitrate_mbit_s": 50,
+            },
+        )
+        assert override_attempt.status_code == 200
+        assert override_attempt.json()["profile"]["per_run_stream_seconds"] == 1800
+
+        campaign = client.post(
+            "/api/v1/test-campaigns",
+            json={
+                "profile_slug": "video-city-5mbps-25fps",
+                "target_mode": "streamed_time",
+                "target_value": 6,
+                "target_unit": "hours",
+                "router_slug": "demo-fake-ltap",
+                "antenna_profile_id": antenna_id,
+                "experiment_id": experiment_id,
+                "variant_id": variant_id,
+                "site_id": site_id,
+                "start_at": "2026-07-22T23:00",
+            },
+        )
+        assert campaign.status_code == 200
+        campaign_batch = campaign.json()["batch"]
+        assert campaign_batch["state"] == "SCHEDULED"
+        assert campaign_batch["target_valid_runs"] == 12
+        assert campaign_batch["max_attempts"] == 15
+        assert campaign_batch["test_profile_slug"] == "video-city-5mbps-25fps"
+        assert campaign_batch["planned_stream_seconds"] == 6 * 3600
+        assert campaign_batch["estimated_minimum_wall_seconds"] == 25860
+
         active = client.get("/api/v1/test-batches/active")
         assert active.status_code == 200
         assert active.json()["active"] is False
@@ -1130,17 +1235,19 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
 
         dashboard = client.get("/")
         assert dashboard.status_code == 200
-        assert "Test Series" in dashboard.text
-        assert "batch-table" in dashboard.text
-        assert "Create Series" in dashboard.text
-        assert "Repeatability 10/15" in dashboard.text
-        assert "Overnight 20/25" in dashboard.text
-        assert "/experiments" in dashboard.text
-        assert "batch-experiment" in dashboard.text
-        assert "batch-variant" in dashboard.text
+        assert "Start a test" in dashboard.text
+        assert "Campaign preview" in dashboard.text
+        assert "Recent test campaigns" in dashboard.text
+        assert "tcp-duration" not in dashboard.text
+        assert "udp-bitrate" not in dashboard.text
+        assert "video-fps" not in dashboard.text
         assert "Antenna repeatability" in dashboard.text
         assert "roof panel" in dashboard.text
-        assert f"/test-batches/{payload['batch_id']}" in dashboard.text
+
+        advanced = client.get("/advanced-tests")
+        assert advanced.status_code == 200
+        assert "Advanced / exploratory tests" in advanced.text
+        assert "Changing measurement properties creates an exploratory test" in advanced.text
 
         batch_page = client.get(f"/test-batches/{payload['batch_id']}")
         assert batch_page.status_code == 200

@@ -108,6 +108,27 @@ class BenchmarkProtocol(Base):
     frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class TestProfile(Base):
+    __tablename__ = "test_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str] = mapped_column(Text, default="")
+    protocol_id: Mapped[int] = mapped_column(ForeignKey("benchmark_protocols.id"), index=True)
+    protocol_hash: Mapped[str] = mapped_column(String(64), index=True)
+    profile_version: Mapped[str] = mapped_column(String(40), default="1")
+    is_comparable: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    display_order: Mapped[int] = mapped_column(default=100)
+    default_target_mode: Mapped[str] = mapped_column(String(40), default="streamed_time")
+    default_target_value: Mapped[float] = mapped_column(Float, default=1.0)
+    default_inter_run_cooldown_seconds: Mapped[int] = mapped_column(default=120)
+    default_max_consecutive_failures: Mapped[int] = mapped_column(default=3)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class AntennaProfile(Base):
     __tablename__ = "antenna_profiles"
 
@@ -229,6 +250,19 @@ class TestBatch(Base):
     expected_test_node_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
     expected_protocol_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     expected_variant_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    test_profile_id: Mapped[int | None] = mapped_column(
+        ForeignKey("test_profiles.id"),
+        nullable=True,
+    )
+    test_profile_slug: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    test_profile_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    resolved_profile_snapshot_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    target_mode: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    requested_target_value: Mapped[float | None] = mapped_column(nullable=True)
+    requested_target_unit: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    planned_stream_seconds: Mapped[int | None] = mapped_column(nullable=True)
+    estimated_minimum_wall_seconds: Mapped[int | None] = mapped_column(nullable=True)
+    estimated_worst_case_wall_seconds: Mapped[int | None] = mapped_column(nullable=True)
     worker_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     last_heartbeat_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Advanced / exploratory tests</title>
+    <style>
+      body { margin: 0; background: #f4f6f8; color: #172033; font: 14px/1.45 system-ui, sans-serif; }
+      header { background: #172033; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+      main { max-width: 860px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+      section { background: #fff; border: 1px solid #d7dee8; border-radius: 8px; padding: 14px; }
+      h1, h2 { margin: 0 0 10px; letter-spacing: 0; }
+      .button { min-height: 36px; border: 1px solid #d7dee8; border-radius: 6px; padding: 7px 12px; color: #172033; background: #fff; text-decoration: none; display: inline-flex; align-items: center; }
+      .warn { background: #fff7ed; border-color: #fed7aa; }
+      code { background: #edf2f7; padding: 2px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Advanced / exploratory tests</h1>
+      <a class="button" href="/">Start a test</a>
+    </header>
+    <main>
+      <section class="warn">
+        <h2>Exploratory mode</h2>
+        <p>
+          Changing measurement properties creates an exploratory test. Results are not
+          comparable with frozen benchmark profiles unless a new versioned profile is created.
+        </p>
+      </section>
+      <section>
+        <h2>Current advanced API</h2>
+        <p>
+          The legacy exploratory endpoint remains available at
+          <code>POST /api/v1/lab/start</code> for detailed TCP, UDP, video, and antenna
+          overrides. The normal dashboard intentionally hides these measurement fields.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

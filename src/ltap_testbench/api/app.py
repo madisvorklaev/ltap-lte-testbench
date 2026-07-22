@@ -1,11 +1,13 @@
 import csv
 import io
+import math
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from threading import Event, Lock, Thread
 from typing import Any
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
@@ -33,11 +35,13 @@ from ltap_testbench.db.models import (
     ExperimentVariant,
     GainSource,
     MetricSample,
+    ProtocolStatus,
     RouterProfile,
     RunState,
     ServerProfile,
     TestBatch,
     TestPlan,
+    TestProfile,
     TestRun,
     TestSite,
 )
@@ -164,6 +168,20 @@ class TestBatchCreate(BaseModel):
     max_consecutive_failures: int = 3
     deadline: str | None = None
     notes: str = ""
+
+
+class TestCampaignRequest(BaseModel):
+    profile_slug: str = "video-city-5mbps-25fps"
+    target_mode: str = "streamed_time"
+    target_value: float = 6
+    target_unit: str = "hours"
+    router_slug: str = "r1-ltap-live"
+    antenna_profile_id: int | None = None
+    experiment_id: int | None = None
+    variant_id: int | None = None
+    site_id: int | None = None
+    start_at: str | None = None
+    name: str | None = None
 
 
 class LabRecoveryError(RuntimeError):
@@ -376,6 +394,12 @@ def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> d
         "inter_run_cooldown_seconds": batch.inter_run_cooldown_seconds,
         "estimated_attempt_seconds": estimated_attempt_seconds,
         "estimated_cycle_seconds": estimated_cycle_seconds,
+        "test_profile_slug": batch.test_profile_slug,
+        "test_profile_version": batch.test_profile_version,
+        "target_mode": batch.target_mode,
+        "planned_stream_seconds": batch.planned_stream_seconds,
+        "estimated_minimum_wall_seconds": batch.estimated_minimum_wall_seconds,
+        "estimated_worst_case_wall_seconds": batch.estimated_worst_case_wall_seconds,
         "deadline": batch.deadline.isoformat() if batch.deadline else None,
         "expected_application_version": batch.expected_application_version,
         "expected_application_git_commit": batch.expected_application_git_commit,
@@ -386,6 +410,160 @@ def _batch_row(batch: TestBatch, protocol: BenchmarkProtocol | None = None) -> d
         "created_at": batch.created_at.isoformat() if batch.created_at else None,
         "started_at": batch.started_at.isoformat() if batch.started_at else None,
         "completed_at": batch.completed_at.isoformat() if batch.completed_at else None,
+    }
+
+
+def _profile_stream_seconds(definition: dict[str, Any]) -> int:
+    return int((definition.get("video") or {}).get("duration_seconds") or 0)
+
+
+def _profile_attempt_rules(definition: dict[str, Any]) -> dict[str, Any]:
+    batch = definition.get("batch") or {}
+    return {
+        "cooldown": int(batch.get("default_inter_run_cooldown_seconds") or 120),
+        "max_failures": int(batch.get("default_max_consecutive_failures") or 3),
+        "attempt_multiplier": float(batch.get("default_attempt_multiplier") or 1.25),
+        "minimum_extra_attempts": int(batch.get("minimum_extra_attempts") or 2),
+    }
+
+
+def _profile_row(profile: TestProfile, protocol: BenchmarkProtocol) -> dict[str, Any]:
+    definition = protocol.definition_json
+    video = definition.get("video") or {}
+    return {
+        "slug": profile.slug,
+        "name": profile.name,
+        "description": profile.description,
+        "version": profile.profile_version,
+        "comparable": profile.is_comparable,
+        "default": profile.is_default,
+        "retired": profile.retired_at is not None,
+        "per_run_stream_seconds": _profile_stream_seconds(definition),
+        "estimated_run_wall_seconds": protocol_duration_seconds(definition),
+        "summary": {
+            "video_bitrate_mbit_s": video.get("bitrate_mbit_s"),
+            "video_fps": video.get("fps"),
+            "scenario": video.get("scenario") or "city",
+            "path_concurrency": definition.get("path_concurrency"),
+            "cooldown_seconds": profile.default_inter_run_cooldown_seconds,
+            "profile_version": profile.profile_version,
+        },
+        "default_target_mode": profile.default_target_mode,
+        "default_target_value": profile.default_target_value,
+    }
+
+
+def _seconds_from_target(value: float, unit: str) -> int:
+    multiplier = {"minutes": 60, "hours": 3600, "seconds": 1}.get(unit, 3600)
+    return max(1, math.ceil(value * multiplier))
+
+
+def _parse_local_start(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=ZoneInfo("Europe/Tallinn"))
+    return parsed.astimezone(UTC)
+
+
+def _default_campaign_name(profile: TestProfile, mode: str, value: float, valid_runs: int) -> str:
+    if profile.slug == "quick-connection-check":
+        return "Quick connection check"
+    if mode == "streamed_time":
+        hours = value if value >= 1 else value / 60
+        return f"{hours:g}-hour city video test"
+    if profile.slug == "comparable-v1":
+        return f"{valid_runs}-run full comparable benchmark"
+    return f"{valid_runs}-run city video test"
+
+
+def _campaign_preview(
+    payload: TestCampaignRequest,
+    session: Session,
+) -> dict[str, Any]:
+    profile = session.scalar(select(TestProfile).where(TestProfile.slug == payload.profile_slug))
+    if profile is None or profile.retired_at is not None:
+        raise HTTPException(status_code=404, detail="test profile not found")
+    protocol = session.get(BenchmarkProtocol, profile.protocol_id)
+    if protocol is None:
+        raise HTTPException(status_code=404, detail="profile protocol not found")
+    if profile.protocol_hash != protocol.protocol_hash:
+        raise HTTPException(status_code=409, detail="profile protocol hash mismatch")
+    stream_seconds = _profile_stream_seconds(protocol.definition_json)
+    if payload.target_mode == "streamed_time":
+        requested_stream_seconds = _seconds_from_target(payload.target_value, payload.target_unit)
+        target_valid_runs = max(1, math.ceil(requested_stream_seconds / max(1, stream_seconds)))
+    elif payload.target_mode == "valid_runs":
+        target_valid_runs = max(1, int(payload.target_value))
+        requested_stream_seconds = target_valid_runs * stream_seconds
+    else:
+        raise HTTPException(status_code=400, detail="unsupported target_mode")
+    planned_stream_seconds = target_valid_runs * stream_seconds
+    rules = _profile_attempt_rules(protocol.definition_json)
+    max_attempts = max(
+        target_valid_runs + rules["minimum_extra_attempts"],
+        math.ceil(target_valid_runs * rules["attempt_multiplier"]),
+    )
+    run_wall_seconds = protocol_duration_seconds(protocol.definition_json)
+    minimum_wall_seconds = (
+        target_valid_runs * run_wall_seconds + max(0, target_valid_runs - 1) * rules["cooldown"]
+    )
+    worst_case_wall_seconds = (
+        max_attempts * run_wall_seconds + max(0, max_attempts - 1) * rules["cooldown"]
+    )
+    blocking_errors = []
+    warnings = []
+    if protocol.status != ProtocolStatus.FROZEN:
+        blocking_errors.append("protocol_not_frozen")
+    router = session.scalar(select(RouterProfile).where(RouterProfile.slug == payload.router_slug))
+    if router is None:
+        blocking_errors.append("router_missing")
+    if profile.is_comparable and payload.antenna_profile_id is None:
+        blocking_errors.append("antenna_profile_required")
+    elif (
+        payload.antenna_profile_id is not None
+        and session.get(
+            AntennaProfile,
+            payload.antenna_profile_id,
+        )
+        is None
+    ):
+        blocking_errors.append("antenna_profile_missing")
+    experiment = session.get(Experiment, payload.experiment_id) if payload.experiment_id else None
+    if payload.experiment_id and experiment is None:
+        blocking_errors.append("experiment_missing")
+    variant = session.get(ExperimentVariant, payload.variant_id) if payload.variant_id else None
+    if payload.variant_id and variant is None:
+        blocking_errors.append("variant_missing")
+    if variant is not None and variant.experiment_id != payload.experiment_id:
+        blocking_errors.append("variant_does_not_belong_to_experiment")
+    site_id = payload.site_id or (experiment.site_id if experiment is not None else None)
+    if site_id is not None and session.get(TestSite, site_id) is None:
+        blocking_errors.append("site_missing")
+    server = session.scalar(select(ServerProfile).where(ServerProfile.slug == "stockbot"))
+    if server is None:
+        blocking_errors.append("stockbot_missing")
+    if planned_stream_seconds != requested_stream_seconds:
+        warnings.append("planned streamed time rounded up to complete fixed-duration runs")
+    if profile.slug == "quick-connection-check":
+        warnings.append("Diagnostic only — excluded from comparison analytics.")
+    start_at_utc = _parse_local_start(payload.start_at)
+    return {
+        "profile": _profile_row(profile, protocol),
+        "target_valid_runs": target_valid_runs,
+        "max_attempts": max_attempts,
+        "requested_stream_seconds": requested_stream_seconds,
+        "planned_stream_seconds": planned_stream_seconds,
+        "estimated_successful_run_wall_seconds": run_wall_seconds,
+        "estimated_minimum_campaign_wall_seconds": minimum_wall_seconds,
+        "estimated_worst_case_campaign_wall_seconds": worst_case_wall_seconds,
+        "cooldown_seconds": rules["cooldown"],
+        "max_consecutive_failures": rules["max_failures"],
+        "start_at_utc": start_at_utc.isoformat() if start_at_utc is not None else None,
+        "warnings": warnings,
+        "blocking_errors": sorted(set(blocking_errors)),
+        "ready_to_create": not blocking_errors,
     }
 
 
@@ -988,6 +1166,15 @@ def experiments_page(request: Request, session: Session = Depends(get_session)) 
     )
 
 
+@app.get("/advanced-tests", response_class=HTMLResponse)
+def advanced_tests(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "advanced_tests.html",
+        {"version": __version__},
+    )
+
+
 @app.get("/runs/{run_id}", response_class=HTMLResponse)
 def run_detail(
     run_id: str,
@@ -1193,6 +1380,99 @@ def test_batches(session: Session = Depends(get_session)) -> list[dict[str, Any]
         for protocol in session.scalars(select(BenchmarkProtocol)).all()
     }
     return [_batch_row(batch, protocols.get(batch.protocol_hash)) for batch in batches]
+
+
+@app.get("/api/v1/test-profiles")
+def test_profiles(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    profiles = session.scalars(
+        select(TestProfile)
+        .where(TestProfile.retired_at.is_(None))
+        .order_by(TestProfile.display_order, TestProfile.name)
+    ).all()
+    protocols = {protocol.id: protocol for protocol in session.scalars(select(BenchmarkProtocol))}
+    return [
+        _profile_row(profile, protocols[profile.protocol_id])
+        for profile in profiles
+        if profile.protocol_id in protocols
+    ]
+
+
+@app.post("/api/v1/test-campaigns/preview")
+def preview_test_campaign(
+    payload: TestCampaignRequest,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    return _campaign_preview(payload, session)
+
+
+@app.post("/api/v1/test-campaigns")
+def create_test_campaign(
+    payload: TestCampaignRequest,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    preview = _campaign_preview(payload, session)
+    if preview["blocking_errors"]:
+        raise HTTPException(status_code=400, detail=preview["blocking_errors"])
+    profile = session.scalar(select(TestProfile).where(TestProfile.slug == payload.profile_slug))
+    assert profile is not None
+    protocol = session.get(BenchmarkProtocol, profile.protocol_id)
+    assert protocol is not None
+    experiment = session.get(Experiment, payload.experiment_id) if payload.experiment_id else None
+    variant = session.get(ExperimentVariant, payload.variant_id) if payload.variant_id else None
+    site_id = payload.site_id or (experiment.site_id if experiment is not None else None)
+    start_after = _parse_local_start(payload.start_at)
+    name = payload.name or _default_campaign_name(
+        profile,
+        payload.target_mode,
+        payload.target_value,
+        int(preview["target_valid_runs"]),
+    )
+    batch = TestBatch(
+        batch_id=f"campaign-{uuid4().hex[:12]}",
+        name=name,
+        protocol_id=protocol.id,
+        protocol_slug=protocol.slug,
+        protocol_hash=protocol.protocol_hash,
+        router_slug=payload.router_slug,
+        experiment_id=experiment.id if experiment is not None else None,
+        variant_id=variant.id if variant is not None else None,
+        site_id=site_id,
+        antenna_profile_id=payload.antenna_profile_id,
+        state=BatchState.SCHEDULED if start_after else BatchState.DRAFT,
+        target_valid_runs=int(preview["target_valid_runs"]),
+        max_attempts=int(preview["max_attempts"]),
+        inter_run_cooldown_seconds=int(preview["cooldown_seconds"]),
+        retry_delay_seconds=300,
+        max_consecutive_failures=int(preview["max_consecutive_failures"]),
+        start_after=start_after,
+        expected_application_version=__version__,
+        expected_application_git_commit=application_git_commit(),
+        expected_protocol_hash=protocol.protocol_hash,
+        test_profile_id=profile.id,
+        test_profile_slug=profile.slug,
+        test_profile_version=profile.profile_version,
+        resolved_profile_snapshot_json=preview["profile"],
+        target_mode=payload.target_mode,
+        requested_target_value=payload.target_value,
+        requested_target_unit=payload.target_unit,
+        planned_stream_seconds=int(preview["planned_stream_seconds"]),
+        estimated_minimum_wall_seconds=int(preview["estimated_minimum_campaign_wall_seconds"]),
+        estimated_worst_case_wall_seconds=int(
+            preview["estimated_worst_case_campaign_wall_seconds"]
+        ),
+        notes="Created from simplified test campaign workflow.",
+    )
+    session.add(batch)
+    session.commit()
+    return {"campaign_id": batch.batch_id, "batch": _batch_row(batch, protocol), "preview": preview}
+
+
+@app.post("/api/v1/test-campaigns/{campaign_id}/start")
+def start_test_campaign(
+    campaign_id: str,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    return start_test_batch(campaign_id, session)
 
 
 @app.post("/api/v1/test-batches")
