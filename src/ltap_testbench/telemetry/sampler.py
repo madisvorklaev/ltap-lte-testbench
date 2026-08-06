@@ -31,16 +31,18 @@ def _float_from_value(value: Any) -> float | None:
         return None
 
 
-def _rate_mbit_from_value(value: Any) -> float | None:
+def _rate_mbit_from_value(value: Any, *, bits_per_second_source: bool = False) -> float | None:
     parsed = _float_from_value(value)
     if parsed is None:
         return None
     text = str(value or "").lower()
     if "gb" in text:
         return parsed * 1000
+    if "mb" in text:
+        return parsed
     if "kb" in text:
         return parsed / 1000
-    if "bps" in text and "mb" not in text:
+    if "bps" in text or bits_per_second_source:
         return parsed / 1_000_000
     return parsed
 
@@ -282,7 +284,10 @@ class RunMetricSampler:
                 "rx_mbit_s": "router_rx_mbit_s",
                 "rx_rate": "router_rx_mbit_s",
             }.items():
-                value = _rate_mbit_from_value(row.get(source_key))
+                value = _rate_mbit_from_value(
+                    row.get(source_key),
+                    bits_per_second_source=source_key in {"tx_rate", "rx_rate"},
+                )
                 if value is None:
                     continue
                 samples.append(

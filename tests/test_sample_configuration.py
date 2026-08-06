@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 import ltap_testbench.cli as cli
+from ltap_testbench.api.app import TestCampaignRequest, _campaign_preview
 from ltap_testbench.cli import (
     _sample_configuration,
     _stable_hash,
@@ -77,6 +78,40 @@ def test_sample_configuration_is_idempotent_and_creates_draft_batch() -> None:
             == "cable_and_or_connector_loss_unknown"
         )
         assert "physical antenna mapping assumed" in first["warnings"]
+
+
+def test_sample_configuration_video_context_previews_ready() -> None:
+    session_factory = _session_factory()
+
+    with session_factory() as session:
+        _sample_configuration(session)
+        antenna = session.scalar(
+            select(AntennaProfile).where(AntennaProfile.slug == "generic-2db-window-2m")
+        )
+        video_experiment = session.scalar(
+            select(Experiment).where(Experiment.name == "Sample city-video stability baseline")
+        )
+        assert antenna is not None
+        assert video_experiment is not None
+        video_variant = session.scalar(
+            select(ExperimentVariant).where(ExperimentVariant.experiment_id == video_experiment.id)
+        )
+        assert video_variant is not None
+
+        preview = _campaign_preview(
+            TestCampaignRequest(
+                profile_slug="video-city-5mbps-25fps",
+                router_slug="r1-ltap-live",
+                antenna_profile_id=antenna.id,
+                experiment_id=video_experiment.id,
+                variant_id=video_variant.id,
+                site_id=video_experiment.site_id,
+            ),
+            session,
+        )
+
+        assert preview["ready_to_create"] is True
+        assert "variant_antenna_mapping_does_not_match" not in preview["blocking_errors"]
 
 
 def test_stable_modem_snapshot_hash_ignores_radio_but_tracks_identity() -> None:

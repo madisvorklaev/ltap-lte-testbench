@@ -15,8 +15,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from sqlalchemy import select, update
-from sqlalchemy.orm import Session
+from sqlalchemy import exists, select, update
+from sqlalchemy.orm import Session, aliased
 
 from ltap_testbench import __version__
 from ltap_testbench.analytics import (
@@ -208,6 +208,8 @@ TERMINAL_BATCH_STATES = {
     BatchState.COMPLETED,
     BatchState.FAILED,
 }
+BATCH_WORKER_LEASE_SECONDS = 120
+BATCH_WORKER_HEARTBEAT_SECONDS = 30
 TERMINAL_RUN_STATES = {
     RunState.COMPLETED,
     RunState.FAILED,
@@ -502,8 +504,11 @@ def _variant_antenna_ids(variant: ExperimentVariant | None) -> set[int]:
         return set()
     antenna_ids: set[int] = set()
     for value in mapping.values():
+        raw_id = value.get("antenna_profile_id") if isinstance(value, dict) else value
+        if raw_id is None:
+            continue
         try:
-            antenna_ids.add(int(value))
+            antenna_ids.add(int(raw_id))
         except (TypeError, ValueError):
             continue
     return antenna_ids
@@ -935,7 +940,32 @@ def _run_lab_background(run_id: str, cancel_event: Event) -> None:
             LAB_CANCEL_EVENTS.pop(run_id, None)
 
 
+def _batch_worker_heartbeat_loop(batch_id: str, worker_id: str, stop_event: Event) -> None:
+    while not stop_event.is_set():
+        with SessionLocal() as session:
+            now = datetime.now(UTC)
+            session.execute(
+                update(TestBatch)
+                .where(TestBatch.batch_id == batch_id)
+                .where(TestBatch.worker_id == worker_id)
+                .where(TestBatch.state == BatchState.RUNNING)
+                .values(
+                    last_heartbeat_at=now,
+                    lease_expires_at=now + timedelta(seconds=BATCH_WORKER_LEASE_SECONDS),
+                )
+            )
+            session.commit()
+        stop_event.wait(BATCH_WORKER_HEARTBEAT_SECONDS)
+
+
 def _run_batch_background(batch_id: str, cancel_event: Event, worker_id: str) -> None:
+    heartbeat_stop = Event()
+    heartbeat_thread = Thread(
+        target=_batch_worker_heartbeat_loop,
+        args=(batch_id, worker_id, heartbeat_stop),
+        daemon=True,
+    )
+    heartbeat_thread.start()
     try:
         with SessionLocal() as session:
             batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
@@ -952,6 +982,8 @@ def _run_batch_background(batch_id: str, cancel_event: Event, worker_id: str) ->
                 session.add(batch)
                 session.commit()
     finally:
+        heartbeat_stop.set()
+        heartbeat_thread.join(timeout=2)
         BATCH_CANCEL_EVENTS.pop(batch_id, None)
 
 
@@ -1024,11 +1056,13 @@ def _start_batch_worker(
     if protocol is None:
         raise HTTPException(status_code=404, detail="benchmark protocol not found")
     worker_id = f"{application_git_commit() or 'local'}-{uuid4().hex[:12]}"
-    lease_expires_at = now + timedelta(seconds=120)
+    lease_expires_at = now + timedelta(seconds=BATCH_WORKER_LEASE_SECONDS)
+    active_batch_alias = aliased(TestBatch)
     result = session.execute(
         update(TestBatch)
         .where(TestBatch.id == batch.id)
         .where(TestBatch.state == batch.state)
+        .where(~exists().where(active_batch_alias.state.in_(ACTIVE_BATCH_STATES)))
         .values(
             state=BatchState.RUNNING,
             started_at=batch.started_at or now,
@@ -1311,8 +1345,11 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
         )
         loss_percent = _float_value(latest_loss.value) if latest_loss is not None else None
         received = _float_value(latest_received.value) if latest_received is not None else None
-        if received is not None:
-            valid_count = int(received)
+        latest_probe_sent = (
+            latest_received.details_json.get("sent")
+            if latest_received is not None and isinstance(latest_received.details_json, dict)
+            else None
+        )
         rows.append(
             {
                 "path_id": path_id,
@@ -1334,6 +1371,8 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
                 ),
                 "valid_sample_count": valid_count,
                 "expected_sample_count": expected_count,
+                "latest_probe_received": int(received) if received is not None else None,
+                "latest_probe_sent": latest_probe_sent,
                 "validity": latest.validity,
                 "source": "metric_samples",
             }
@@ -1403,7 +1442,8 @@ def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, An
                 "tx_mbit_s": _sample_value(tx_sample),
                 "rx_mbit_s": _sample_value(rx_sample),
                 "tx_rate": _sample_value(tx_sample),
-                "registration_state": newest.details_json.get("registration_state"),
+                "registration_state": newest.details_json.get("registration_state")
+                or newest.details_json.get("status"),
                 "operator": newest.details_json.get("operator"),
                 "access_technology": newest.details_json.get("access_technology"),
                 "cell_id": newest.details_json.get("cell_id"),

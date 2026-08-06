@@ -13,6 +13,7 @@ from ltap_testbench.api.app import (
     LabRecoveryError,
     LabRunCreate,
     _analytics_run_row,
+    _latest_radio_telemetry,
     _live_lab_metrics,
     _live_latency_results,
     _recover_orphaned_lab_reservations,
@@ -735,8 +736,34 @@ def test_live_latency_results_read_persisted_samples_without_router_polling() ->
                 metric_name="latency_rtt_ms",
                 value=24.0,
                 unit="ms",
-                validity="valid",
+                validity="path-routed",
                 details_json={"target": "198.51.100.10"},
+            )
+        )
+        session.add(
+            MetricSample(
+                run_pk=run.id,
+                offset_ms=1000,
+                path_id="lte1",
+                phase="tcp",
+                metric_name="latency_loss_percent",
+                value=0.0,
+                unit="percent",
+                validity="path-routed",
+                details_json={"target": "198.51.100.10", "sent": 1, "received": 1},
+            )
+        )
+        session.add(
+            MetricSample(
+                run_pk=run.id,
+                offset_ms=1000,
+                path_id="lte1",
+                phase="tcp",
+                metric_name="latency_received",
+                value=1.0,
+                unit="count",
+                validity="path-routed",
+                details_json={"target": "198.51.100.10", "sent": 1, "received": 1},
             )
         )
         session.commit()
@@ -747,8 +774,52 @@ def test_live_latency_results_read_persisted_samples_without_router_polling() ->
 
         assert first == second
         assert first[0]["avg_ms"] == 24.0
+        assert first[0]["loss_percent"] == 0.0
+        assert first[0]["valid_sample_count"] == 1
+        assert first[0]["expected_sample_count"] == 1
+        assert first[0]["latest_probe_received"] == 1
+        assert first[0]["latest_probe_sent"] == 1
         assert first[0]["source"] == "metric_samples"
         assert adapter.calls == 0
+
+
+def test_latest_radio_telemetry_uses_status_as_registration_fallback() -> None:
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    with session_factory() as session:
+        router = RouterProfile(slug="r1-ltap-live", display_name="R1", kind=RouterKind.FAKE)
+        session.add(router)
+        session.flush()
+        run = DbTestRun(
+            run_id="run-radio-live",
+            router=router,
+            plan_slug="lab-current",
+            state=RunState.RUNNING,
+            resolved_plan={},
+            summary={},
+        )
+        session.add(run)
+        session.flush()
+        session.add(
+            MetricSample(
+                run_pk=run.id,
+                offset_ms=1000,
+                path_id="lte1",
+                phase="video",
+                metric_name="radio_band",
+                value=0.0,
+                unit="band",
+                validity="valid",
+                details_json={"band": "B3", "status": "registered"},
+            )
+        )
+        session.commit()
+
+        rows = _latest_radio_telemetry(session, run)
+
+        assert rows[0]["primary_band"] == "B3"
+        assert rows[0]["registration_state"] == "registered"
 
 
 def test_recover_orphaned_lab_reservation_only_releases_owned_lab_run(monkeypatch) -> None:
