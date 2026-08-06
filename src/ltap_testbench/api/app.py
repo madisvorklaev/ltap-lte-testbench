@@ -2,6 +2,7 @@ import csv
 import io
 import math
 import statistics
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
@@ -494,11 +495,11 @@ def _profile_row(profile: TestProfile, protocol: BenchmarkProtocol) -> dict[str,
 
 
 def _dashboard_context_defaults(
-    routers: list[RouterProfile],
-    antenna_profiles: list[AntennaProfile],
-    experiments: list[Experiment],
-    variants: list[ExperimentVariant],
-    profiles: list[TestProfile],
+    routers: Sequence[RouterProfile],
+    antenna_profiles: Sequence[AntennaProfile],
+    experiments: Sequence[Experiment],
+    variants: Sequence[ExperimentVariant],
+    profiles: Sequence[TestProfile],
 ) -> dict[str, dict[str, Any]]:
     router_slug = None
     for router in routers:
@@ -509,8 +510,10 @@ def _dashboard_context_defaults(
         router_slug = routers[0].slug
     antenna_id = antenna_profiles[0].id if antenna_profiles else None
     variants_by_experiment: dict[int, list[ExperimentVariant]] = {}
-    for variant in variants:
-        variants_by_experiment.setdefault(variant.experiment_id, []).append(variant)
+    for experiment_variant in variants:
+        variants_by_experiment.setdefault(experiment_variant.experiment_id, []).append(
+            experiment_variant
+        )
     defaults = {}
     for profile in profiles:
         compatible_experiments = [
@@ -519,10 +522,10 @@ def _dashboard_context_defaults(
             if experiment.protocol_id == profile.protocol_id
         ]
         experiment = compatible_experiments[0] if compatible_experiments else None
-        variant = None
+        selected_variant: ExperimentVariant | None = None
         if experiment is not None:
             compatible_variants = variants_by_experiment.get(experiment.id, [])
-            variant = next(
+            selected_variant = next(
                 (
                     row
                     for row in compatible_variants
@@ -534,7 +537,7 @@ def _dashboard_context_defaults(
             "router_slug": router_slug,
             "antenna_profile_id": antenna_id,
             "experiment_id": experiment.id if experiment is not None else None,
-            "variant_id": variant.id if variant is not None else None,
+            "variant_id": selected_variant.id if selected_variant is not None else None,
             "site_id": experiment.site_id if experiment is not None else None,
         }
     return defaults
@@ -1199,9 +1202,7 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
             if value is not None
         ]
         valid_count = sum(
-            1
-            for sample in path_samples
-            if sample.validity in {"valid", "ok", "current", ""}
+            1 for sample in path_samples if sample.validity in {"valid", "ok", "current", ""}
         )
         expected_count = max(len(path_samples), 1)
         latest = max(path_samples, key=lambda sample: (sample.offset_ms, sample.id))
@@ -1215,9 +1216,7 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
                 "avg_ms": statistics.fmean(values) if values else None,
                 "p50_ms": statistics.median(values) if values else None,
                 "p95_ms": (
-                    sorted(values)[max(0, math.ceil(len(values) * 0.95) - 1)]
-                    if values
-                    else None
+                    sorted(values)[max(0, math.ceil(len(values) * 0.95) - 1)] if values else None
                 ),
                 "min_ms": min(values) if values else None,
                 "max_ms": max(values) if values else None,
@@ -1260,6 +1259,7 @@ def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, An
             sample_time = sample_time.replace(tzinfo=UTC)
         age_seconds = max(0.0, (now - sample_time.astimezone(UTC)).total_seconds())
         band = by_metric.get("radio_band")
+        tx_sample = by_metric.get("router_tx_mbit_s")
         rows.append(
             {
                 "path_id": path_id,
@@ -1271,27 +1271,13 @@ def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, An
                     if band is not None and band.details_json.get("band") is not None
                     else (band.value if band is not None else None)
                 ),
-                "rsrp": by_metric.get("radio_rsrp_dbm").value
-                if by_metric.get("radio_rsrp_dbm") is not None
-                else None,
-                "rsrq": by_metric.get("radio_rsrq_db").value
-                if by_metric.get("radio_rsrq_db") is not None
-                else None,
-                "sinr": by_metric.get("radio_sinr_db").value
-                if by_metric.get("radio_sinr_db") is not None
-                else None,
-                "rssi": by_metric.get("radio_rssi_dbm").value
-                if by_metric.get("radio_rssi_dbm") is not None
-                else None,
-                "tx_mbit_s": by_metric.get("router_tx_mbit_s").value
-                if by_metric.get("router_tx_mbit_s") is not None
-                else None,
-                "rx_mbit_s": by_metric.get("router_rx_mbit_s").value
-                if by_metric.get("router_rx_mbit_s") is not None
-                else None,
-                "tx_rate": by_metric.get("router_tx_mbit_s").value
-                if by_metric.get("router_tx_mbit_s") is not None
-                else None,
+                "rsrp": _sample_value(by_metric.get("radio_rsrp_dbm")),
+                "rsrq": _sample_value(by_metric.get("radio_rsrq_db")),
+                "sinr": _sample_value(by_metric.get("radio_sinr_db")),
+                "rssi": _sample_value(by_metric.get("radio_rssi_dbm")),
+                "tx_mbit_s": _sample_value(tx_sample),
+                "rx_mbit_s": _sample_value(by_metric.get("router_rx_mbit_s")),
+                "tx_rate": _sample_value(tx_sample),
                 "registration_state": newest.details_json.get("registration_state"),
                 "operator": newest.details_json.get("operator"),
                 "access_technology": newest.details_json.get("access_technology"),
@@ -1313,6 +1299,10 @@ def _float_value(value: Any) -> float | None:
 def _mean(values: list[float | None]) -> float | None:
     clean = [value for value in values if value is not None]
     return sum(clean) / len(clean) if clean else None
+
+
+def _sample_value(sample: MetricSample | None) -> float | None:
+    return sample.value if sample is not None else None
 
 
 def _lab_metadata(run: TestRun) -> dict[str, Any]:

@@ -1469,9 +1469,9 @@ def execute_run(
             if row.get("validity") != "invalid" and int(row.get("received") or 0) > 0
         ]
         protocol_info = _protocol_info(run)
-        comparable_video_run = (
-            protocol_info.get("comparable") is True and _plan_has_video_probe_stage(run)
-        )
+        comparable_video_run = protocol_info.get(
+            "comparable"
+        ) is True and _plan_has_video_probe_stage(run)
         has_live_results = bool(
             upload_results
             or udp_upload_results
@@ -1479,8 +1479,7 @@ def execute_run(
             or (
                 has_video_sender_traffic
                 and (
-                    not comparable_video_run
-                    or _video_receiver_confirmed(run, video_probe_results)
+                    not comparable_video_run or _video_receiver_confirmed(run, video_probe_results)
                 )
             )
         )

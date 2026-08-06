@@ -1169,9 +1169,10 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
             },
         )
         assert mismatched_preview.status_code == 200
-        assert "experiment_protocol_does_not_match_profile" in mismatched_preview.json()[
-            "blocking_errors"
-        ]
+        assert (
+            "experiment_protocol_does_not_match_profile"
+            in mismatched_preview.json()["blocking_errors"]
+        )
 
         video_experiment = client.post(
             "/api/v1/experiments",
