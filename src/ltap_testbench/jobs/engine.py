@@ -2,6 +2,7 @@ import hashlib
 import json
 import subprocess
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from pathlib import Path
@@ -16,6 +17,7 @@ from ltap_testbench import __version__
 from ltap_testbench.analytics import evaluate_run_integrity
 from ltap_testbench.core.time import utc_now
 from ltap_testbench.db.models import (
+    RouterKind,
     RouterProfile,
     RunEvent,
     RunState,
@@ -384,9 +386,8 @@ def _router_paths(run: TestRun) -> list[dict]:
 
 def _path_port(path: dict) -> int | None:
     ports = path.get("ports")
-    if not isinstance(ports, dict):
-        return None
-    start = ports.get("start")
+    start = ports.get("start") if isinstance(ports, dict) else None
+    start = start or path.get("udp_port")
     return int(start) if start else None
 
 
@@ -492,6 +493,134 @@ def _video_receiver_confirmed(run: TestRun, video_probe_results: dict) -> bool:
             return False
     dual_path = receiver_summary.get("dual_path") or video_probe_results.get("dual_path") or {}
     return bool(dual_path) or bool(receiver_summary.get("paired_frames_complete"))
+
+
+def _path_ids_from_results(rows: list[dict], predicate: Callable[[dict], bool]) -> set[str]:
+    return {str(row.get("path_id")) for row in rows if row.get("path_id") and predicate(row)}
+
+
+def _all_expected_paths_confirmed(
+    run: TestRun,
+    rows: list[dict],
+    predicate: Callable[[dict], bool],
+) -> bool:
+    expected_paths = _expected_path_ids(run)
+    if not expected_paths:
+        return False
+    return set(expected_paths).issubset(_path_ids_from_results(rows, predicate))
+
+
+def _latency_confirmed(run: TestRun, latency_results: list[dict]) -> bool:
+    if not _plan_has_latency_stage(run):
+        return True
+    return _all_expected_paths_confirmed(
+        run,
+        latency_results,
+        lambda row: row.get("validity") != "invalid" and int(row.get("received") or 0) > 0,
+    )
+
+
+def _tcp_confirmed(run: TestRun, upload_results: list[dict]) -> bool:
+    if not _plan_has_upload_stage(run):
+        return True
+    expected_paths = _expected_path_ids(run)
+    if not expected_paths:
+        return False
+    for round_index in range(1, _tcp_upload_count(run) + 1):
+        round_rows = [row for row in upload_results if int(row.get("round") or 1) == round_index]
+        confirmed_paths = _path_ids_from_results(
+            round_rows,
+            lambda row: (
+                row.get("validity") == "server-confirmed"
+                and int(row.get("server_bytes_received") or 0) > 0
+            ),
+        )
+        if not set(expected_paths).issubset(confirmed_paths):
+            return False
+    return True
+
+
+def _udp_confirmed(run: TestRun, udp_upload_results: list[dict]) -> bool:
+    if not _plan_has_udp_upload_stage(run):
+        return True
+    expected_paths = _expected_path_ids(run)
+    if not expected_paths:
+        return False
+    labels = ["end"]
+    pattern = str(_udp_upload_config(run).get("pattern") or "end")
+    if pattern == "beginning":
+        labels = ["beginning"]
+    elif pattern == "after_each_tcp":
+        labels = [f"after-tcp-{index}" for index in range(1, _tcp_upload_count(run) + 1)]
+    for label in labels:
+        label_rows = [row for row in udp_upload_results if str(row.get("label") or "end") == label]
+        confirmed_paths = _path_ids_from_results(
+            label_rows,
+            lambda row: (
+                row.get("validity") == "server-confirmed"
+                and int((row.get("receiver") or {}).get("datagrams_received") or 0) > 0
+            ),
+        )
+        if not set(expected_paths).issubset(confirmed_paths):
+            return False
+    return True
+
+
+def _video_sender_confirmed(run: TestRun, video_probe_results: dict) -> bool:
+    if not _plan_has_video_probe_stage(run):
+        return True
+    sender_results = video_probe_results.get("sender_results") or []
+    if not isinstance(sender_results, list):
+        return False
+    return _all_expected_paths_confirmed(
+        run,
+        sender_results,
+        lambda row: int(row.get("bytes_sent") or 0) > 0 and int(row.get("frames_sent") or 0) > 0,
+    )
+
+
+def _video_stage_confirmed(run: TestRun, video_probe_results: dict) -> bool:
+    if not _plan_has_video_probe_stage(run):
+        return True
+    return _video_sender_confirmed(run, video_probe_results) and _video_receiver_confirmed(
+        run,
+        video_probe_results,
+    )
+
+
+def _required_live_results_confirmed(
+    run: TestRun,
+    *,
+    latency_results: list[dict],
+    upload_results: list[dict],
+    udp_upload_results: list[dict],
+    video_probe_results: dict,
+) -> tuple[bool, list[str]]:
+    protocol_info = _protocol_info(run)
+    protocol_id = str(protocol_info.get("protocol_id") or run.protocol_hash or "")
+    comparison_mode = str(protocol_info.get("comparison_mode") or "")
+    quick_check = protocol_id == "quick-connection-check-v1"
+    comparable = protocol_info.get("comparable") is True or comparison_mode == "comparable"
+    checks = {
+        "latency": _latency_confirmed(run, latency_results),
+        "tcp": _tcp_confirmed(run, upload_results),
+        "udp": _udp_confirmed(run, udp_upload_results),
+        "video": _video_stage_confirmed(run, video_probe_results),
+    }
+    if quick_check:
+        required = ["latency", "video"]
+    elif comparable and _plan_has_upload_stage(run):
+        required = ["latency", "tcp", "udp", "video"]
+    elif _plan_has_video_probe_stage(run):
+        required = ["video"]
+    else:
+        required = [name for name in ["latency", "tcp", "udp"] if name in checks]
+    missing = [name for name in required if not checks[name]]
+    return not missing, missing
+
+
+def _requires_live_router_evidence(run: TestRun) -> bool:
+    return run.router.kind == RouterKind.MIKROTIK
 
 
 def _tcp_upload_count(run: TestRun) -> int:
@@ -1459,38 +1588,34 @@ def execute_run(
             renewal_monitor=renewal_monitor,
         )
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
-        has_video_sender_traffic = any(
-            int(row.get("bytes_sent") or 0) > 0
-            for row in video_probe_results.get("sender_results", [])
-        )
-        valid_latency_results = [
-            row
-            for row in latency_results
-            if row.get("validity") != "invalid" and int(row.get("received") or 0) > 0
-        ]
         protocol_info = _protocol_info(run)
-        comparable_video_run = protocol_info.get(
-            "comparable"
-        ) is True and _plan_has_video_probe_stage(run)
-        has_live_results = bool(
-            upload_results
-            or udp_upload_results
-            or valid_latency_results
-            or (
-                has_video_sender_traffic
-                and (
-                    not comparable_video_run or _video_receiver_confirmed(run, video_probe_results)
-                )
-            )
+        has_live_results, missing_live_requirements = _required_live_results_confirmed(
+            run,
+            latency_results=latency_results,
+            upload_results=upload_results,
+            udp_upload_results=udp_upload_results,
+            video_probe_results=video_probe_results,
         )
         if not has_live_results:
             add_event(
                 session,
                 run,
-                "simulated-measurement",
-                "MVP simulated measurement completed; no live upload stage ran.",
-                {"latency_ms_median": 42.0, "latency_ms_p95": 88.0, "loss_percent": 0.0},
+                "live-result-requirements-missing",
+                "Required live measurement evidence was not confirmed.",
+                {"missing": missing_live_requirements},
             )
+            if not _requires_live_router_evidence(run):
+                add_event(
+                    session,
+                    run,
+                    "simulated-measurement",
+                    "Simulated measurement completed for a non-live router adapter.",
+                    {
+                        "latency_ms_median": 42.0,
+                        "latency_ms_p95": 88.0,
+                        "loss_percent": 0.0,
+                    },
+                )
         transition(session, run, RunState.COOLING_DOWN)
         transition(session, run, RunState.ANALYZING)
         connections = [
@@ -1511,11 +1636,12 @@ def execute_run(
             "comparison_eligible": comparison_eligible,
             "exclusion_reasons": integrity["exclusion_reasons"],
             "integrity": integrity,
+            "missing_live_requirements": missing_live_requirements,
             "warnings": controller_check.warnings,
             "message": (
                 "Run completed with live measured stages."
                 if has_live_results
-                else "MVP run completed using adapter checks and simulated measurements."
+                else "Run completed but required live measurement evidence was missing."
             ),
             "test_node_reserved": reservation is not None,
             "reservation_renewals": _reservation_history(renewal_monitor),
@@ -1542,6 +1668,14 @@ def execute_run(
         }
         session.add(run)
         session.commit()
+        if not has_live_results and _requires_live_router_evidence(run):
+            transition(
+                session,
+                run,
+                RunState.FAILED,
+                "required live measurement evidence missing",
+            )
+            return run
         transition(session, run, RunState.GENERATING_REPORT)
     except RunCancelledError as exc:
         add_event(session, run, "cancel", str(exc))

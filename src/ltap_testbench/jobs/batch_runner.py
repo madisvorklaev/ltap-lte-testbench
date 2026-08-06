@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from datetime import timedelta
 from threading import Event
 
 from sqlalchemy import select
@@ -268,10 +269,12 @@ def _sleep_with_batch_controls(
     seconds: int,
     cancel_event: Event | None,
     sleep: Callable[[float], None],
+    worker_id: str | None = None,
 ) -> BatchState | None:
     deadline = time.monotonic() + max(0, seconds)
     while time.monotonic() < deadline:
         session.refresh(batch)
+        _refresh_worker_lease(session, batch, worker_id)
         if batch.state == BatchState.CANCEL_REQUESTED or (
             cancel_event is not None and cancel_event.is_set()
         ):
@@ -285,6 +288,24 @@ def _sleep_with_batch_controls(
             return BatchState.PAUSED
         sleep(min(0.25, deadline - time.monotonic()))
     return None
+
+
+def _refresh_worker_lease(
+    session: Session,
+    batch: TestBatch,
+    worker_id: str | None,
+    *,
+    lease_seconds: int = 120,
+) -> None:
+    if not worker_id or batch.state != BatchState.RUNNING:
+        return
+    batch.worker_id = worker_id
+    batch.last_heartbeat_at = utc_now()
+    batch.lease_expires_at = batch.last_heartbeat_at.replace(microsecond=0) + timedelta(
+        seconds=lease_seconds
+    )
+    session.add(batch)
+    session.commit()
 
 
 def _finish_attempt(
@@ -385,6 +406,7 @@ def run_batch(
     run_executor: RunExecutor | None = None,
     precondition_runner: PreconditionRunner | None = None,
     sleep: Callable[[float], None] = time.sleep,
+    worker_id: str | None = None,
 ) -> TestBatch:
     if batch.state not in {BatchState.DRAFT, BatchState.SCHEDULED, BatchState.RUNNING}:
         return batch
@@ -400,10 +422,17 @@ def run_batch(
     preconditions = precondition_runner or _run_preconditions
     batch.state = BatchState.RUNNING
     batch.started_at = batch.started_at or utc_now()
+    if worker_id:
+        batch.worker_id = worker_id
+        batch.last_heartbeat_at = utc_now()
+        batch.lease_expires_at = batch.last_heartbeat_at.replace(microsecond=0) + timedelta(
+            seconds=120
+        )
     session.add(batch)
     session.commit()
     while True:
         session.refresh(batch)
+        _refresh_worker_lease(session, batch, worker_id)
         if batch.state == BatchState.CANCEL_REQUESTED or (
             cancel_event is not None and cancel_event.is_set()
         ):
@@ -457,6 +486,7 @@ def run_batch(
                     batch.retry_delay_seconds,
                     cancel_event,
                     sleep,
+                    worker_id,
                 )
                 if stopped is not None:
                     return batch
@@ -517,6 +547,7 @@ def run_batch(
                 batch.inter_run_cooldown_seconds,
                 cancel_event,
                 sleep,
+                worker_id,
             )
             if stopped is not None:
                 return batch
@@ -529,6 +560,8 @@ def recover_interrupted_batches(session: Session) -> list[TestBatch]:
         if batch.state in TERMINAL_BATCH_STATES:
             continue
         if batch.state == BatchState.DRAFT:
+            continue
+        if batch.state == BatchState.SCHEDULED:
             continue
         active_attempt = session.scalar(
             select(BatchAttempt)

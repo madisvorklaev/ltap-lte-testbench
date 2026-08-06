@@ -21,6 +21,11 @@ def canonical_protocol_definition(plan: dict[str, Any]) -> dict[str, Any]:
     metadata: dict[str, Any] = metadata_value if isinstance(metadata_value, dict) else {}
     protocol_value = metadata.get("protocol")
     protocol_meta: dict[str, Any] = protocol_value if isinstance(protocol_value, dict) else {}
+    result_schema_version = (
+        plan_copy.get("result_schema_version")
+        or protocol_meta.get("result_schema_version")
+        or RESULT_SCHEMA_VERSION
+    )
     return {
         "protocol_id": plan_copy.get("protocol_id")
         or protocol_meta.get("protocol_id")
@@ -40,7 +45,7 @@ def canonical_protocol_definition(plan: dict[str, Any]) -> dict[str, Any]:
         "traffic": plan_copy.get("traffic") or {},
         "telemetry": plan_copy.get("telemetry") or {},
         "measurement_implementation_version": MEASUREMENT_IMPLEMENTATION_VERSION,
-        "result_schema_version": RESULT_SCHEMA_VERSION,
+        "result_schema_version": int(result_schema_version),
     }
 
 
@@ -54,7 +59,7 @@ def protocol_metadata(plan: dict[str, Any]) -> dict[str, Any]:
         "protocol_id": definition["protocol_id"],
         "protocol_version": definition["protocol_version"],
         "protocol_hash": protocol_hash(plan),
-        "result_schema_version": RESULT_SCHEMA_VERSION,
+        "result_schema_version": definition["result_schema_version"],
         "measurement_implementation_version": MEASUREMENT_IMPLEMENTATION_VERSION,
         "canonical_definition": definition,
     }

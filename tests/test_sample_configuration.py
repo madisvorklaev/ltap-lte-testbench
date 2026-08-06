@@ -14,6 +14,8 @@ from ltap_testbench.db.base import Base
 from ltap_testbench.db.models import (
     AntennaProfile,
     BatchState,
+    BenchmarkProtocol,
+    Experiment,
     ExperimentVariant,
     GainSource,
     RouterKind,
@@ -39,6 +41,14 @@ def test_sample_configuration_is_idempotent_and_creates_draft_batch() -> None:
         antenna = session.scalar(
             select(AntennaProfile).where(AntennaProfile.slug == "generic-2db-window-2m")
         )
+        video_protocol = session.scalar(
+            select(BenchmarkProtocol).where(
+                BenchmarkProtocol.slug == "video-city-5mbps-25fps-30m-v1"
+            )
+        )
+        video_experiment = session.scalar(
+            select(Experiment).where(Experiment.name == "Sample city-video stability baseline")
+        )
 
         assert first["configuration_created"] is True
         assert first["ready_to_start"] is False
@@ -51,6 +61,8 @@ def test_sample_configuration_is_idempotent_and_creates_draft_batch() -> None:
         assert batches[0].site_id is not None
         assert batches[0].antenna_profile_id == antenna.id
         assert batches[0].expected_variant_snapshot_hash
+        assert video_experiment is not None
+        assert video_experiment.protocol_id == video_protocol.id
         assert antenna is not None
         assert antenna.gain_source == GainSource.ESTIMATED
         assert antenna.nominal_peak_gain_dbi == 2.0
@@ -222,8 +234,8 @@ def test_sample_configuration_versions_variant_when_hardware_changes(monkeypatch
 
         assert first["ready_to_start"] is True
         assert second["ready_to_start"] is True
-        assert len(variants) == 2
-        assert variants[0].expected_modem_snapshot_hash != variants[1].expected_modem_snapshot_hash
+        assert len(variants) == 4
+        assert len({variant.expected_modem_snapshot_hash for variant in variants}) == 2
         assert "Current connected-router baseline v2" in {variant.label for variant in variants}
         assert "hashed-imei-1" in database_dump
         assert "123456789012345" not in database_dump

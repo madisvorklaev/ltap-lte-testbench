@@ -31,6 +31,20 @@ def _float_from_value(value: Any) -> float | None:
         return None
 
 
+def _rate_mbit_from_value(value: Any) -> float | None:
+    parsed = _float_from_value(value)
+    if parsed is None:
+        return None
+    text = str(value or "").lower()
+    if "gb" in text:
+        return parsed * 1000
+    if "kb" in text:
+        return parsed / 1000
+    if "bps" in text and "mb" not in text:
+        return parsed / 1_000_000
+    return parsed
+
+
 @dataclass
 class PhaseContext:
     phase: str = "setup"
@@ -223,8 +237,6 @@ class RunMetricSampler:
             "rsrq": ("radio_rsrq_db", "dB"),
             "sinr": ("radio_sinr_db", "dB"),
             "rssi": ("radio_rssi_dbm", "dBm"),
-            "tx_mbit_s": ("router_tx_mbit_s", "Mbit/s"),
-            "rx_mbit_s": ("router_rx_mbit_s", "Mbit/s"),
         }
         for row in rows:
             path_id = str(row.get("path_id") or "") or None
@@ -249,6 +261,37 @@ class RunMetricSampler:
                         metric_name=metric_name,
                         value=value,
                         unit=unit,
+                        details=row,
+                    )
+                )
+            band = row.get("radio_band") or row.get("primary_band")
+            if band:
+                samples.append(
+                    self._base_sample(
+                        run,
+                        path_id=path_id,
+                        metric_name="radio_band",
+                        value=_float_from_value(band) or 0.0,
+                        unit="band",
+                        details={**row, "band": band},
+                    )
+                )
+            for source_key, metric_name in {
+                "tx_mbit_s": "router_tx_mbit_s",
+                "tx_rate": "router_tx_mbit_s",
+                "rx_mbit_s": "router_rx_mbit_s",
+                "rx_rate": "router_rx_mbit_s",
+            }.items():
+                value = _rate_mbit_from_value(row.get(source_key))
+                if value is None:
+                    continue
+                samples.append(
+                    self._base_sample(
+                        run,
+                        path_id=path_id,
+                        metric_name=metric_name,
+                        value=value,
+                        unit="Mbit/s",
                         details=row,
                     )
                 )

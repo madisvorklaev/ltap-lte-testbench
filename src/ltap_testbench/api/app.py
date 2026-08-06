@@ -4,7 +4,7 @@ import math
 import statistics
 from collections.abc import Sequence
 from contextlib import suppress
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from threading import Event, Lock, Thread
 from typing import Any
@@ -15,7 +15,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from ltap_testbench import __version__
@@ -494,6 +494,31 @@ def _profile_row(profile: TestProfile, protocol: BenchmarkProtocol) -> dict[str,
     }
 
 
+def _variant_antenna_ids(variant: ExperimentVariant | None) -> set[int]:
+    if variant is None:
+        return set()
+    mapping = variant.antenna_mapping_json or {}
+    if not isinstance(mapping, dict):
+        return set()
+    antenna_ids: set[int] = set()
+    for value in mapping.values():
+        try:
+            antenna_ids.add(int(value))
+        except (TypeError, ValueError):
+            continue
+    return antenna_ids
+
+
+def _variant_antenna_matches(
+    variant: ExperimentVariant | None,
+    antenna_profile_id: int | None,
+) -> bool:
+    antenna_ids = _variant_antenna_ids(variant)
+    if not antenna_ids:
+        return antenna_profile_id is None
+    return antenna_profile_id in antenna_ids and len(antenna_ids) == 1
+
+
 def _dashboard_context_defaults(
     routers: Sequence[RouterProfile],
     antenna_profiles: Sequence[AntennaProfile],
@@ -508,7 +533,7 @@ def _dashboard_context_defaults(
             break
     if router_slug is None and routers:
         router_slug = routers[0].slug
-    antenna_id = antenna_profiles[0].id if antenna_profiles else None
+    fallback_antenna_id = antenna_profiles[0].id if antenna_profiles else None
     variants_by_experiment: dict[int, list[ExperimentVariant]] = {}
     for experiment_variant in variants:
         variants_by_experiment.setdefault(experiment_variant.experiment_id, []).append(
@@ -533,6 +558,8 @@ def _dashboard_context_defaults(
                 ),
                 compatible_variants[0] if compatible_variants else None,
             )
+        mapped_antenna_ids = _variant_antenna_ids(selected_variant)
+        antenna_id = next(iter(mapped_antenna_ids), fallback_antenna_id)
         defaults[profile.slug] = {
             "router_slug": router_slug,
             "antenna_profile_id": antenna_id,
@@ -643,6 +670,18 @@ def _campaign_preview(
     site_id = payload.site_id or (experiment.site_id if experiment is not None else None)
     if site_id is not None and session.get(TestSite, site_id) is None:
         blocking_errors.append("site_missing")
+    if profile.is_comparable:
+        if experiment is None:
+            blocking_errors.append("experiment_required")
+        if variant is None:
+            blocking_errors.append("variant_required")
+        if site_id is None:
+            blocking_errors.append("site_required")
+        if variant is not None and not _variant_antenna_matches(
+            variant,
+            payload.antenna_profile_id,
+        ):
+            blocking_errors.append("variant_antenna_mapping_does_not_match")
     server = session.scalar(select(ServerProfile).where(ServerProfile.slug == "stockbot"))
     if server is None:
         blocking_errors.append("stockbot_missing")
@@ -896,13 +935,13 @@ def _run_lab_background(run_id: str, cancel_event: Event) -> None:
             LAB_CANCEL_EVENTS.pop(run_id, None)
 
 
-def _run_batch_background(batch_id: str, cancel_event: Event) -> None:
+def _run_batch_background(batch_id: str, cancel_event: Event, worker_id: str) -> None:
     try:
         with SessionLocal() as session:
             batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
             if batch is None:
                 return
-            run_batch(session, batch, cancel_event=cancel_event)
+            run_batch(session, batch, cancel_event=cancel_event, worker_id=worker_id)
     except Exception as exc:
         with SessionLocal() as session:
             batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
@@ -984,15 +1023,36 @@ def _start_batch_worker(
     )
     if protocol is None:
         raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    worker_id = f"{application_git_commit() or 'local'}-{uuid4().hex[:12]}"
+    lease_expires_at = now + timedelta(seconds=120)
+    result = session.execute(
+        update(TestBatch)
+        .where(TestBatch.id == batch.id)
+        .where(TestBatch.state == batch.state)
+        .values(
+            state=BatchState.RUNNING,
+            started_at=batch.started_at or now,
+            state_reason=None,
+            worker_id=worker_id,
+            last_heartbeat_at=now,
+            lease_expires_at=lease_expires_at,
+        )
+    )
+    if int(getattr(result, "rowcount", 0)) != 1:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="batch was already claimed")
+    session.commit()
+    claimed = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if claimed is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
     cancel_event = Event()
     BATCH_CANCEL_EVENTS[batch_id] = cancel_event
-    batch.state = BatchState.RUNNING
-    batch.started_at = batch.started_at or now
-    batch.state_reason = None
-    session.add(batch)
-    session.commit()
-    Thread(target=_run_batch_background, args=(batch_id, cancel_event), daemon=True).start()
-    return _batch_row(batch, protocol)
+    Thread(
+        target=_run_batch_background,
+        args=(batch_id, cancel_event, worker_id),
+        daemon=True,
+    ).start()
+    return _batch_row(claimed, protocol)
 
 
 def _start_due_scheduled_batches_once() -> None:
@@ -1182,7 +1242,14 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
         select(MetricSample)
         .where(
             MetricSample.run_pk == run.id,
-            MetricSample.metric_name.in_(["latency_rtt_ms", "latency_avg_ms"]),
+            MetricSample.metric_name.in_(
+                [
+                    "latency_rtt_ms",
+                    "latency_avg_ms",
+                    "latency_loss_percent",
+                    "latency_received",
+                ]
+            ),
         )
         .order_by(MetricSample.offset_ms.desc(), MetricSample.id.desc())
         .limit(200)
@@ -1196,16 +1263,56 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
         by_path.setdefault(sample.path_id, []).append(sample)
     rows = []
     for path_id, path_samples in sorted(by_path.items(), key=lambda item: item[0] or ""):
+        latency_samples = [
+            sample
+            for sample in path_samples
+            if sample.metric_name in {"latency_rtt_ms", "latency_avg_ms"}
+        ]
         values = [
             value
-            for value in (_float_value(sample.value) for sample in path_samples)
+            for value in (_float_value(sample.value) for sample in latency_samples)
             if value is not None
         ]
+        valid_latency_values = {
+            "valid",
+            "ok",
+            "current",
+            "path-routed",
+            "",
+        }
         valid_count = sum(
-            1 for sample in path_samples if sample.validity in {"valid", "ok", "current", ""}
+            1 for sample in latency_samples if sample.validity in valid_latency_values
         )
-        expected_count = max(len(path_samples), 1)
+        expected_count = max(len(latency_samples), 1)
         latest = max(path_samples, key=lambda sample: (sample.offset_ms, sample.id))
+        latest_loss = next(
+            (
+                sample
+                for sample in sorted(
+                    path_samples,
+                    key=lambda sample: (sample.offset_ms, sample.id),
+                    reverse=True,
+                )
+                if sample.metric_name == "latency_loss_percent"
+            ),
+            None,
+        )
+        latest_received = next(
+            (
+                sample
+                for sample in sorted(
+                    path_samples,
+                    key=lambda sample: (sample.offset_ms, sample.id),
+                    reverse=True,
+                )
+                if sample.metric_name == "latency_received"
+            ),
+            None,
+        )
+        loss_percent = _float_value(latest_loss.value) if latest_loss is not None else None
+        received = _float_value(latest_received.value) if latest_received is not None else None
+        if received is not None:
+            valid_count = int(received)
         rows.append(
             {
                 "path_id": path_id,
@@ -1220,7 +1327,11 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
                 ),
                 "min_ms": min(values) if values else None,
                 "max_ms": max(values) if values else None,
-                "loss_percent": round((1 - valid_count / expected_count) * 100, 2),
+                "loss_percent": (
+                    loss_percent
+                    if loss_percent is not None
+                    else round((1 - valid_count / expected_count) * 100, 2)
+                ),
                 "valid_sample_count": valid_count,
                 "expected_sample_count": expected_count,
                 "validity": latest.validity,
@@ -1237,8 +1348,13 @@ def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, An
         "radio_sinr_db",
         "radio_rssi_dbm",
         "radio_band",
+        "primary_band",
         "router_tx_mbit_s",
         "router_rx_mbit_s",
+        "tx_mbit_s",
+        "rx_mbit_s",
+        "tx_rate",
+        "rx_rate",
     ]
     samples = session.scalars(
         select(MetricSample)
@@ -1258,8 +1374,17 @@ def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, An
         if sample_time.tzinfo is None:
             sample_time = sample_time.replace(tzinfo=UTC)
         age_seconds = max(0.0, (now - sample_time.astimezone(UTC)).total_seconds())
-        band = by_metric.get("radio_band")
-        tx_sample = by_metric.get("router_tx_mbit_s")
+        band = by_metric.get("radio_band") or by_metric.get("primary_band")
+        tx_sample = (
+            by_metric.get("router_tx_mbit_s")
+            or by_metric.get("tx_mbit_s")
+            or by_metric.get("tx_rate")
+        )
+        rx_sample = (
+            by_metric.get("router_rx_mbit_s")
+            or by_metric.get("rx_mbit_s")
+            or by_metric.get("rx_rate")
+        )
         rows.append(
             {
                 "path_id": path_id,
@@ -1276,7 +1401,7 @@ def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, An
                 "sinr": _sample_value(by_metric.get("radio_sinr_db")),
                 "rssi": _sample_value(by_metric.get("radio_rssi_dbm")),
                 "tx_mbit_s": _sample_value(tx_sample),
-                "rx_mbit_s": _sample_value(by_metric.get("router_rx_mbit_s")),
+                "rx_mbit_s": _sample_value(rx_sample),
                 "tx_rate": _sample_value(tx_sample),
                 "registration_state": newest.details_json.get("registration_state"),
                 "operator": newest.details_json.get("operator"),
@@ -1847,11 +1972,23 @@ def create_test_batch(
         site_id = experiment.site_id
     if site_id is not None and session.get(TestSite, site_id) is None:
         raise HTTPException(status_code=404, detail="test site not found")
+    if bool((protocol.definition_json or {}).get("comparable")):
+        if experiment is None:
+            raise HTTPException(status_code=400, detail="experiment_id is required")
+        if variant is None:
+            raise HTTPException(status_code=400, detail="variant_id is required")
+        if site_id is None:
+            raise HTTPException(status_code=400, detail="site_id is required")
     if payload.antenna_profile_id is None:
         raise HTTPException(status_code=400, detail="antenna_profile_id is required")
     antenna = session.get(AntennaProfile, payload.antenna_profile_id)
     if antenna is None:
         raise HTTPException(status_code=404, detail="antenna profile not found")
+    if bool((protocol.definition_json or {}).get("comparable")) and not _variant_antenna_matches(
+        variant,
+        antenna.id,
+    ):
+        raise HTTPException(status_code=400, detail="variant antenna mapping does not match")
     deadline = None
     if payload.deadline:
         with suppress(ValueError):

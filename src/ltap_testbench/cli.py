@@ -488,6 +488,52 @@ def _sample_configuration(
         antenna_mapping=mapping,
         modem_snapshot_hash=modem_snapshot_hash,
     )
+    video_protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.slug == "video-city-5mbps-25fps-30m-v1")
+    )
+    video_experiment = session.scalar(
+        select(Experiment).where(Experiment.name == "Sample city-video stability baseline")
+    )
+    if video_experiment is None:
+        video_experiment = Experiment(
+            name="Sample city-video stability baseline",
+            comparison_dimension=ComparisonDimension.GENERAL_REPEATABILITY,
+            protocol_id=video_protocol.id if video_protocol else None,
+            site_id=site.id,
+            hypothesis=(
+                "Repeated fixed 5 Mbps, 25 fps city-video tests with the current "
+                "dual-LTE router, routes and antenna mapping establish the default "
+                "video stability baseline."
+            ),
+            primary_metrics_json=[
+                "video_effective_redundant_success_percent",
+                "video_both_path_loss_percent",
+                "video_longest_both_path_outage_seconds",
+                "latency_p95_ms",
+            ],
+            practical_thresholds_json={
+                "video_loss_absolute_percentage_points": 0.2,
+                "longest_both_path_outage_seconds": 1.0,
+                "latency_p95_relative": 0.15,
+                "latency_p95_absolute_ms": 10,
+            },
+            random_seed=2001,
+        )
+        session.add(video_experiment)
+        session.flush()
+    video_variant_snapshot = {
+        **variant_snapshot,
+        "protocol_hash": video_protocol.protocol_hash if video_protocol else None,
+    }
+    _find_or_create_variant(
+        session,
+        video_experiment,
+        base_label="Current connected-router baseline",
+        router_snapshot=router_snapshot,
+        configuration=video_variant_snapshot,
+        antenna_mapping=mapping,
+        modem_snapshot_hash=modem_snapshot_hash,
+    )
     batch_id = f"sample-comparable-baseline-{router.slug}-{target_valid_runs}v-{max_attempts}a"
     batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
     if batch is None:
