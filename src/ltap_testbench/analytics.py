@@ -548,12 +548,16 @@ def evaluate_run_integrity(
     has_live_results: bool,
     protocol: dict[str, Any],
 ) -> dict[str, Any]:
-    comparable_protocol_ids = {"comparable-benchmark", "comparable-v1"}
     protocol_id = str(protocol.get("protocol_id") or "")
+    comparison_mode = str(protocol.get("comparison_mode") or "").lower()
     protocol_hash_value = protocol.get("protocol_hash") or run.protocol_hash
+    protocol_declares_comparable = (
+        protocol.get("comparable") is True or comparison_mode == "comparable"
+    )
+    legacy_comparable_protocol = protocol_id in {"comparable-benchmark", "comparable-v1"}
     checks = {
         "protocol_hash_verified": bool(protocol_hash_value),
-        "protocol_is_comparable": protocol_id in comparable_protocol_ids,
+        "protocol_is_comparable": protocol_declares_comparable or legacy_comparable_protocol,
         "environment_snapshot_complete": bool(
             (run.integrity_json or {}).get("environment_snapshot_complete")
         ),

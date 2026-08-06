@@ -125,6 +125,42 @@ VIDEO_CITY_5MBPS_25FPS_30M_V1: dict[str, Any] = {
 }
 
 
+QUICK_CONNECTION_CHECK_V1: dict[str, Any] = {
+    "id": "quick-connection-check-v1",
+    "version": "1",
+    "result_schema_version": 3,
+    "comparable": False,
+    "path_concurrency": "parallel",
+    "stabilization": {
+        "required_registered_seconds": 10,
+        "timeout_seconds": 60,
+        "poll_interval_seconds": 2,
+    },
+    "idle_baseline": {"duration_seconds": 10},
+    "latency_sampler": {"interval_seconds": 1, "enabled_during": ["idle", "video"]},
+    "radio_sampler": {"interval_seconds": 5},
+    "video": {
+        "duration_seconds": 30,
+        "bitrate_mbit_s": 1.0,
+        "fps": 10,
+        "scenario": "city",
+        "payload_bytes": 1200,
+        "trace_id": "synthetic-quick-check-v1",
+        "trace_version": 1,
+        "trace_seed": 7001,
+        "receiver_bucket_seconds": 1,
+        "receiver_settle_seconds": 3,
+    },
+    "final_recovery": {"duration_seconds": 5},
+    "batch": {
+        "default_inter_run_cooldown_seconds": 0,
+        "default_max_consecutive_failures": 1,
+        "default_attempt_multiplier": 1.0,
+        "minimum_extra_attempts": 0,
+    },
+}
+
+
 FROZEN_PROTOCOLS = {
     "comparable-v1": ("Comparable Benchmark v1", COMPARABLE_V1),
     "video-stability-v1": ("Video Stability v1", VIDEO_STABILITY_V1),
@@ -132,6 +168,7 @@ FROZEN_PROTOCOLS = {
         "Video Stability — City, 5 Mbps, 25 fps",
         VIDEO_CITY_5MBPS_25FPS_30M_V1,
     ),
+    "quick-connection-check-v1": ("Quick Connection Check v1", QUICK_CONNECTION_CHECK_V1),
 }
 
 
@@ -170,7 +207,7 @@ PROFILE_SEEDS: list[dict[str, Any]] = [
             "Diagnostic only — excluded from comparison analytics. Verifies router access, "
             "path registration, route selection, test-node access, and basic traffic flow."
         ),
-        "protocol_slug": "video-city-5mbps-25fps-30m-v1",
+        "protocol_slug": "quick-connection-check-v1",
         "profile_version": "1",
         "is_comparable": False,
         "is_default": False,

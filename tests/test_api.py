@@ -1108,7 +1108,7 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
             for row in profile_rows
         )
 
-        preview = client.post(
+        mismatched_preview = client.post(
             "/api/v1/test-campaigns/preview",
             json={
                 "profile_slug": "video-city-5mbps-25fps",
@@ -1119,6 +1119,47 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
                 "antenna_profile_id": antenna_id,
                 "experiment_id": experiment_id,
                 "variant_id": variant_id,
+                "site_id": site_id,
+            },
+        )
+        assert mismatched_preview.status_code == 200
+        assert "experiment_protocol_does_not_match_profile" in mismatched_preview.json()[
+            "blocking_errors"
+        ]
+
+        video_experiment = client.post(
+            "/api/v1/experiments",
+            json={
+                "name": "Video stability repeatability",
+                "comparison_dimension": "general_repeatability",
+                "protocol_slug": "video-city-5mbps-25fps-30m-v1",
+                "site_id": site_id,
+                "primary_metrics": ["video_either_success_percent"],
+            },
+        )
+        assert video_experiment.status_code == 200
+        video_experiment_id = video_experiment.json()["id"]
+        video_variant = client.post(
+            f"/api/v1/experiments/{video_experiment_id}/variants",
+            json={
+                "label": "video baseline",
+                "antenna_mapping": {"lte1": antenna_id, "lte2": antenna_id},
+            },
+        )
+        assert video_variant.status_code == 200
+        video_variant_id = video_variant.json()["id"]
+
+        preview = client.post(
+            "/api/v1/test-campaigns/preview",
+            json={
+                "profile_slug": "video-city-5mbps-25fps",
+                "target_mode": "streamed_time",
+                "target_value": 6,
+                "target_unit": "hours",
+                "router_slug": "demo-fake-ltap",
+                "antenna_profile_id": antenna_id,
+                "experiment_id": video_experiment_id,
+                "variant_id": video_variant_id,
                 "site_id": site_id,
             },
         )
@@ -1139,8 +1180,8 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
                 "target_unit": "minutes",
                 "router_slug": "demo-fake-ltap",
                 "antenna_profile_id": antenna_id,
-                "experiment_id": experiment_id,
-                "variant_id": variant_id,
+                "experiment_id": video_experiment_id,
+                "variant_id": video_variant_id,
                 "site_id": site_id,
             },
         )
@@ -1158,8 +1199,8 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
                 "target_unit": "hours",
                 "router_slug": "demo-fake-ltap",
                 "antenna_profile_id": antenna_id,
-                "experiment_id": experiment_id,
-                "variant_id": variant_id,
+                "experiment_id": video_experiment_id,
+                "variant_id": video_variant_id,
                 "site_id": site_id,
                 "video_duration_seconds": 60,
                 "udp_bitrate_mbit_s": 50,
@@ -1177,10 +1218,10 @@ def test_protocol_antenna_and_batch_api_use_persistent_models() -> None:
                 "target_unit": "hours",
                 "router_slug": "demo-fake-ltap",
                 "antenna_profile_id": antenna_id,
-                "experiment_id": experiment_id,
-                "variant_id": variant_id,
+                "experiment_id": video_experiment_id,
+                "variant_id": video_variant_id,
                 "site_id": site_id,
-                "start_at": "2026-07-22T23:00",
+                "start_at": "2026-12-22T23:00",
             },
         )
         assert campaign.status_code == 200

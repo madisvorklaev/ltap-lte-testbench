@@ -214,16 +214,14 @@
             <h3>Live speed</h3>
             <table>
               <tr><th>Modem</th><th>Receiver rate</th><th>Average TCP</th><th>Average UDP</th></tr>
-              <tr><td>lte1</td><td id="lte1-current">-</td><td id="lte1-tcp">-</td><td id="lte1-udp">-</td></tr>
-              <tr><td>lte2</td><td id="lte2-current">-</td><td id="lte2-tcp">-</td><td id="lte2-udp">-</td></tr>
+              <tbody id="speed-rows"></tbody>
             </table>
           </div>
           <div>
             <h3>LTE parameters</h3>
             <table>
               <tr><th>Modem</th><th>Band</th><th>RSRP</th><th>RSRQ</th><th>SINR</th></tr>
-              <tr><td>lte1</td><td id="lte1-band">-</td><td id="lte1-rsrp">-</td><td id="lte1-rsrq">-</td><td id="lte1-sinr">-</td></tr>
-              <tr><td>lte2</td><td id="lte2-band">-</td><td id="lte2-rsrp">-</td><td id="lte2-rsrq">-</td><td id="lte2-sinr">-</td></tr>
+              <tbody id="radio-rows"></tbody>
             </table>
           </div>
         </div>
@@ -231,16 +229,14 @@
           <h3>Latency</h3>
           <table>
             <tr><th>Modem</th><th>Average</th><th>Min</th><th>Max</th><th>Loss</th></tr>
-            <tr><td>lte1</td><td id="lte1-lat-avg">-</td><td id="lte1-lat-min">-</td><td id="lte1-lat-max">-</td><td id="lte1-lat-loss">-</td></tr>
-            <tr><td>lte2</td><td id="lte2-lat-avg">-</td><td id="lte2-lat-min">-</td><td id="lte2-lat-max">-</td><td id="lte2-lat-loss">-</td></tr>
+            <tbody id="latency-rows"></tbody>
           </table>
         </div>
         <div style="margin-top:14px;">
           <h3>Video health</h3>
           <table>
             <tr><th>Modem</th><th id="video-frames-heading">Frames seen</th><th>Complete</th><th>Lost</th><th id="video-incomplete-heading">Partial</th><th id="video-success-heading">Complete among seen</th><th>p95 fragment span</th></tr>
-            <tr><td>lte1</td><td id="lte1-video-frames">-</td><td id="lte1-video-complete">-</td><td id="lte1-video-lost">-</td><td id="lte1-video-incomplete">-</td><td id="lte1-video-success">-</td><td id="lte1-video-p95">-</td></tr>
-            <tr><td>lte2</td><td id="lte2-video-frames">-</td><td id="lte2-video-complete">-</td><td id="lte2-video-lost">-</td><td id="lte2-video-incomplete">-</td><td id="lte2-video-success">-</td><td id="lte2-video-p95">-</td></tr>
+            <tbody id="video-rows"></tbody>
           </table>
           <div class="muted" id="video-compare" style="margin-top:6px;">No video frame probe yet.</div>
         </div>
@@ -264,6 +260,7 @@
       let previewTimer = null;
       let previousLiveSample = null;
       let pollInFlight = false;
+      let renderedPathIds = [];
 
       const request = async (url, options = {}) => {
         const response = await fetch(url, {
@@ -317,6 +314,40 @@
         return n * multiplier / 1000000;
       };
       const setText = (id, value) => { $(id).textContent = value ?? "-"; };
+      const pathKey = (id) => String(id).replace(/[^A-Za-z0-9_-]/g, "_");
+      const currentPathIds = (run) => {
+        const ids = [...(run?.path_ids || [])];
+        for (const id of Object.keys(run?.live_metrics?.paths || {})) if (!ids.includes(id)) ids.push(id);
+        for (const row of run?.telemetry || []) if (row.path_id && !ids.includes(row.path_id)) ids.push(row.path_id);
+        return ids.length ? ids : ["lte1", "lte2"];
+      };
+      const ensurePathRows = (pathIds) => {
+        if (JSON.stringify(renderedPathIds) === JSON.stringify(pathIds)) return;
+        renderedPathIds = [...pathIds];
+        const tableSpecs = [
+          ["speed-rows", ["current", "tcp", "udp"]],
+          ["radio-rows", ["band", "rsrp", "rsrq", "sinr"]],
+          ["latency-rows", ["lat-avg", "lat-min", "lat-max", "lat-loss"]],
+          ["video-rows", ["video-frames", "video-complete", "video-lost", "video-incomplete", "video-success", "video-p95"]],
+        ];
+        for (const [tbodyId, suffixes] of tableSpecs) {
+          const body = $(tbodyId);
+          body.replaceChildren();
+          for (const pathId of pathIds) {
+            const tr = document.createElement("tr");
+            const label = document.createElement("td");
+            label.textContent = pathId;
+            tr.append(label);
+            for (const suffix of suffixes) {
+              const td = document.createElement("td");
+              td.id = `${pathKey(pathId)}-${suffix}`;
+              td.textContent = "-";
+              tr.append(td);
+            }
+            body.append(tr);
+          }
+        }
+      };
       const latestEvent = (run, type) => [...(run.events || [])].reverse().find((event) => event.type === type);
       const eventTime = (event) => event ? new Date(event.timestamp).getTime() / 1000 : null;
       const progressFor = (run) => {
@@ -360,7 +391,7 @@
       };
       const rememberLiveSample = (run) => {
         const bytesByPath = {};
-        for (const id of ["lte1", "lte2"]) {
+        for (const id of currentPathIds(run)) {
           const bytes = livePathBytes(run.live_metrics || {}, id);
           if (Number.isFinite(bytes)) bytesByPath[id] = bytes;
         }
@@ -370,26 +401,29 @@
         const rows = run.telemetry || [];
         for (const row of rows || []) {
           const id = row.path_id;
-          if (!["lte1", "lte2"].includes(id)) continue;
           const live = liveDeltaRateMbit(run, id);
-          const tx = rateToMbit(row.tx_rate);
+          const tx = Number(row.tx_mbit_s ?? rateToMbit(row.tx_rate));
           const displayed = Number.isFinite(live) && live > 0 ? live : tx;
-          setText(`${id}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
-          setText(`${id}-band`, row.primary_band || "-");
-          setText(`${id}-rsrp`, row.rsrp || "-");
-          setText(`${id}-rsrq`, row.rsrq || "-");
-          setText(`${id}-sinr`, row.sinr || "-");
+          const key = pathKey(id);
+          setText(`${key}-current`, Number.isFinite(displayed) ? `${displayed.toFixed(2)} Mbit/s` : "-");
+          setText(`${key}-band`, row.primary_band || "-");
+          setText(`${key}-rsrp`, row.rsrp ?? "-");
+          setText(`${key}-rsrq`, row.rsrq ?? "-");
+          setText(`${key}-sinr`, row.sinr ?? "-");
         }
       };
-      const applyAverages = (summary, liveMetrics) => {
-        for (const id of ["lte1", "lte2"]) {
+      const applyAverages = (run, summary, liveMetrics) => {
+        for (const id of currentPathIds(run)) {
+          const key = pathKey(id);
           const tcpRows = (summary.upload_results || []).filter((row) => row.path_id === id);
           const udpRows = (summary.udp_upload_results || []).filter((row) => row.path_id === id);
           const tcp = tcpRows.at(-1);
           const udp = udpRows.at(-1);
           const live = (liveMetrics?.paths || {})[id] || {};
-          setText(`${id}-tcp`, fmtMbit(live.tcp_average_mbit_s ?? tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
-          setText(`${id}-udp`, fmtMbit(live.udp_average_mbit_s ?? udp?.server_average_mbit_s ?? udp?.average_mbit_s));
+          const rate = liveDeltaRateMbit(run, id);
+          setText(`${key}-current`, fmtMbit(rate));
+          setText(`${key}-tcp`, fmtMbit(live.tcp_average_mbit_s ?? tcp?.server_average_mbit_s ?? tcp?.speed_upload_mbit_s));
+          setText(`${key}-udp`, fmtMbit(live.udp_average_mbit_s ?? udp?.server_average_mbit_s ?? udp?.average_mbit_s));
         }
       };
       const applyPhaseUpload = (liveMetrics) => {
@@ -404,15 +438,16 @@
         return latency?.details?.results || [];
       };
       const applyLatency = (run, liveMetrics) => {
-        for (const id of ["lte1", "lte2"]) {
+        for (const id of currentPathIds(run)) {
+          const key = pathKey(id);
           const row = latencyRows(run, liveMetrics).find((item) => item.path_id === id);
-          setText(`${id}-lat-avg`, fmtMs(row?.avg_ms));
-          setText(`${id}-lat-min`, fmtMs(row?.min_ms));
-          setText(`${id}-lat-max`, fmtMs(row?.max_ms));
-          setText(`${id}-lat-loss`, fmtPct(row?.loss_percent));
+          setText(`${key}-lat-avg`, fmtMs(row?.p50_ms ?? row?.avg_ms));
+          setText(`${key}-lat-min`, fmtMs(row?.min_ms));
+          setText(`${key}-lat-max`, fmtMs(row?.max_ms));
+          setText(`${key}-lat-loss`, fmtPct(row?.loss_percent));
         }
       };
-      const applyVideoHealth = (summary, liveMetrics) => {
+      const applyVideoHealth = (run, summary, liveMetrics) => {
         const videoResults = summary.video_probe_results || {};
         const liveVideo = liveMetrics?.video_probe || {};
         const video = videoResults.receiver_summary || liveVideo || {};
@@ -421,7 +456,8 @@
         setText("video-frames-heading", finalMode ? "Sent" : "Frames seen");
         setText("video-incomplete-heading", finalMode ? "Not decodable" : "Partial");
         setText("video-success-heading", finalMode ? "End-to-end success" : "Complete among seen");
-        for (const id of ["lte1", "lte2"]) {
+        for (const id of currentPathIds(run)) {
+          const key = pathKey(id);
           const liveRow = (liveVideo.paths || {})[id] || {};
           const row = paths[id] || liveRow;
           const receiver = row.receiver || liveRow || {};
@@ -430,12 +466,12 @@
           const notDecodable = row.frames_not_decodable ?? receiver.frames_incomplete ?? receiver.frames_partial;
           const successPercent = finalMode ? row.frame_success_percent : receiver.completion_among_seen_percent;
           const fragmentSpanP95 = receiver.fragment_arrival_span_ms_p95 ?? receiver.frame_completion_ms_p95;
-          setText(`${id}-video-frames`, sentOrSeen ?? "-");
-          setText(`${id}-video-complete`, complete ?? "-");
-          setText(`${id}-video-lost`, row.frames_fully_lost ?? "-");
-          setText(`${id}-video-incomplete`, notDecodable ?? "-");
-          setText(`${id}-video-success`, fmtPct(successPercent));
-          setText(`${id}-video-p95`, fmtMs(fragmentSpanP95));
+          setText(`${key}-video-frames`, sentOrSeen ?? "-");
+          setText(`${key}-video-complete`, complete ?? "-");
+          setText(`${key}-video-lost`, row.frames_fully_lost ?? "-");
+          setText(`${key}-video-incomplete`, notDecodable ?? "-");
+          setText(`${key}-video-success`, fmtPct(successPercent));
+          setText(`${key}-video-p95`, fmtMs(fragmentSpanP95));
         }
         const winners = video.first_arrival_winners || {};
         const ties = video.first_arrival_ties || 0;
@@ -458,6 +494,7 @@
           return;
         }
         const run = data.run;
+        ensurePathRows(currentPathIds(run));
         const desc = run.description || {};
         const title = `${run.router_name || "router"} · ${desc.video_resolution || "profile"} ${desc.video_scenario || ""}`;
         setText("current-test", title);
@@ -467,10 +504,10 @@
         $("progress").value = progress;
         setText("progress-label", `${progress}%`);
         applyTelemetry(run);
-        applyAverages(run.summary || {}, run.live_metrics || {});
+        applyAverages(run, run.summary || {}, run.live_metrics || {});
         applyPhaseUpload(run.live_metrics || {});
         applyLatency(run, run.live_metrics || {});
-        applyVideoHealth(run.summary || {}, run.live_metrics || {});
+        applyVideoHealth(run, run.summary || {}, run.live_metrics || {});
         rememberLiveSample(run);
         $("backend-log").textContent = (run.events || []).map((event) => `${event.timestamp} ${event.type}: ${event.message}`).join("\n") || "No events.";
         $("summary").textContent = Object.keys(run.summary || {}).length ? JSON.stringify(run.summary, null, 2) : "No summary yet.";
@@ -478,7 +515,7 @@
       const pollRunStatus = async () => {
         if (pollInFlight) return;
         pollInFlight = true;
-        try { renderRunStatus(await request("/api/v1/lab/status")); }
+        try { renderRunStatus(await request("/api/v1/test-campaigns/active/live")); }
         catch (error) { $("backend-log").textContent = error.message; }
         finally { pollInFlight = false; }
       };
@@ -512,14 +549,14 @@
         if (!profile) return;
         $("profile-description").textContent = profile.description;
         const summary = profile.summary || {};
-        $("profile-summary").innerHTML = `
-          Video: ${summary.video_bitrate_mbit_s ?? "-"} Mbps · ${summary.video_fps ?? "-"} fps · ${summary.scenario || "-"}<br>
-          Per run: ${fmtDuration(profile.per_run_stream_seconds)} streamed video<br>
-          Paths: both LTE paths in parallel<br>
-          Cooldown: ${fmtDuration(summary.cooldown_seconds)}<br>
-          Comparable: ${profile.comparable ? "yes" : "no"}<br>
-          Profile version: v${profile.version}
-        `;
+        $("profile-summary").textContent = [
+          `Video: ${summary.video_bitrate_mbit_s ?? "-"} Mbps · ${summary.video_fps ?? "-"} fps · ${summary.scenario || "-"}`,
+          `Per run: ${fmtDuration(profile.per_run_stream_seconds)} streamed video`,
+          "Paths: active router paths in parallel",
+          `Cooldown: ${fmtDuration(summary.cooldown_seconds)}`,
+          `Comparable: ${profile.comparable ? "yes" : "no"}`,
+          `Profile version: v${profile.version}`,
+        ].join("\n");
       };
       const renderPreview = async () => {
         try {
@@ -529,16 +566,16 @@
           });
           const errors = data.blocking_errors || [];
           const warnings = data.warnings || [];
-          $("preview").innerHTML = `
-            <strong>${data.profile.name} v${data.profile.version}</strong><br>
-            ${data.target_valid_runs} valid runs · ${fmtDuration(data.planned_stream_seconds)} planned streamed video<br>
-            ${fmtDuration(data.estimated_successful_run_wall_seconds)} estimated per successful run<br>
-            ${fmtDuration(data.estimated_minimum_campaign_wall_seconds)} minimum wall-clock time<br>
-            ${fmtDuration(data.estimated_worst_case_campaign_wall_seconds)} worst-case wall-clock time<br>
-            Stop conditions: ${data.target_valid_runs} valid runs, ${data.max_attempts} attempts, scheduled deadline, ${data.max_consecutive_failures} consecutive failures<br>
-            ${warnings.length ? `<span class="muted">Warnings: ${warnings.join(", ")}</span><br>` : ""}
-            ${errors.length ? `<span class="bad">Blocking: ${errors.join(", ")}</span>` : `<span class="ok">Ready to create</span>`}
-          `;
+          $("preview").textContent = [
+            `${data.profile.name} v${data.profile.version}`,
+            `${data.target_valid_runs} valid runs · ${fmtDuration(data.planned_stream_seconds)} planned streamed video`,
+            `${fmtDuration(data.estimated_successful_run_wall_seconds)} estimated per successful run`,
+            `${fmtDuration(data.estimated_minimum_campaign_wall_seconds)} minimum wall-clock time`,
+            `${fmtDuration(data.estimated_worst_case_campaign_wall_seconds)} worst-case wall-clock time`,
+            `Stop conditions: ${data.target_valid_runs} valid runs, ${data.max_attempts} attempts, scheduled deadline, ${data.max_consecutive_failures} consecutive failures`,
+            warnings.length ? `Warnings: ${warnings.join(", ")}` : "",
+            errors.length ? `Blocking: ${errors.join(", ")}` : "Ready to create",
+          ].filter(Boolean).join("\n");
           $("create-campaign").disabled = errors.length > 0;
           $("create-campaign").textContent = startMode === "schedule" ? "Schedule test campaign" : "Start test campaign";
         } catch (error) {
@@ -558,6 +595,18 @@
         $("streamed-unit").classList.toggle("hidden", mode !== "streamed_time");
         $("run-target").classList.toggle("hidden", mode !== "valid_runs");
         schedulePreview();
+      };
+      const applyProfileDefaults = () => {
+        const profile = profiles.find((row) => row.slug === $("profile").value);
+        if (!profile) return;
+        const mode = profile.default_target_mode || "streamed_time";
+        setTargetMode(mode);
+        if (mode === "streamed_time") {
+          $("target-value").value = profile.default_target_value ?? 6;
+          $("target-unit").value = profile.default_target_unit || "hours";
+        } else {
+          $("target-runs").value = Math.max(1, Math.round(Number(profile.default_target_value || 1)));
+        }
       };
       const setStartMode = (mode) => {
         startMode = mode;
@@ -584,36 +633,61 @@
       };
       const renderCampaigns = async () => {
         const rows = await request("/api/v1/test-batches");
-        $("campaigns").innerHTML = rows.slice(0, 20).map((row) => {
+        const body = $("campaigns");
+        body.replaceChildren();
+        for (const row of rows.slice(0, 20)) {
           const streamed = row.planned_stream_seconds
             ? `${fmtDuration((row.valid_run_count || 0) * (row.planned_stream_seconds / Math.max(1, row.target_valid_runs)))} / ${fmtDuration(row.planned_stream_seconds)}`
             : "-";
           const canDelete = ["DRAFT", "SCHEDULED"].includes(row.state) && !row.attempt_count;
           const canStart = ["DRAFT", "SCHEDULED", "PAUSED"].includes(row.state);
           const canCancel = ["RUNNING", "PAUSE_REQUESTED", "CANCEL_REQUESTED"].includes(row.state);
-          const actions = [
-            `<a href="/test-batches/${row.batch_id}">View</a>`,
-            canStart ? `<button type="button" data-action="start" data-batch-id="${row.batch_id}">Start</button>` : "",
-            canCancel ? `<button type="button" data-action="cancel" data-batch-id="${row.batch_id}">Cancel</button>` : "",
-            canDelete ? `<button type="button" data-action="delete" data-batch-id="${row.batch_id}">Delete</button>` : ""
-          ].filter(Boolean).join(" ");
-          return `
-            <tr>
-              <td>${row.name}</td>
-              <td>${row.test_profile_slug || row.protocol_slug}</td>
-              <td>${row.valid_run_count} / ${row.target_valid_runs} valid runs</td>
-              <td>${streamed}</td>
-              <td>${row.state}</td>
-              <td>${actions}</td>
-            </tr>`;
-        }).join("") || "<tr><td colspan=\"6\" class=\"muted\">No campaigns yet.</td></tr>";
+          const tr = document.createElement("tr");
+          for (const value of [row.name, row.test_profile_slug || row.protocol_slug, `${row.valid_run_count} / ${row.target_valid_runs} valid runs`, streamed, row.state]) {
+            const td = document.createElement("td");
+            td.textContent = value;
+            tr.append(td);
+          }
+          const actions = document.createElement("td");
+          const view = document.createElement("a");
+          view.href = `/test-batches/${encodeURIComponent(row.batch_id)}`;
+          view.textContent = "View";
+          actions.append(view);
+          for (const [enabled, action, label] of [[canStart, "start", "Start"], [canCancel, "cancel", "Cancel"], [canDelete, "delete", "Delete"]]) {
+            if (!enabled) continue;
+            actions.append(" ");
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.action = action;
+            button.dataset.batchId = row.batch_id;
+            button.textContent = label;
+            actions.append(button);
+          }
+          tr.append(actions);
+          body.append(tr);
+        }
+        if (!body.children.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 6;
+          td.className = "muted";
+          td.textContent = "No campaigns yet.";
+          tr.append(td);
+          body.append(tr);
+        }
         await renderActiveCampaign();
       };
       const loadProfiles = async () => {
         profiles = await request("/api/v1/test-profiles");
-        $("profile").innerHTML = profiles.map((profile) => `
-          <option value="${profile.slug}" ${profile.default ? "selected" : ""}>${profile.name}</option>
-        `).join("");
+        $("profile").replaceChildren();
+        for (const profile of profiles) {
+          const option = document.createElement("option");
+          option.value = profile.slug;
+          option.selected = Boolean(profile.default);
+          option.textContent = profile.name;
+          $("profile").append(option);
+        }
+        applyProfileDefaults();
         renderProfile();
         await renderPreview();
       };
@@ -621,7 +695,7 @@
       $("mode-runs").addEventListener("click", () => setTargetMode("valid_runs"));
       $("start-now").addEventListener("click", () => setStartMode("now"));
       $("start-schedule").addEventListener("click", () => setStartMode("schedule"));
-      $("profile").addEventListener("change", () => { renderProfile(); schedulePreview(); });
+      $("profile").addEventListener("change", () => { applyProfileDefaults(); renderProfile(); schedulePreview(); });
       for (const id of ["target-value", "target-unit", "target-runs", "router", "antenna", "experiment", "variant", "start-at"]) {
         $(id).addEventListener("input", () => { syncVariants(); schedulePreview(); });
         $(id).addEventListener("change", () => { syncVariants(); schedulePreview(); });

@@ -1,6 +1,7 @@
 import csv
 import io
 import math
+import statistics
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
@@ -192,6 +193,8 @@ LAB_LOCK = Lock()
 LAB_ACTIVE_RUN_ID: str | None = None
 LAB_CANCEL_EVENTS: dict[str, Event] = {}
 BATCH_CANCEL_EVENTS: dict[str, Event] = {}
+SCHEDULER_STOP_EVENT = Event()
+SCHEDULER_STARTED = False
 LAB_RESERVATION_OWNER = "ltap-testbench"
 TCP_FILE_SIZE_OPTIONS_MB = [5, 10, 25, 50, 100]
 ACTIVE_BATCH_STATES = (
@@ -452,10 +455,10 @@ def _profile_stream_seconds(definition: dict[str, Any]) -> int:
 def _profile_attempt_rules(definition: dict[str, Any]) -> dict[str, Any]:
     batch = definition.get("batch") or {}
     return {
-        "cooldown": int(batch.get("default_inter_run_cooldown_seconds") or 120),
-        "max_failures": int(batch.get("default_max_consecutive_failures") or 3),
-        "attempt_multiplier": float(batch.get("default_attempt_multiplier") or 1.25),
-        "minimum_extra_attempts": int(batch.get("minimum_extra_attempts") or 2),
+        "cooldown": int(batch.get("default_inter_run_cooldown_seconds", 120)),
+        "max_failures": int(batch.get("default_max_consecutive_failures", 3)),
+        "attempt_multiplier": float(batch.get("default_attempt_multiplier", 1.25)),
+        "minimum_extra_attempts": int(batch.get("minimum_extra_attempts", 2)),
     }
 
 
@@ -482,6 +485,9 @@ def _profile_row(profile: TestProfile, protocol: BenchmarkProtocol) -> dict[str,
         },
         "default_target_mode": profile.default_target_mode,
         "default_target_value": profile.default_target_value,
+        "default_target_unit": (
+            "hours" if profile.default_target_mode == "streamed_time" else "runs"
+        ),
     }
 
 
@@ -499,12 +505,22 @@ def _parse_local_start(value: str | None) -> datetime | None:
     return parsed.astimezone(UTC)
 
 
-def _default_campaign_name(profile: TestProfile, mode: str, value: float, valid_runs: int) -> str:
+def _default_campaign_name(
+    profile: TestProfile,
+    mode: str,
+    value: float,
+    unit: str,
+    valid_runs: int,
+) -> str:
     if profile.slug == "quick-connection-check":
         return "Quick connection check"
     if mode == "streamed_time":
-        hours = value if value >= 1 else value / 60
-        return f"{hours:g}-hour city video test"
+        seconds = _seconds_from_target(value, unit)
+        if seconds % 3600 == 0:
+            return f"{seconds // 3600:g}-hour city video test"
+        if seconds % 60 == 0:
+            return f"{seconds // 60:g}-minute city video test"
+        return f"{seconds:g}-second city video test"
     if profile.slug == "comparable-v1":
         return f"{valid_runs}-run full comparable benchmark"
     return f"{valid_runs}-run city video test"
@@ -570,6 +586,8 @@ def _campaign_preview(
         blocking_errors.append("variant_missing")
     if variant is not None and variant.experiment_id != payload.experiment_id:
         blocking_errors.append("variant_does_not_belong_to_experiment")
+    if experiment is not None and experiment.protocol_id != protocol.id:
+        blocking_errors.append("experiment_protocol_does_not_match_profile")
     site_id = payload.site_id or (experiment.site_id if experiment is not None else None)
     if site_id is not None and session.get(TestSite, site_id) is None:
         blocking_errors.append("site_missing")
@@ -846,6 +864,108 @@ def _run_batch_background(batch_id: str, cancel_event: Event) -> None:
         BATCH_CANCEL_EVENTS.pop(batch_id, None)
 
 
+def _start_batch_worker(
+    batch_id: str,
+    session: Session,
+    *,
+    allow_future_schedule: bool = False,
+) -> dict[str, Any]:
+    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="test batch not found")
+    if batch.state not in {BatchState.DRAFT, BatchState.SCHEDULED, BatchState.PAUSED}:
+        raise HTTPException(status_code=409, detail=f"batch is {batch.state.value}")
+    now = datetime.now(UTC)
+    if (
+        batch.state == BatchState.SCHEDULED
+        and batch.start_after is not None
+        and not allow_future_schedule
+    ):
+        start_after = batch.start_after
+        if start_after.tzinfo is None:
+            start_after = start_after.replace(tzinfo=UTC)
+        if start_after > now:
+            raise HTTPException(status_code=409, detail="scheduled start time has not arrived")
+    if BATCH_CANCEL_EVENTS:
+        active_batch_id = next(iter(BATCH_CANCEL_EVENTS))
+        active_worker_batch = session.scalar(
+            select(TestBatch).where(TestBatch.batch_id == active_batch_id)
+        )
+        active_protocol = (
+            session.scalar(
+                select(BenchmarkProtocol).where(
+                    BenchmarkProtocol.protocol_hash == active_worker_batch.protocol_hash
+                )
+            )
+            if active_worker_batch is not None
+            else None
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=_batch_conflict_detail(
+                "batch worker is already active",
+                active_worker_batch,
+                active_protocol,
+            ),
+        )
+    active_batch = _active_batch(session)
+    active_protocol = (
+        session.scalar(
+            select(BenchmarkProtocol).where(
+                BenchmarkProtocol.protocol_hash == active_batch.protocol_hash
+            )
+        )
+        if active_batch is not None
+        else None
+    )
+    if active_batch is not None and active_batch.batch_id != batch_id:
+        raise HTTPException(
+            status_code=409,
+            detail=_batch_conflict_detail(
+                f"batch {active_batch.batch_id} is active",
+                active_batch,
+                active_protocol,
+            ),
+        )
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    if protocol is None:
+        raise HTTPException(status_code=404, detail="benchmark protocol not found")
+    cancel_event = Event()
+    BATCH_CANCEL_EVENTS[batch_id] = cancel_event
+    batch.state = BatchState.RUNNING
+    batch.started_at = batch.started_at or now
+    batch.state_reason = None
+    session.add(batch)
+    session.commit()
+    Thread(target=_run_batch_background, args=(batch_id, cancel_event), daemon=True).start()
+    return _batch_row(batch, protocol)
+
+
+def _start_due_scheduled_batches_once() -> None:
+    with SessionLocal() as session:
+        now = datetime.now(UTC)
+        due = session.scalars(
+            select(TestBatch)
+            .where(TestBatch.state == BatchState.SCHEDULED)
+            .where(TestBatch.start_after.is_not(None))
+            .where(TestBatch.start_after <= now)
+            .order_by(TestBatch.start_after, TestBatch.id)
+            .limit(1)
+        ).all()
+        for batch in due:
+            try:
+                _start_batch_worker(batch.batch_id, session, allow_future_schedule=True)
+            except HTTPException:
+                continue
+
+
+def _scheduled_batch_loop() -> None:
+    while not SCHEDULER_STOP_EVENT.wait(5):
+        _start_due_scheduled_batches_once()
+
+
 def _latest_lab_run(session: Session) -> TestRun | None:
     if LAB_ACTIVE_RUN_ID:
         run = session.scalar(select(TestRun).where(TestRun.run_id == LAB_ACTIVE_RUN_ID))
@@ -998,7 +1118,6 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
 
 
 def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
-    latest_by_path: dict[str | None, MetricSample] = {}
     samples = session.scalars(
         select(MetricSample)
         .where(
@@ -1008,23 +1127,122 @@ def _live_latency_results(session: Session, run: TestRun) -> list[dict]:
         .order_by(MetricSample.offset_ms.desc(), MetricSample.id.desc())
         .limit(200)
     ).all()
-    for sample in samples:
-        if sample.path_id not in latest_by_path:
-            latest_by_path[sample.path_id] = sample
-    return [
-        {
-            "path_id": sample.path_id,
-            "target": sample.details_json.get("target"),
-            "phase": sample.phase,
-            "phase_instance": sample.phase_instance,
-            "offset_ms": sample.offset_ms,
-            "avg_ms": sample.value,
-            "rtt_ms": sample.value,
-            "validity": sample.validity,
-            "source": "metric_samples",
-        }
-        for sample in sorted(latest_by_path.values(), key=lambda item: item.path_id or "")
+    if not samples:
+        return []
+    latest_offset = max(sample.offset_ms for sample in samples)
+    window = [sample for sample in samples if sample.offset_ms >= latest_offset - 60_000]
+    by_path: dict[str | None, list[MetricSample]] = {}
+    for sample in window:
+        by_path.setdefault(sample.path_id, []).append(sample)
+    rows = []
+    for path_id, path_samples in sorted(by_path.items(), key=lambda item: item[0] or ""):
+        values = [
+            value
+            for value in (_float_value(sample.value) for sample in path_samples)
+            if value is not None
+        ]
+        valid_count = sum(
+            1
+            for sample in path_samples
+            if sample.validity in {"valid", "ok", "current", ""}
+        )
+        expected_count = max(len(path_samples), 1)
+        latest = max(path_samples, key=lambda sample: (sample.offset_ms, sample.id))
+        rows.append(
+            {
+                "path_id": path_id,
+                "target": latest.details_json.get("target"),
+                "phase": latest.phase,
+                "phase_instance": latest.phase_instance,
+                "offset_ms": latest.offset_ms,
+                "avg_ms": statistics.fmean(values) if values else None,
+                "p50_ms": statistics.median(values) if values else None,
+                "p95_ms": (
+                    sorted(values)[max(0, math.ceil(len(values) * 0.95) - 1)]
+                    if values
+                    else None
+                ),
+                "min_ms": min(values) if values else None,
+                "max_ms": max(values) if values else None,
+                "loss_percent": round((1 - valid_count / expected_count) * 100, 2),
+                "valid_sample_count": valid_count,
+                "expected_sample_count": expected_count,
+                "validity": latest.validity,
+                "source": "metric_samples",
+            }
+        )
+    return rows
+
+
+def _latest_radio_telemetry(session: Session, run: TestRun) -> list[dict[str, Any]]:
+    metric_names = [
+        "radio_rsrp_dbm",
+        "radio_rsrq_db",
+        "radio_sinr_db",
+        "radio_rssi_dbm",
+        "radio_band",
+        "router_tx_mbit_s",
+        "router_rx_mbit_s",
     ]
+    samples = session.scalars(
+        select(MetricSample)
+        .where(MetricSample.run_pk == run.id, MetricSample.metric_name.in_(metric_names))
+        .order_by(MetricSample.offset_ms.desc(), MetricSample.id.desc())
+        .limit(500)
+    ).all()
+    latest: dict[str | None, dict[str, MetricSample]] = {}
+    for sample in samples:
+        by_metric = latest.setdefault(sample.path_id, {})
+        by_metric.setdefault(sample.metric_name, sample)
+    rows = []
+    now = datetime.now(UTC)
+    for path_id, by_metric in sorted(latest.items(), key=lambda item: item[0] or ""):
+        newest = max(by_metric.values(), key=lambda sample: (sample.offset_ms, sample.id))
+        sample_time = newest.timestamp
+        if sample_time.tzinfo is None:
+            sample_time = sample_time.replace(tzinfo=UTC)
+        age_seconds = max(0.0, (now - sample_time.astimezone(UTC)).total_seconds())
+        band = by_metric.get("radio_band")
+        rows.append(
+            {
+                "path_id": path_id,
+                "timestamp": newest.timestamp.isoformat(),
+                "sample_age_seconds": age_seconds,
+                "validity": newest.validity,
+                "primary_band": (
+                    band.details_json.get("band")
+                    if band is not None and band.details_json.get("band") is not None
+                    else (band.value if band is not None else None)
+                ),
+                "rsrp": by_metric.get("radio_rsrp_dbm").value
+                if by_metric.get("radio_rsrp_dbm") is not None
+                else None,
+                "rsrq": by_metric.get("radio_rsrq_db").value
+                if by_metric.get("radio_rsrq_db") is not None
+                else None,
+                "sinr": by_metric.get("radio_sinr_db").value
+                if by_metric.get("radio_sinr_db") is not None
+                else None,
+                "rssi": by_metric.get("radio_rssi_dbm").value
+                if by_metric.get("radio_rssi_dbm") is not None
+                else None,
+                "tx_mbit_s": by_metric.get("router_tx_mbit_s").value
+                if by_metric.get("router_tx_mbit_s") is not None
+                else None,
+                "rx_mbit_s": by_metric.get("router_rx_mbit_s").value
+                if by_metric.get("router_rx_mbit_s") is not None
+                else None,
+                "tx_rate": by_metric.get("router_tx_mbit_s").value
+                if by_metric.get("router_tx_mbit_s") is not None
+                else None,
+                "registration_state": newest.details_json.get("registration_state"),
+                "operator": newest.details_json.get("operator"),
+                "access_technology": newest.details_json.get("access_technology"),
+                "cell_id": newest.details_json.get("cell_id"),
+                "stale": age_seconds > 15,
+            }
+        )
+    return rows
 
 
 def _float_value(value: Any) -> float | None:
@@ -1070,12 +1288,24 @@ def _analytics_run_row(run: TestRun) -> dict[str, Any]:
 
 @app.on_event("startup")
 def startup() -> None:
+    global SCHEDULER_STARTED
     init_db()
     with SessionLocal() as session:
         seed_benchmark_protocols(session)
         recover_interrupted_batches(session)
         with suppress(LabRecoveryError):
             _recover_orphaned_lab_reservations(session)
+    if not SCHEDULER_STARTED:
+        SCHEDULER_STOP_EVENT.clear()
+        SCHEDULER_STARTED = True
+        Thread(target=_scheduled_batch_loop, name="scheduled-batch-loop", daemon=True).start()
+
+
+@app.on_event("shutdown")
+def shutdown() -> None:
+    global SCHEDULER_STARTED
+    SCHEDULER_STOP_EVENT.set()
+    SCHEDULER_STARTED = False
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -1466,6 +1696,7 @@ def create_test_campaign(
         profile,
         payload.target_mode,
         payload.target_value,
+        payload.target_unit,
         int(preview["target_valid_runs"]),
     )
     batch = TestBatch(
@@ -1505,7 +1736,15 @@ def create_test_campaign(
     )
     session.add(batch)
     session.commit()
+    if start_after is None:
+        started = _start_batch_worker(batch.batch_id, session)
+        return {"campaign_id": batch.batch_id, "batch": started, "preview": preview}
     return {"campaign_id": batch.batch_id, "batch": _batch_row(batch, protocol), "preview": preview}
+
+
+@app.get("/api/v1/test-campaigns/active/live")
+def active_test_campaign_live(session: Session = Depends(get_session)) -> dict[str, Any]:
+    return _active_test_campaign_live_payload(session)
 
 
 @app.post("/api/v1/test-campaigns/{campaign_id}/start")
@@ -1612,66 +1851,7 @@ def test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[s
 
 @app.post("/api/v1/test-batches/{batch_id}/start")
 def start_test_batch(batch_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
-    batch = session.scalar(select(TestBatch).where(TestBatch.batch_id == batch_id))
-    if batch is None:
-        raise HTTPException(status_code=404, detail="test batch not found")
-    if batch.state not in {BatchState.DRAFT, BatchState.SCHEDULED, BatchState.PAUSED}:
-        raise HTTPException(status_code=409, detail=f"batch is {batch.state.value}")
-    if BATCH_CANCEL_EVENTS:
-        active_batch_id = next(iter(BATCH_CANCEL_EVENTS))
-        active_worker_batch = session.scalar(
-            select(TestBatch).where(TestBatch.batch_id == active_batch_id)
-        )
-        active_protocol = (
-            session.scalar(
-                select(BenchmarkProtocol).where(
-                    BenchmarkProtocol.protocol_hash == active_worker_batch.protocol_hash
-                )
-            )
-            if active_worker_batch is not None
-            else None
-        )
-        raise HTTPException(
-            status_code=409,
-            detail=_batch_conflict_detail(
-                "batch worker is already active",
-                active_worker_batch,
-                active_protocol,
-            ),
-        )
-    active_batch = _active_batch(session)
-    active_protocol = (
-        session.scalar(
-            select(BenchmarkProtocol).where(
-                BenchmarkProtocol.protocol_hash == active_batch.protocol_hash
-            )
-        )
-        if active_batch is not None
-        else None
-    )
-    if active_batch is not None and active_batch.batch_id != batch_id:
-        raise HTTPException(
-            status_code=409,
-            detail=_batch_conflict_detail(
-                f"batch {active_batch.batch_id} is active",
-                active_batch,
-                active_protocol,
-            ),
-        )
-    protocol = session.scalar(
-        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
-    )
-    if protocol is None:
-        raise HTTPException(status_code=404, detail="benchmark protocol not found")
-    cancel_event = Event()
-    BATCH_CANCEL_EVENTS[batch_id] = cancel_event
-    batch.state = BatchState.RUNNING
-    batch.started_at = batch.started_at or datetime.now().astimezone()
-    batch.state_reason = None
-    session.add(batch)
-    session.commit()
-    Thread(target=_run_batch_background, args=(batch_id, cancel_event), daemon=True).start()
-    return _batch_row(batch, protocol)
+    return _start_batch_worker(batch_id, session)
 
 
 @app.delete("/api/v1/test-batches/{batch_id}")
@@ -2138,7 +2318,7 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
     if run is None:
         return {"active": False, "run": None}
     active = run.state not in TERMINAL_RUN_STATES
-    telemetry: list[dict[str, Any]] = []
+    telemetry = _latest_radio_telemetry(session, run)
     live_metrics = _live_lab_metrics(session, run) if active else {}
     if active:
         live_metrics["latency_results"] = _live_latency_results(session, run)
@@ -2167,6 +2347,86 @@ def lab_status(session: Session = Depends(get_session)) -> dict:
             "live_metrics": live_metrics,
             "artifacts": list_run_artifacts(run),
         },
+    }
+
+
+def _run_live_row(session: Session, run: TestRun | None) -> dict[str, Any] | None:
+    if run is None:
+        return None
+    active = run.state not in TERMINAL_RUN_STATES
+    live_metrics = _live_lab_metrics(session, run) if active else {}
+    if active:
+        live_metrics["latency_results"] = _live_latency_results(session, run)
+    events = [
+        {
+            "timestamp": event.timestamp.isoformat(),
+            "type": event.event_type,
+            "message": event.message,
+            "details": event.details,
+        }
+        for event in run.events
+    ]
+    return {
+        "run_id": run.run_id,
+        "state": run.state,
+        "router_name": run.router.display_name,
+        "router_ip": run.router.management_host,
+        "plan": run.plan_slug,
+        "description": run.resolved_plan.get("metadata", {}).get("lab", {})
+        or run.resolved_plan.get("lab", {}),
+        "path_ids": _known_path_ids(run),
+        "summary": run.summary,
+        "events": events,
+        "telemetry": _latest_radio_telemetry(session, run),
+        "live_metrics": live_metrics,
+        "artifacts": list_run_artifacts(run),
+    }
+
+
+def _active_test_campaign_live_payload(session: Session) -> dict[str, Any]:
+    batch = _active_batch(session)
+    if batch is None:
+        return {"active": False, "campaign": None, "attempt": None, "run": None}
+    protocol = session.scalar(
+        select(BenchmarkProtocol).where(BenchmarkProtocol.protocol_hash == batch.protocol_hash)
+    )
+    attempt = session.scalar(
+        select(BatchAttempt)
+        .where(BatchAttempt.batch_pk == batch.id)
+        .order_by(BatchAttempt.sequence_number.desc())
+    )
+    run = (
+        session.scalar(select(TestRun).where(TestRun.run_id == attempt.run_id))
+        if attempt is not None and attempt.run_id
+        else None
+    )
+    next_attempt_in_seconds = None
+    if batch.state == BatchState.RUNNING and attempt is not None and attempt.finished_at:
+        elapsed = (datetime.now(UTC) - attempt.finished_at.astimezone(UTC)).total_seconds()
+        remaining = batch.inter_run_cooldown_seconds - elapsed
+        next_attempt_in_seconds = max(0, round(remaining)) if remaining > 0 else None
+    return {
+        "active": True,
+        "campaign": {
+            **_batch_row(batch, protocol),
+            "phase": attempt.state.value if attempt is not None else batch.state.value,
+            "next_attempt_in_seconds": next_attempt_in_seconds,
+            "campaign_progress_percent": (
+                min(100, batch.valid_run_count / max(1, batch.target_valid_runs) * 100)
+            ),
+        },
+        "attempt": (
+            {
+                "sequence_number": attempt.sequence_number,
+                "state": attempt.state.value,
+                "run_id": attempt.run_id,
+                "comparison_eligible": attempt.comparison_eligible,
+                "outcome_code": attempt.outcome_code,
+            }
+            if attempt is not None
+            else None
+        ),
+        "run": _run_live_row(session, run),
     }
 
 

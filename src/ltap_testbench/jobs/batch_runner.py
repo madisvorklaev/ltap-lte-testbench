@@ -194,7 +194,15 @@ def benchmark_plan_definition(protocol: BenchmarkProtocol, server_slug: str = "s
         },
         "traffic": {"path_concurrency": definition.get("path_concurrency", "parallel")},
         "telemetry": definition.get("radio_sampler") or {},
-        "metadata": {"protocol": {"protocol_hash": protocol.protocol_hash}},
+        "metadata": {
+            "protocol": {
+                "protocol_hash": protocol.protocol_hash,
+                "comparable": bool(definition.get("comparable")),
+                "comparison_mode": (
+                    "comparable" if bool(definition.get("comparable")) else "diagnostic"
+                ),
+            }
+        },
     }
     return TestPlanConfig.model_validate(plan).model_dump(mode="json")
 
@@ -228,6 +236,13 @@ def _finish_batch(session: Session, batch: TestBatch, state: BatchState, reason:
     session.commit()
 
 
+def _batch_targets_comparison_eligible_runs(batch: TestBatch) -> bool:
+    snapshot = batch.resolved_profile_snapshot_json or {}
+    if "comparable" in snapshot:
+        return bool(snapshot["comparable"])
+    return not str(batch.protocol_slug or "").startswith("quick-connection-check")
+
+
 def _deadline_reached(batch: TestBatch) -> bool:
     if batch.deadline is None:
         return False
@@ -252,9 +267,11 @@ def _finish_attempt(
         return
     attempt.run_id = run.run_id
     attempt.comparison_eligible = bool((run.summary or {}).get("comparison_eligible"))
-    if run.state == RunState.COMPLETED and attempt.comparison_eligible:
+    operational_success = run.state == RunState.COMPLETED
+    target_eligible = _batch_targets_comparison_eligible_runs(batch)
+    if operational_success and (attempt.comparison_eligible or not target_eligible):
         attempt.state = BatchAttemptState.VALID
-        attempt.outcome_code = "OK"
+        attempt.outcome_code = "OK" if attempt.comparison_eligible else "OK_DIAGNOSTIC"
         batch.valid_run_count += 1
         batch.consecutive_failure_count = 0
     elif run.state == RunState.CANCELLED:
