@@ -204,6 +204,13 @@ def benchmark_plan_definition(protocol: BenchmarkProtocol, server_slug: str = "s
                 "final_recovery_seconds": int(
                     (definition.get("final_recovery") or {}).get("duration_seconds") or 0
                 ),
+                "tcp_warmup_seconds": int((definition.get("tcp") or {}).get("warmup_seconds") or 0),
+                "tcp_recovery_seconds_between_rounds": int(
+                    (definition.get("tcp") or {}).get("recovery_seconds_between_rounds") or 0
+                ),
+                "post_udp_recovery_seconds": int(
+                    (definition.get("post_udp_recovery") or {}).get("duration_seconds") or 0
+                ),
             }
         },
     }

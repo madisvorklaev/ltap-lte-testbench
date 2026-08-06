@@ -422,6 +422,45 @@ def _final_recovery_seconds(run: TestRun) -> int:
         return 0
 
 
+def _protocol_wait_seconds(run: TestRun, key: str) -> int:
+    try:
+        return max(0, int(_protocol_info(run).get(key) or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _execute_protocol_wait(
+    session: Session,
+    run: TestRun,
+    *,
+    phase: str,
+    duration_seconds: int,
+    cancel_event: CancelToken | None,
+    renewal_monitor: ReservationRenewalMonitor | None,
+) -> None:
+    if duration_seconds <= 0:
+        return
+    add_event(
+        session,
+        run,
+        f"{phase}-started",
+        f"{phase.replace('-', ' ').title()} started.",
+        {"duration_seconds": duration_seconds},
+    )
+    deadline = time.monotonic() + duration_seconds
+    while time.monotonic() < deadline:
+        _raise_if_reservation_lost(renewal_monitor)
+        _raise_if_cancelled(session, run, cancel_event)
+        time.sleep(min(0.25, deadline - time.monotonic()))
+    add_event(
+        session,
+        run,
+        f"{phase}-completed",
+        f"{phase.replace('-', ' ').title()} completed.",
+        {"duration_seconds": duration_seconds},
+    )
+
+
 def _plan_has_video_probe_stage(run: TestRun) -> bool:
     config = _video_probe_config(run)
     if config.get("enabled") is False:
@@ -1313,6 +1352,17 @@ def execute_run(
         for round_index in range(1, tcp_rounds + 1):
             _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
+            if round_index == 1:
+                if metric_sampler is not None:
+                    metric_sampler.set_phase("tcp_warmup", "before-round-1")
+                _execute_protocol_wait(
+                    session,
+                    run,
+                    phase="tcp-warmup",
+                    duration_seconds=_protocol_wait_seconds(run, "tcp_warmup_seconds"),
+                    cancel_event=cancel_event,
+                    renewal_monitor=renewal_monitor,
+                )
             if metric_sampler is not None:
                 metric_sampler.set_phase("tcp", f"round-{round_index}")
             upload_results.extend(
@@ -1329,6 +1379,20 @@ def execute_run(
             )
             _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
+            if round_index < tcp_rounds:
+                if metric_sampler is not None:
+                    metric_sampler.set_phase("tcp_recovery", f"after-round-{round_index}")
+                _execute_protocol_wait(
+                    session,
+                    run,
+                    phase="tcp-recovery",
+                    duration_seconds=_protocol_wait_seconds(
+                        run,
+                        "tcp_recovery_seconds_between_rounds",
+                    ),
+                    cancel_event=cancel_event,
+                    renewal_monitor=renewal_monitor,
+                )
             if udp_pattern == "after_each_tcp":
                 if metric_sampler is not None:
                     metric_sampler.set_phase("udp", f"after-tcp-{round_index}")
@@ -1361,6 +1425,17 @@ def execute_run(
             )
             _raise_if_reservation_lost(renewal_monitor)
             _raise_if_cancelled(session, run, cancel_event)
+        if udp_upload_results:
+            if metric_sampler is not None:
+                metric_sampler.set_phase("post_udp_recovery", "after-udp")
+            _execute_protocol_wait(
+                session,
+                run,
+                phase="post-udp-recovery",
+                duration_seconds=_protocol_wait_seconds(run, "post_udp_recovery_seconds"),
+                cancel_event=cancel_event,
+                renewal_monitor=renewal_monitor,
+            )
         if metric_sampler is not None:
             metric_sampler.set_phase("video", "video-probe")
         video_probe_results = _execute_video_probe_stage(
@@ -1375,27 +1450,14 @@ def execute_run(
         _raise_if_cancelled(session, run, cancel_event)
         if metric_sampler is not None:
             metric_sampler.set_phase("final_recovery", "after-traffic")
-        final_recovery_seconds = _final_recovery_seconds(run)
-        if final_recovery_seconds > 0:
-            add_event(
-                session,
-                run,
-                "final-recovery-started",
-                "Waiting for final recovery.",
-                {"duration_seconds": final_recovery_seconds},
-            )
-            recovery_deadline = time.monotonic() + final_recovery_seconds
-            while time.monotonic() < recovery_deadline:
-                _raise_if_reservation_lost(renewal_monitor)
-                _raise_if_cancelled(session, run, cancel_event)
-                time.sleep(min(0.25, recovery_deadline - time.monotonic()))
-            add_event(
-                session,
-                run,
-                "final-recovery-completed",
-                "Final recovery completed.",
-                {"duration_seconds": final_recovery_seconds},
-            )
+        _execute_protocol_wait(
+            session,
+            run,
+            phase="final-recovery",
+            duration_seconds=_final_recovery_seconds(run),
+            cancel_event=cancel_event,
+            renewal_monitor=renewal_monitor,
+        )
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
         has_video_sender_traffic = any(
             int(row.get("bytes_sent") or 0) > 0

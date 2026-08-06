@@ -410,7 +410,7 @@ def compatible_comparison_rows(
         "compatibility_key": dict(zip(COMPATIBILITY_FIELDS, reference_key, strict=True))
         if reference_key is not None
         else None,
-        "compatible": len(complete_keys) == 1 and not excluded,
+        "compatible": len(complete_keys) == 1,
     }
 
 
@@ -448,11 +448,6 @@ def compare_cohorts(
     }
     if not baseline_rows or not candidate_rows:
         conclusion = {"status": "NO_DATA", "reason": "one or both cohorts are empty"}
-    if compatibility["excluded_count"]:
-        conclusion = {
-            "status": "INCONCLUSIVE",
-            "reason": "one or more runs were excluded by compatibility checks",
-        }
     elif not compatibility["compatible"]:
         conclusion = {
             "status": "INCONCLUSIVE",
@@ -550,13 +545,15 @@ def evaluate_run_integrity(
 ) -> dict[str, Any]:
     protocol_id = str(protocol.get("protocol_id") or "")
     comparison_mode = str(protocol.get("comparison_mode") or "").lower()
-    protocol_hash_value = protocol.get("protocol_hash") or run.protocol_hash
+    protocol_hash_value = protocol.get("protocol_hash")
     protocol_declares_comparable = (
         protocol.get("comparable") is True or comparison_mode == "comparable"
     )
     legacy_comparable_protocol = protocol_id in {"comparable-benchmark", "comparable-v1"}
     checks = {
-        "protocol_hash_verified": bool(protocol_hash_value),
+        "protocol_hash_verified": bool(
+            protocol_hash_value and run.protocol_hash == protocol_hash_value
+        ),
         "protocol_is_comparable": protocol_declares_comparable or legacy_comparable_protocol,
         "environment_snapshot_complete": bool(
             (run.integrity_json or {}).get("environment_snapshot_complete")
@@ -572,15 +569,26 @@ def evaluate_run_integrity(
         ),
     }
     checks["receiver_measurements_present"] = bool(has_live_results)
+    checks["latency_samples_complete"] = (
+        not checks["protocol_is_comparable"] or checks["latency_sample_count"] > 0
+    )
+    checks["radio_samples_complete"] = (
+        not checks["protocol_is_comparable"] or checks["radio_sample_count"] > 0
+    )
+    protocol_hash_reason = (
+        "protocol_hash_missing" if not protocol_hash_value else "protocol_hash_mismatch"
+    )
     exclusion_reasons = [
         reason
         for reason, ok in [
-            ("protocol_hash_missing", checks["protocol_hash_verified"]),
+            (protocol_hash_reason, checks["protocol_hash_verified"]),
             ("exploratory_or_legacy_protocol", checks["protocol_is_comparable"]),
             ("environment_snapshot_incomplete", checks["environment_snapshot_complete"]),
             ("application_version_missing", checks["application_version_verified"]),
             ("test_node_version_missing", checks["test_node_version_verified"]),
             ("traffic_not_receiver_confirmed", checks["receiver_measurements_present"]),
+            ("latency_samples_incomplete", checks["latency_samples_complete"]),
+            ("radio_samples_incomplete", checks["radio_samples_complete"]),
         ]
         if not ok
     ]

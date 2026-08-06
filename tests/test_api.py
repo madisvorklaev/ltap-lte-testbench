@@ -308,11 +308,35 @@ def test_evaluate_run_integrity_accepts_comparable_run_with_persisted_hash() -> 
         integrity_json={"environment_snapshot_complete": True},
         environment_snapshot_json={"test_node": {"health": {"version": "stockbot-test"}}},
     )
+    run.metric_samples = [
+        MetricSample(
+            run_pk=1,
+            offset_ms=1000,
+            path_id="lte1",
+            phase="idle",
+            metric_name="latency_rtt_ms",
+            value=20.0,
+            unit="ms",
+        ),
+        MetricSample(
+            run_pk=1,
+            offset_ms=1000,
+            path_id="lte1",
+            phase="idle",
+            metric_name="radio_sample",
+            value=1.0,
+            unit="sample",
+        ),
+    ]
 
     integrity = evaluate_run_integrity(
         run,
         has_live_results=True,
-        protocol={"protocol_id": "comparable-v1", "result_schema_version": 2},
+        protocol={
+            "protocol_id": "comparable-v1",
+            "protocol_hash": "sha256-ok",
+            "result_schema_version": 2,
+        },
     )
 
     assert integrity["comparison_eligible"] is True
@@ -320,6 +344,18 @@ def test_evaluate_run_integrity_accepts_comparable_run_with_persisted_hash() -> 
     assert integrity["checks"]["protocol_hash_verified"] is True
     assert integrity["checks"]["traffic_receiver_confirmed"] is True
     assert integrity["checks"]["receiver_measurements_present"] is True
+
+    mismatch = evaluate_run_integrity(
+        run,
+        has_live_results=True,
+        protocol={
+            "protocol_id": "comparable-v1",
+            "protocol_hash": "sha256-other",
+            "result_schema_version": 2,
+        },
+    )
+    assert mismatch["comparison_eligible"] is False
+    assert "protocol_hash_mismatch" in mismatch["exclusion_reasons"]
 
 
 def test_evaluate_run_integrity_reports_machine_readable_exclusions() -> None:
@@ -412,6 +448,15 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
         }
         for index, value in enumerate([20, 21, 22, 23, 24], start=1)
     ]
+    candidate_rows.append(
+        {
+            "run_id": "candidate-excluded",
+            **compatibility,
+            "comparison_eligible": False,
+            "local_hour": 1.0,
+            "paths": {"lte1": {"tcp_mbit_s": 100}},
+        }
+    )
 
     comparison = compare_cohorts(
         baseline_rows,
@@ -429,7 +474,8 @@ def test_compare_cohorts_returns_likely_improvement_after_minimum_evidence() -> 
     assert comparison["conclusion"]["bootstrap_95_ci"]["iterations"] == 1000
     assert comparison["time_of_night"]["warning"] is None
     assert comparison["time_of_night"]["baseline"]["histogram"] == {"01:00": 5}
-    assert comparison["excluded_run_count"] == 0
+    assert comparison["excluded_run_count"] == 1
+    assert comparison["exclusion_counts"]["run_not_comparison_eligible"] == 1
 
 
 def test_compare_cohorts_downgrades_when_time_of_night_is_confounding() -> None:
@@ -542,7 +588,7 @@ def test_compare_cohorts_excludes_incompatible_metadata() -> None:
         path_id="lte1",
     )
 
-    assert comparison["conclusion"]["status"] == "INCONCLUSIVE"
+    assert comparison["conclusion"]["status"] == "NO_DATA"
     assert comparison["excluded_run_count"] == 10
     assert comparison["exclusion_counts"]["cohort_metadata_incompatible"] == 10
 
@@ -582,7 +628,7 @@ def test_compare_cohorts_reports_missing_metadata_as_exclusion_reason() -> None:
         path_id="lte1",
     )
 
-    assert comparison["conclusion"]["status"] == "INCONCLUSIVE"
+    assert comparison["conclusion"]["status"] == "NO_DATA"
     assert comparison["excluded_run_count"] == 10
     assert comparison["exclusion_counts"]["application_measurement_version_missing"] == 10
 
