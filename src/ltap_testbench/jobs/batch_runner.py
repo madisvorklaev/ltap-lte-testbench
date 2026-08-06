@@ -201,6 +201,9 @@ def benchmark_plan_definition(protocol: BenchmarkProtocol, server_slug: str = "s
                 "comparison_mode": (
                     "comparable" if bool(definition.get("comparable")) else "diagnostic"
                 ),
+                "final_recovery_seconds": int(
+                    (definition.get("final_recovery") or {}).get("duration_seconds") or 0
+                ),
             }
         },
     }
@@ -250,6 +253,31 @@ def _deadline_reached(batch: TestBatch) -> bool:
     if batch.deadline.tzinfo is None:
         return now.replace(tzinfo=None) >= batch.deadline
     return now >= batch.deadline
+
+
+def _sleep_with_batch_controls(
+    session: Session,
+    batch: TestBatch,
+    seconds: int,
+    cancel_event: Event | None,
+    sleep: Callable[[float], None],
+) -> BatchState | None:
+    deadline = time.monotonic() + max(0, seconds)
+    while time.monotonic() < deadline:
+        session.refresh(batch)
+        if batch.state == BatchState.CANCEL_REQUESTED or (
+            cancel_event is not None and cancel_event.is_set()
+        ):
+            _finish_batch(session, batch, BatchState.CANCELLED, "user_cancelled")
+            return BatchState.CANCELLED
+        if _deadline_reached(batch):
+            _finish_batch(session, batch, BatchState.COMPLETED, "deadline_reached")
+            return BatchState.COMPLETED
+        if batch.state == BatchState.PAUSE_REQUESTED:
+            _finish_batch(session, batch, BatchState.PAUSED, "user_paused")
+            return BatchState.PAUSED
+        sleep(min(0.25, deadline - time.monotonic()))
+    return None
 
 
 def _finish_attempt(
@@ -415,6 +443,16 @@ def run_batch(
             if batch.attempt_count >= batch.max_attempts:
                 _finish_batch(session, batch, BatchState.FAILED, "max_attempts_reached")
                 return batch
+            if batch.retry_delay_seconds > 0:
+                stopped = _sleep_with_batch_controls(
+                    session,
+                    batch,
+                    batch.retry_delay_seconds,
+                    cancel_event,
+                    sleep,
+                )
+                if stopped is not None:
+                    return batch
             continue
         attempt.state = BatchAttemptState.RUNNING
         attempt.outcome_details_json = {"preconditions": stability.to_dict()}
@@ -438,14 +476,21 @@ def run_batch(
         session.add_all([attempt, run])
         session.commit()
         run = executor(session, run, cancel_event)
-        _finish_attempt(session, batch, attempt, run)
         drift = _record_run_environment_snapshot(session, batch, attempt, run)
         if drift is not None:
             reason, details = drift
+            attempt.finished_at = utc_now()
+            attempt.state = BatchAttemptState.INVALID
+            attempt.outcome_code = reason
+            attempt.outcome_details_json = {
+                **(attempt.outcome_details_json or {}),
+                "drift": details,
+            }
             session.add_all([batch, attempt])
             session.commit()
             _pause_batch_for_drift(session, batch, reason, details)
             return batch
+        _finish_attempt(session, batch, attempt, run)
         session.add_all([batch, attempt])
         session.commit()
         session.refresh(batch)
@@ -459,21 +504,15 @@ def run_batch(
             _finish_batch(session, batch, BatchState.FAILED, "max_attempts_reached")
             return batch
         if batch.inter_run_cooldown_seconds > 0:
-            deadline = time.monotonic() + batch.inter_run_cooldown_seconds
-            while time.monotonic() < deadline:
-                session.refresh(batch)
-                if batch.state == BatchState.CANCEL_REQUESTED or (
-                    cancel_event is not None and cancel_event.is_set()
-                ):
-                    _finish_batch(session, batch, BatchState.CANCELLED, "user_cancelled")
-                    return batch
-                if _deadline_reached(batch):
-                    _finish_batch(session, batch, BatchState.COMPLETED, "deadline_reached")
-                    return batch
-                if batch.state == BatchState.PAUSE_REQUESTED:
-                    _finish_batch(session, batch, BatchState.PAUSED, "user_paused")
-                    return batch
-                sleep(min(0.25, deadline - time.monotonic()))
+            stopped = _sleep_with_batch_controls(
+                session,
+                batch,
+                batch.inter_run_cooldown_seconds,
+                cancel_event,
+                sleep,
+            )
+            if stopped is not None:
+                return batch
 
 
 def recover_interrupted_batches(session: Session) -> list[TestBatch]:

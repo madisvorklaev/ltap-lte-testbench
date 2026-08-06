@@ -410,11 +410,49 @@ def _video_probe_config(run: TestRun) -> dict:
     return config if isinstance(config, dict) else {}
 
 
+def _protocol_info(run: TestRun) -> dict:
+    protocol = (run.resolved_plan or {}).get("metadata", {}).get("protocol", {})
+    return protocol if isinstance(protocol, dict) else {}
+
+
+def _final_recovery_seconds(run: TestRun) -> int:
+    try:
+        return max(0, int(_protocol_info(run).get("final_recovery_seconds") or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
 def _plan_has_video_probe_stage(run: TestRun) -> bool:
     config = _video_probe_config(run)
     if config.get("enabled") is False:
         return False
     return VIDEO_PROBE_STAGE in _plan_stage_set(run)
+
+
+def _expected_path_ids(run: TestRun) -> list[str]:
+    return [str(path.get("id")) for path in _router_paths(run) if path.get("id")]
+
+
+def _video_receiver_confirmed(run: TestRun, video_probe_results: dict) -> bool:
+    receiver_summary = video_probe_results.get("receiver_summary") or {}
+    if not isinstance(receiver_summary, dict) or receiver_summary.get("error"):
+        return False
+    receiver_paths = receiver_summary.get("paths") or {}
+    if not isinstance(receiver_paths, dict):
+        return False
+    expected_paths = _expected_path_ids(run)
+    if not expected_paths:
+        expected_paths = [
+            str(row.get("path_id"))
+            for row in video_probe_results.get("sender_results", [])
+            if row.get("path_id")
+        ]
+    for path_id in expected_paths:
+        path_summary = receiver_paths.get(path_id) or {}
+        if int(path_summary.get("frames_seen") or 0) <= 0:
+            return False
+    dual_path = receiver_summary.get("dual_path") or video_probe_results.get("dual_path") or {}
+    return bool(dual_path) or bool(receiver_summary.get("paired_frames_complete"))
 
 
 def _tcp_upload_count(run: TestRun) -> int:
@@ -1337,6 +1375,27 @@ def execute_run(
         _raise_if_cancelled(session, run, cancel_event)
         if metric_sampler is not None:
             metric_sampler.set_phase("final_recovery", "after-traffic")
+        final_recovery_seconds = _final_recovery_seconds(run)
+        if final_recovery_seconds > 0:
+            add_event(
+                session,
+                run,
+                "final-recovery-started",
+                "Waiting for final recovery.",
+                {"duration_seconds": final_recovery_seconds},
+            )
+            recovery_deadline = time.monotonic() + final_recovery_seconds
+            while time.monotonic() < recovery_deadline:
+                _raise_if_reservation_lost(renewal_monitor)
+                _raise_if_cancelled(session, run, cancel_event)
+                time.sleep(min(0.25, recovery_deadline - time.monotonic()))
+            add_event(
+                session,
+                run,
+                "final-recovery-completed",
+                "Final recovery completed.",
+                {"duration_seconds": final_recovery_seconds},
+            )
         telemetry_after = _safe_router_telemetry(session, run, adapter, "after-traffic")
         has_video_sender_traffic = any(
             int(row.get("bytes_sent") or 0) > 0
@@ -1347,11 +1406,21 @@ def execute_run(
             for row in latency_results
             if row.get("validity") != "invalid" and int(row.get("received") or 0) > 0
         ]
+        protocol_info = _protocol_info(run)
+        comparable_video_run = (
+            protocol_info.get("comparable") is True and _plan_has_video_probe_stage(run)
+        )
         has_live_results = bool(
             upload_results
             or udp_upload_results
             or valid_latency_results
-            or has_video_sender_traffic
+            or (
+                has_video_sender_traffic
+                and (
+                    not comparable_video_run
+                    or _video_receiver_confirmed(run, video_probe_results)
+                )
+            )
         )
         if not has_live_results:
             add_event(
@@ -1368,7 +1437,6 @@ def execute_run(
             for result in upload_results
             for connection in result.get("test_node_connections", [])
         ]
-        protocol_info = run.resolved_plan.get("metadata", {}).get("protocol", {})
         integrity = evaluate_run_integrity(
             run,
             has_live_results=has_live_results,

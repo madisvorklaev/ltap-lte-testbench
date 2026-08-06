@@ -124,39 +124,43 @@
         </div>
 
         <h3>Context</h3>
-        <div class="grid">
-          <label>Router
-            <select id="router">
-              {% for router in routers %}
-              <option value="{{ router.slug }}">{{ router.display_name }} · {{ router.slug }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>Antenna
-            <select id="antenna">
-              <option value="">Choose antenna</option>
-              {% for profile in antenna_profiles %}
-              <option value="{{ profile.id }}">{{ profile.manufacturer }} {{ profile.model }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>Experiment
-            <select id="experiment">
-              <option value="">None</option>
-              {% for experiment in experiments %}
-              <option value="{{ experiment.id }}">{{ experiment.name }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>Variant
-            <select id="variant">
-              <option value="">None</option>
-              {% for variant in variant_options %}
-              <option value="{{ variant.id }}" data-experiment-id="{{ variant.experiment_id }}">{{ variant.label }}</option>
-              {% endfor %}
-            </select>
-          </label>
-        </div>
+        <div id="context-summary" class="summary muted"></div>
+        <details id="context-details" style="margin-top:8px;">
+          <summary>Change test context</summary>
+          <div class="grid" style="margin-top:8px;">
+            <label>Router
+              <select id="router">
+                {% for router in routers %}
+                <option value="{{ router.slug }}">{{ router.display_name }} · {{ router.slug }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Antenna
+              <select id="antenna">
+                <option value="">Choose antenna</option>
+                {% for profile in antenna_profiles %}
+                <option value="{{ profile.id }}">{{ profile.manufacturer }} {{ profile.model }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Experiment
+              <select id="experiment">
+                <option value="">None</option>
+                {% for experiment in experiments %}
+                <option value="{{ experiment.id }}">{{ experiment.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Variant
+              <select id="variant">
+                <option value="">None</option>
+                {% for variant in variant_options %}
+                <option value="{{ variant.id }}" data-experiment-id="{{ variant.experiment_id }}">{{ variant.label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          </div>
+        </details>
 
         <h3>Campaign preview</h3>
         <div id="preview" class="preview summary">Loading preview...</div>
@@ -209,6 +213,7 @@
           </div>
         </div>
         <progress id="progress" value="0" max="100" style="margin-top:10px;"></progress>
+        <div class="muted" id="live-status" style="margin-top:6px;">No live campaign.</div>
         <div class="split" style="margin-top:14px;">
           <div>
             <h3>Live speed</h3>
@@ -254,6 +259,7 @@
     </main>
     <script>
       const $ = (id) => document.getElementById(id);
+      const contextDefaults = {{ context_defaults | tojson }};
       let profiles = [];
       let targetMode = "streamed_time";
       let startMode = "now";
@@ -314,6 +320,7 @@
         return n * multiplier / 1000000;
       };
       const setText = (id, value) => { $(id).textContent = value ?? "-"; };
+      const selectedText = (id) => $(id).selectedOptions[0]?.textContent || "-";
       const pathKey = (id) => String(id).replace(/[^A-Za-z0-9_-]/g, "_");
       const currentPathIds = (run) => {
         const ids = [...(run?.path_ids || [])];
@@ -352,7 +359,8 @@
       const eventTime = (event) => event ? new Date(event.timestamp).getTime() / 1000 : null;
       const progressFor = (run) => {
         const state = String(run.state);
-        if (["COMPLETED", "FAILED", "CANCELLED", "INTERRUPTED"].includes(state)) return 100;
+        if (state === "COMPLETED") return 100;
+        if (["FAILED", "CANCELLED", "INTERRUPTED"].includes(state)) return 0;
         const videoStart = latestEvent(run, "video-probe-stage-started");
         if (videoStart) {
           const seconds = Number(videoStart.details.duration_seconds || 1);
@@ -489,6 +497,7 @@
           $("progress").value = 0;
           setText("progress-label", "0%");
           setText("phase-uploaded", "0 MB");
+          setText("live-status", data.campaign ? `${data.campaign.state} · waiting for next run` : "No live campaign.");
           $("backend-log").textContent = "No run loaded.";
           $("summary").textContent = "No summary yet.";
           return;
@@ -503,6 +512,20 @@
         const progress = Math.round(progressFor(run));
         $("progress").value = progress;
         setText("progress-label", `${progress}%`);
+        const campaign = data.campaign || {};
+        const next = Number(campaign.next_attempt_in_seconds);
+        const health = run.live_metrics?.source_health || {};
+        const telemetryRows = run.telemetry || [];
+        const newestTelemetryAge = telemetryRows.length
+          ? Math.min(...telemetryRows.map((row) => Number(row.sample_age_seconds)).filter(Number.isFinite))
+          : null;
+        const statusParts = [
+          campaign.batch_id ? `${campaign.valid_run_count || 0}/${campaign.target_valid_runs || 0} valid runs` : null,
+          Number.isFinite(next) ? `next run in ${fmtDuration(next)}` : null,
+          Number.isFinite(newestTelemetryAge) ? `router telemetry ${newestTelemetryAge.toFixed(1)}s old` : "router telemetry unavailable",
+          health.test_node_metrics_error ? `test node: ${health.test_node_metrics_error}` : "test node metrics current",
+        ].filter(Boolean);
+        setText("live-status", statusParts.join(" · "));
         applyTelemetry(run);
         applyAverages(run, run.summary || {}, run.live_metrics || {});
         applyPhaseUpload(run.live_metrics || {});
@@ -608,6 +631,23 @@
           $("target-runs").value = Math.max(1, Math.round(Number(profile.default_target_value || 1)));
         }
       };
+      const applyContextDefaults = () => {
+        const defaults = contextDefaults[$("profile").value] || {};
+        if (defaults.router_slug) $("router").value = defaults.router_slug;
+        if (defaults.antenna_profile_id) $("antenna").value = String(defaults.antenna_profile_id);
+        $("experiment").value = defaults.experiment_id ? String(defaults.experiment_id) : "";
+        syncVariants();
+        $("variant").value = defaults.variant_id ? String(defaults.variant_id) : "";
+        updateContextSummary();
+      };
+      const updateContextSummary = () => {
+        $("context-summary").textContent = [
+          `Router: ${selectedText("router")}`,
+          `Antenna: ${selectedText("antenna")}`,
+          `Experiment: ${selectedText("experiment")}`,
+          `Variant: ${selectedText("variant")}`,
+        ].join("\n");
+      };
       const setStartMode = (mode) => {
         startMode = mode;
         $("start-now").classList.toggle("active", mode === "now");
@@ -621,6 +661,7 @@
           option.hidden = Boolean(option.value && experimentId && option.dataset.experimentId !== experimentId);
         }
         if ($("variant").selectedOptions[0]?.hidden) $("variant").value = "";
+        updateContextSummary();
       };
       const renderActiveCampaign = async () => {
         const active = await request("/api/v1/test-batches/active");
@@ -688,6 +729,7 @@
           $("profile").append(option);
         }
         applyProfileDefaults();
+        applyContextDefaults();
         renderProfile();
         await renderPreview();
       };
@@ -695,10 +737,10 @@
       $("mode-runs").addEventListener("click", () => setTargetMode("valid_runs"));
       $("start-now").addEventListener("click", () => setStartMode("now"));
       $("start-schedule").addEventListener("click", () => setStartMode("schedule"));
-      $("profile").addEventListener("change", () => { applyProfileDefaults(); renderProfile(); schedulePreview(); });
+      $("profile").addEventListener("change", () => { applyProfileDefaults(); applyContextDefaults(); renderProfile(); schedulePreview(); });
       for (const id of ["target-value", "target-unit", "target-runs", "router", "antenna", "experiment", "variant", "start-at"]) {
-        $(id).addEventListener("input", () => { syncVariants(); schedulePreview(); });
-        $(id).addEventListener("change", () => { syncVariants(); schedulePreview(); });
+        $(id).addEventListener("input", () => { syncVariants(); updateContextSummary(); schedulePreview(); });
+        $(id).addEventListener("change", () => { syncVariants(); updateContextSummary(); schedulePreview(); });
       }
       document.querySelector(".quick").addEventListener("click", (event) => {
         const target = event.target;

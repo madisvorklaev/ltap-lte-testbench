@@ -369,9 +369,11 @@ def test_batch_runner_pauses_when_test_node_version_drifts() -> None:
     assert batch.state == BatchState.PAUSED
     assert batch.state_reason == "TEST_NODE_VERSION_CHANGED"
     assert batch.attempt_count == 2
-    assert batch.valid_run_count == 2
+    assert batch.valid_run_count == 1
     assert batch.expected_test_node_version == "stockbot-a"
     attempts = session.scalars(select(BatchAttempt).order_by(BatchAttempt.sequence_number)).all()
+    assert attempts[1].state == BatchAttemptState.INVALID
+    assert attempts[1].outcome_code == "TEST_NODE_VERSION_CHANGED"
     assert [attempt.environment_snapshot_hash for attempt in attempts] == [
         "snapshot-stockbot-a",
         "snapshot-stockbot-b",

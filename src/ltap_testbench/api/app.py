@@ -467,6 +467,8 @@ def _profile_row(profile: TestProfile, protocol: BenchmarkProtocol) -> dict[str,
     video = definition.get("video") or {}
     return {
         "slug": profile.slug,
+        "protocol_id": profile.protocol_id,
+        "protocol_slug": protocol.slug,
         "name": profile.name,
         "description": profile.description,
         "version": profile.profile_version,
@@ -489,6 +491,53 @@ def _profile_row(profile: TestProfile, protocol: BenchmarkProtocol) -> dict[str,
             "hours" if profile.default_target_mode == "streamed_time" else "runs"
         ),
     }
+
+
+def _dashboard_context_defaults(
+    routers: list[RouterProfile],
+    antenna_profiles: list[AntennaProfile],
+    experiments: list[Experiment],
+    variants: list[ExperimentVariant],
+    profiles: list[TestProfile],
+) -> dict[str, dict[str, Any]]:
+    router_slug = None
+    for router in routers:
+        if router.slug == "r1-ltap-live":
+            router_slug = router.slug
+            break
+    if router_slug is None and routers:
+        router_slug = routers[0].slug
+    antenna_id = antenna_profiles[0].id if antenna_profiles else None
+    variants_by_experiment: dict[int, list[ExperimentVariant]] = {}
+    for variant in variants:
+        variants_by_experiment.setdefault(variant.experiment_id, []).append(variant)
+    defaults = {}
+    for profile in profiles:
+        compatible_experiments = [
+            experiment
+            for experiment in experiments
+            if experiment.protocol_id == profile.protocol_id
+        ]
+        experiment = compatible_experiments[0] if compatible_experiments else None
+        variant = None
+        if experiment is not None:
+            compatible_variants = variants_by_experiment.get(experiment.id, [])
+            variant = next(
+                (
+                    row
+                    for row in compatible_variants
+                    if "current connected-router baseline" in row.label.lower()
+                ),
+                compatible_variants[0] if compatible_variants else None,
+            )
+        defaults[profile.slug] = {
+            "router_slug": router_slug,
+            "antenna_profile_id": antenna_id,
+            "experiment_id": experiment.id if experiment is not None else None,
+            "variant_id": variant.id if variant is not None else None,
+            "site_id": experiment.site_id if experiment is not None else None,
+        }
+    return defaults
 
 
 def _seconds_from_target(value: float, unit: str) -> int:
@@ -979,7 +1028,8 @@ def _path_ports(run: TestRun) -> dict[str, int]:
     ports = {}
     for path in paths:
         path_id = path.get("id")
-        port = path.get("ports", {}).get("start")
+        port = path.get("ports", {}).get("start") if isinstance(path.get("ports"), dict) else None
+        port = port or path.get("udp_port")
         if path_id and port:
             ports[str(path_id)] = int(port)
     return ports
@@ -1060,12 +1110,18 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
     metrics = {
         "current_phase": _current_phase_info(run),
         "paths": path_metrics_by_id,
+        "source_health": {
+            "test_node_metrics_error": None,
+            "latency_sampler_error": None,
+            "router_telemetry_error": None,
+        },
     }
     if not paths:
         return metrics
     try:
         client = TestNodeClient(_stockbot(session).control_api_url)
-    except Exception:
+    except Exception as exc:
+        metrics["source_health"]["test_node_metrics_error"] = str(exc)
         return metrics
     phase = metrics["current_phase"]
     phase_name = str(phase.get("name", "setup"))
@@ -1105,8 +1161,9 @@ def _live_lab_metrics(session: Session, run: TestRun) -> dict:
     if phase_name == "video":
         try:
             metrics["video_probe"] = client.video_frame_stats(f"{run.run_id}-video")
-        except Exception:
+        except Exception as exc:
             metrics["video_probe"] = {}
+            metrics["source_health"]["test_node_metrics_error"] = str(exc)
         for path_id, row in (metrics.get("video_probe", {}).get("paths") or {}).items():
             if path_id in path_metrics_by_id:
                 bytes_received = row.get("bytes_received") or 0
@@ -1319,6 +1376,11 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     experiments = session.scalars(select(Experiment).order_by(Experiment.id.desc())).all()
     experiment_names = {experiment.id: experiment.name for experiment in experiments}
     variants = session.scalars(select(ExperimentVariant).order_by(ExperimentVariant.id)).all()
+    test_profiles = session.scalars(
+        select(TestProfile)
+        .where(TestProfile.retired_at.is_(None))
+        .order_by(TestProfile.display_order, TestProfile.name)
+    ).all()
     variant_options = [
         {
             "id": variant.id,
@@ -1346,6 +1408,13 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "experiments": experiments,
             "variant_options": variant_options,
             "batches": batches,
+            "context_defaults": _dashboard_context_defaults(
+                routers,
+                antenna_profiles,
+                experiments,
+                variants,
+                test_profiles,
+            ),
         },
     )
 
