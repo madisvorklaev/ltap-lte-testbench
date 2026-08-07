@@ -1,5 +1,7 @@
 .env
 .env.*
+config.json
+campaign*.json
 .venv/
 __pycache__/
 *.py[cod]
@@ -13,6 +15,8 @@ secrets/
 results/
 artifacts/
 backups/
+router-exports/
+*.export
 *.backup
 *.npk
 *.pcap

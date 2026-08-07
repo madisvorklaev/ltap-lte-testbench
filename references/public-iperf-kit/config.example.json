@@ -1,0 +1,45 @@
+{
+  "linux_interface": "enp3s0",
+  "router": {
+    "host": "192.168.88.1",
+    "user": "tester",
+    "port": 22,
+    "ssh_key": "~/.ssh/id_ed25519"
+  },
+  "paths": {
+    "lte1": {
+      "source_ip": "192.168.88.201",
+      "lte_interface": "lte1"
+    },
+    "lte2": {
+      "source_ip": "192.168.88.202",
+      "lte_interface": "lte2"
+    }
+  },
+  "ping_target": "1.1.1.1",
+  "public_server_candidates": [
+    {
+      "hostname": "iperf-ams-nl.eranium.net",
+      "ports": [
+        5201,
+        5202,
+        5203,
+        5204,
+        5205,
+        5206,
+        5207,
+        5208,
+        5209,
+        5210
+      ],
+      "note": "Example currently documented by public-iperf3-servers project."
+    },
+    {
+      "hostname": "ams.speedtest.clouvider.net",
+      "ports": [
+        5201
+      ],
+      "note": "Example currently documented by public-iperf3-servers project."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+# EXAMPLE ONLY — DO NOT PASTE BLINDLY.
+#
+# Goal:
+#   Linux source 192.168.88.201 -> existing LTE1 routing table
+#   Linux source 192.168.88.202 -> existing LTE2 routing table
+#
+# OpenClaw MUST first inspect:
+#   /routing/table/print detail
+#   /ip/route/print detail
+#   /routing/rule/print detail
+#   /ip/firewall/mangle/print detail
+#   /ip/firewall/nat/print detail
+#
+# Prefer reusing the routing tables already used by the ELMO port-based rules.
+# Back up first:
+#   /export file=before-ltap-test-routing
+#
+# If the existing configuration uses mangle routing marks, two temporary rules can
+# normally be inserted BEFORE the existing generic/port rules.
+#
+# Replace <TABLE_FOR_LTE1> and <TABLE_FOR_LTE2> with VERIFIED existing table names.
+#
+# /ip/firewall/mangle
+# add chain=prerouting src-address=192.168.88.201/32 action=mark-routing \
+#     new-routing-mark=<TABLE_FOR_LTE1> passthrough=no comment="TEMP LTAP TEST LTE1"
+# add chain=prerouting src-address=192.168.88.202/32 action=mark-routing \
+#     new-routing-mark=<TABLE_FOR_LTE2> passthrough=no comment="TEMP LTAP TEST LTE2"
+#
+# Ensure existing srcnat/masquerade rules cover both LTE egress paths.
+#
+# IMPORTANT:
+# - Do not create new default routes until the existing routing logic is understood.
+# - Do not reorder production ELMO rules except the minimum needed for the two
+#   temporary source-IP test rules.
+# - After setup, prove the path using LTE interface byte counters while sending
+#   traffic bound to .201 and .202.
+# - The collector also performs a direction-aware path verification and flags
+#   tests where the non-selected LTE interface carried substantial traffic.
