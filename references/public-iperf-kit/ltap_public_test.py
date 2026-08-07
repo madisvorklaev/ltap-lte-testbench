@@ -33,7 +33,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 
 RADIO_KEYS = {
     "status", "model", "revision", "current-operator", "lac", "cell-id",
@@ -157,6 +157,46 @@ def parse_stats(raw: str) -> dict[str, int]:
             except ValueError:
                 pass
     return data
+
+
+def parse_counter_lines(raw: str) -> dict[str, int]:
+    vals: list[int] = []
+    for line in raw.splitlines():
+        s = line.strip().replace(" ", "")
+        if re.fullmatch(r"[0-9]+", s):
+            vals.append(int(s))
+    return {"bytes": vals[0], "packets": vals[1]} if len(vals) >= 2 else {}
+
+
+def source_rule_comment(path_name: str, path_cfg: dict[str, Any]) -> str:
+    return str(path_cfg.get("source_rule_comment") or f"ELMO TEST: source via {path_name}")
+
+
+def mangle_rule_counters(router: RouterSSH, comment: str) -> dict[str, Any]:
+    escaped = comment.replace("\\", "\\\\").replace('"', '\\"')
+    command = (
+        f':put ([/ip/firewall/mangle/get [find comment="{escaped}"] bytes]); '
+        f':put ([/ip/firewall/mangle/get [find comment="{escaped}"] packets])'
+    )
+    try:
+        cp = router.call(command, timeout=6)
+        out: dict[str, Any] = {
+            "comment": comment,
+            "rc": cp.returncode,
+            "raw": cp.stdout,
+        }
+        out.update(parse_counter_lines(cp.stdout))
+        if cp.stderr.strip():
+            out["stderr"] = cp.stderr.strip()
+        return out
+    except Exception as exc:
+        return {"comment": comment, "error": repr(exc)}
+
+
+def counter_delta(before: dict[str, Any], after: dict[str, Any], key: str) -> int | None:
+    if key not in before or key not in after:
+        return None
+    return max(0, int(after[key]) - int(before[key]))
 
 
 def poll_router(router: RouterSSH, iface: str) -> dict[str, Any]:
@@ -473,7 +513,8 @@ def append_summary_csv(path: Path, row: dict[str, Any]) -> None:
         "ping_avg_ms", "ping_p95_ms", "ping_loss_percent",
         "rsrp_median", "rsrq_median", "sinr_median", "cqi_median", "ri_median",
         "primary_bands_seen", "ca_bands_seen", "ca_missing_samples",
-        "cell_changes", "lte_tx_bytes_delta", "lte_rx_bytes_delta",
+        "cell_changes", "source_rule_bytes_delta", "source_rule_packets_delta",
+        "lte_tx_bytes_delta", "lte_rx_bytes_delta",
         "other_lte_tx_bytes_delta", "other_lte_rx_bytes_delta",
         "path_verification", "test_dir",
     ]
@@ -534,6 +575,7 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
     path_cfg = paths[args.path]
     iface = path_cfg["lte_interface"]
     source_ip = path_cfg["source_ip"]
+    source_comment = source_rule_comment(args.path, path_cfg)
     linux_if = cfg["linux_interface"]
 
     if not ip_present(linux_if, source_ip):
@@ -585,9 +627,14 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "cooldown_s": args.cooldown,
         "target_bitrate": args.bitrate if args.protocol == "udp" else None,
         "packet_length": args.packet_length if args.protocol == "udp" else None,
+        "routing_mode": cfg.get("routing_mode"),
+        "routing_table": path_cfg.get("routing_table"),
+        "source_rule_comment": source_comment,
     }
     save_json(out_dir / "test.json", meta)
     save_json(out_dir / "router_metadata.json", collect_router_metadata(router, all_lte))
+    source_rule_before = mangle_rule_counters(router, source_comment)
+    source_rule_after: dict[str, Any] = {}
 
     stop = threading.Event()
     tele_path = out_dir / "telemetry.jsonl"
@@ -632,6 +679,7 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         ping_err.close()
         stop.set()
         tele.join(timeout=10)
+        source_rule_after = mangle_rule_counters(router, source_comment)
         router.close()
 
     (out_dir / "iperf_exit_code.txt").write_text(str(rc) + "\n", encoding="utf-8")
@@ -656,6 +704,8 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
     target_rx = radio_target.get("rx-byte_delta", 0) or 0
     other_tx = sum((d.get("tx-byte_delta", 0) or 0) for d in other_summaries.values())
     other_rx = sum((d.get("rx-byte_delta", 0) or 0) for d in other_summaries.values())
+    source_rule_bytes_delta = counter_delta(source_rule_before, source_rule_after, "bytes")
+    source_rule_packets_delta = counter_delta(source_rule_before, source_rule_after, "packets")
 
     # Direction-aware path verification. This is deliberately conservative.
     if args.reverse:
@@ -664,12 +714,14 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
     else:
         selected = target_tx
         other = other_tx
-    if selected > 1_000_000 and selected >= 4 * max(1, other):
+    if not source_rule_packets_delta or not source_rule_bytes_delta:
+        path_verification = "FAIL_SOURCE_RULE_NOT_MATCHED"
+    elif selected <= 1_000_000:
+        path_verification = "FAIL_WRONG_LTE"
+    elif selected >= 4 * max(1, other):
         path_verification = "PASS"
-    elif selected > 1_000_000:
-        path_verification = "WARN_OTHER_LTE_TRAFFIC"
     else:
-        path_verification = "FAIL_OR_COUNTER_PARSE"
+        path_verification = "WARN_BACKGROUND_OTHER_LTE"
 
     summary = {
         "test": meta,
@@ -677,6 +729,13 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "ping": ping_sum,
         "radio_target": radio_target,
         "radio_other": other_summaries,
+        "source_rule": {
+            "comment": source_comment,
+            "before": source_rule_before,
+            "after": source_rule_after,
+            "bytes_delta": source_rule_bytes_delta,
+            "packets_delta": source_rule_packets_delta,
+        },
         "path_verification": path_verification,
         "events_count": len(events),
     }
@@ -709,6 +768,8 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "ca_bands_seen": "|".join(radio_target.get("ca_bands_seen", [])),
         "ca_missing_samples": radio_target.get("ca_missing_samples"),
         "cell_changes": radio_target.get("cell_changes"),
+        "source_rule_bytes_delta": source_rule_bytes_delta,
+        "source_rule_packets_delta": source_rule_packets_delta,
         "lte_tx_bytes_delta": target_tx,
         "lte_rx_bytes_delta": target_rx,
         "other_lte_tx_bytes_delta": other_tx,
