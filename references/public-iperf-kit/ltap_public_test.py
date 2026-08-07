@@ -33,7 +33,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 RADIO_KEYS = {
     "status", "model", "revision", "current-operator", "lac", "cell-id",
@@ -323,8 +323,8 @@ def summarize_iperf(j: dict[str, Any], protocol: str, reverse: bool) -> dict[str
         return result
 
     if protocol == "udp":
-        # Depending on direction/version, useful UDP summary may be in sum, sum_received or sum_sent.
-        candidates = [end.get("sum"), end.get("sum_received"), end.get("sum_sent")]
+        # Receiver-side UDP loss/jitter/throughput is the useful result for video tests.
+        candidates = [end.get("sum_received"), end.get("sum"), end.get("sum_sent")]
         x = next((v for v in candidates if isinstance(v, dict) and "bits_per_second" in v), {})
         result.update({
             "bits_per_second": x.get("bits_per_second"),
