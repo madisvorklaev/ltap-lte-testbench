@@ -33,7 +33,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 RADIO_KEYS = {
     "status", "model", "revision", "current-operator", "lac", "cell-id",
@@ -266,7 +266,7 @@ def build_iperf(
     cmd = [
         "iperf3", "-c", server, "-p", str(port), "-4",
         "-B", source_ip, "-t", str(duration),
-        "-i", "1", "-J", "--get-server-output",
+        "-i", "1", "-J",
     ]
     if protocol == "udp":
         cmd += ["-u", "-b", bitrate, "-l", str(packet_length)]
@@ -404,6 +404,66 @@ def parse_ping(path: Path) -> dict[str, Any]:
     return out
 
 
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    with path.open("w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def summarize_events(rows: list[dict[str, Any]], iface: str, sinr_low_threshold: float) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    previous: dict[str, Any] = {}
+    sinr_was_low: bool | None = None
+
+    def add(ts: str, event_type: str, **fields: Any) -> None:
+        events.append({"timestamp_utc": ts, "type": event_type, "interface": iface, **fields})
+
+    for row in rows:
+        ts = row.get("timestamp_utc")
+        if not ts:
+            continue
+        d = (((row.get("interfaces") or {}).get(iface) or {}))
+        lte = d.get("lte") or {}
+        status = lte.get("status") or lte.get("registration-status")
+        primary = lte.get("primary-band") or ""
+        ca = lte.get("ca-band") or ""
+        cell = lte.get("cell-id") or lte.get("current-cellid") or lte.get("phy-cellid") or ""
+
+        current = {"status": status, "primary": primary, "ca": ca, "cell": cell}
+        if previous:
+            if current["primary"] != previous.get("primary"):
+                add(ts, "primary_band_changed", old=previous.get("primary"), new=current["primary"])
+            if bool(current["ca"]) and not previous.get("ca"):
+                add(ts, "ca_appeared", ca_band=current["ca"])
+            if previous.get("ca") and not current["ca"]:
+                add(ts, "ca_disappeared", old=previous.get("ca"))
+            if current["ca"] and previous.get("ca") and current["ca"] != previous.get("ca"):
+                add(ts, "ca_band_changed", old=previous.get("ca"), new=current["ca"])
+            if current["cell"] and previous.get("cell") and current["cell"] != previous.get("cell"):
+                add(ts, "cell_changed", old=previous.get("cell"), new=current["cell"])
+            if current["status"] != previous.get("status"):
+                if current["status"] == "registered":
+                    add(ts, "lte_recovered", old=previous.get("status"), new=current["status"])
+                else:
+                    add(ts, "lte_status_changed", old=previous.get("status"), new=current["status"])
+        previous = current
+
+        sinr = numeric_radio(lte.get("sinr"))
+        if sinr is None:
+            continue
+        sinr_is_low = sinr < sinr_low_threshold
+        if sinr_was_low is None:
+            sinr_was_low = sinr_is_low
+        elif sinr_is_low and not sinr_was_low:
+            add(ts, "sinr_low_started", sinr=sinr, threshold=sinr_low_threshold)
+            sinr_was_low = True
+        elif not sinr_is_low and sinr_was_low:
+            add(ts, "sinr_low_ended", sinr=sinr, threshold=sinr_low_threshold)
+            sinr_was_low = False
+
+    return events
+
+
 def append_summary_csv(path: Path, row: dict[str, Any]) -> None:
     # Keep this stable and compact. Full data remains in per-test JSON/JSONL files.
     fields = [
@@ -539,7 +599,7 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
     tele.start()
 
     ping_target = cfg.get("ping_target", "1.1.1.1")
-    ping_cmd = ["ping", "-n", "-I", source_ip, "-i", str(args.ping_interval), ping_target]
+    ping_cmd = ["ping", "-n", "-D", "-O", "-I", source_ip, "-i", str(args.ping_interval), ping_target]
     ping_out = (out_dir / "ping.txt").open("w", encoding="utf-8")
     ping_err = (out_dir / "ping_stderr.txt").open("w", encoding="utf-8")
     ping_proc = subprocess.Popen(ping_cmd, stdout=ping_out, stderr=ping_err, text=True)
@@ -586,6 +646,8 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
     ping_sum = parse_ping(out_dir / "ping.txt")
     rows = read_telemetry(tele_path)
     radio_target = summarize_radio(rows, iface)
+    events = summarize_events(rows, iface, args.sinr_low_threshold)
+    write_jsonl(out_dir / "events.jsonl", events)
 
     other_ifaces = [x for x in all_lte if x != iface]
     other_summaries = {x: summarize_radio(rows, x) for x in other_ifaces}
@@ -616,6 +678,7 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "radio_target": radio_target,
         "radio_other": other_summaries,
         "path_verification": path_verification,
+        "events_count": len(events),
     }
     save_json(out_dir / "summary.json", summary)
 
@@ -653,10 +716,14 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "path_verification": path_verification,
         "test_dir": str(out_dir),
     }
-    append_summary_csv(Path(args.output) / "summary.csv", row)
+    valid_for_summary = rc == 0 and not iperf_sum.get("error") and path_verification == "PASS"
+    if valid_for_summary:
+        append_summary_csv(Path(args.output) / "summary.csv", row)
 
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     print(f"\nSaved: {out_dir}")
+    if not valid_for_summary:
+        print("Run kept as raw artifacts only; not appended to summary.csv.", file=sys.stderr)
     if rc != 0:
         print("iperf3 exited non-zero; inspect iperf_stderr.txt and iperf.json", file=sys.stderr)
         return rc or 1
@@ -730,6 +797,7 @@ def main() -> int:
     rt.add_argument("--cooldown", type=int, default=5)
     rt.add_argument("--telemetry-interval", type=float, default=1.0)
     rt.add_argument("--ping-interval", type=float, default=0.2)
+    rt.add_argument("--sinr-low-threshold", type=float, default=3.0)
     rt.add_argument("--reverse", action="store_true", help="Server -> client download")
     rt.add_argument("--tag", default="manual")
     rt.add_argument("--output", default="results")

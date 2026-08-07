@@ -1,115 +1,118 @@
-# OpenClaw task: prepare Linux Mint LtAP LTE test workstation
+# OpenClaw task — prepare the Linux Mint LtAP LTE lab workstation
+Version: 1.5
 
-## Objective
+## Scope and starting assumptions
 
-Prepare this Linux Mint computer as a repeatable test workstation for several MikroTik LtAP routers with two LTE modems.
+Prepare this Linux Mint PC as a complete, repeatable LTE test workstation.
 
-The physical antenna/pigtail/router swaps will be done by the user. Your job is to install, configure, verify and maintain the software-side test environment.
+Assume the MikroTik LtAP has ALREADY been configured with the supplied full RouterOS test script and is physically connected to one of the Linux PC's Ethernet ports.
 
-The most important goal is **repeatability**, not maximum benchmark speed.
+Do **not** re-import or rewrite the RouterOS configuration unless verification proves that the expected test configuration is missing.
 
-A test must use:
-- the same public test server/IP for a campaign;
-- the same traffic profile;
-- a known LTE1 or LTE2 path;
-- continuous LTE/radio telemetry;
-- simultaneous latency measurements;
-- machine-readable raw results.
+Expected router configuration:
 
-Do not silently "fix" a failed test by changing server, modem path, bitrate or duration.
+- Router management IP: `192.168.103.254/24`
+- LAN bridge/network: `192.168.103.0/24`
+- Router DHCP pool: `192.168.103.10-192.168.103.100`
+- LTE interfaces: `lte1`, `lte2`
+- Routing tables:
+  - `to-lte1`
+  - `to-lte2`
+- MikroTik test policy:
+  - source `192.168.103.201/32` -> `to-lte1` -> `lte1`
+  - source `192.168.103.202/32` -> `to-lte2` -> `lte2`
 
----
+Your job is to configure the **Linux PC**, bootstrap authenticated access to the router, install the collector, select/pin a public iPerf3 server, and prove both LTE paths end-to-end.
 
-## Why public iPerf3 is the primary transport
-
-There is no private upload server available.
-
-Use a public iPerf3 endpoint as the default test transport. iPerf3 supports:
-- TCP and UDP;
-- a fixed target bitrate for UDP;
-- receiver-side UDP loss/jitter;
-- JSON output;
-- binding the client to a specific local source IP.
-
-This is particularly suitable for the vehicle use case because the actual traffic is a continuous UDP video stream.
-
-A maintained public-server list is available from:
-- `https://export.iperf3serverlist.net/listed_iperf3_servers.json`
-- project: `https://github.com/R0GGER/public-iperf3-servers`
-
-Public servers are shared infrastructure. Be polite:
-- normal campaign tests should be roughly 30–120 seconds;
-- use realistic LTE/video rates, not huge artificial rates;
-- do not run unattended continuous saturation;
-- respect any per-server notes/limits;
-- if a server is busy, try another allowed port on the **same pinned host**;
-- if the host itself must change, start a new campaign and keep those results separate.
-
-Do **not** make Ookla CLI the default. The currently distributed Ookla CLI package describes its use as personal/non-commercial, which may not fit this project. It may be left as an optional manually enabled comparison tool only if the user confirms the terms are appropriate.
-
-Measurement Lab NDT7 is a possible secondary TCP comparison tool, but M-Lab publishes measurement results including the client public IP. Do not enable it automatically without explaining that to the user.
+The physical antenna/pigtail/router swaps will be performed by the user later.
 
 ---
 
-## Files supplied with this handoff
+# Lab credentials
 
-- `ltap_public_test.py` — collector.
-- `install_linux_mint.sh` — required Linux packages.
-- `setup_test_ips.sh` — temporary two-source-IP setup.
-- `config.example.json` — configuration template.
-- `routeros_test_routing.rsc.example` — routing concept; never paste it blindly.
-- `README.md` — operator instructions.
+Credentials were supplied out-of-band for this isolated lab setup and were used
+only for local sudo validation and one-time MikroTik SSH-key bootstrap. They are
+intentionally not stored in this repository.
 
-Treat the Python collector as a functional starter implementation, not untouchable code. You have permission to repair it if live testing reveals RouterOS-version-specific output differences. Preserve raw output whenever a parser is changed.
+- MikroTik username: `admin`
 
----
+The omitted values are lab secrets.
 
-## Expected topology
+Rules:
 
-Typical topology:
-
-```
-Linux Mint test PC
-   |
-   | Ethernet
-   |
-MikroTik LtAP
-   |                  |
-  LTE1               LTE2
-   |                  |
- mobile network      mobile network
-   \                  /
-      public iPerf3 server
-```
-
-The Linux PC should have two additional source addresses on the same wired interface, for example:
-
-- `192.168.88.201` -> force through LTE1
-- `192.168.88.202` -> force through LTE2
-
-The MikroTik should policy-route those source IPs through the already-existing LTE1 and LTE2 routing tables.
-
-The collector runs:
-
-```
-iperf3 ... -B 192.168.88.201
-```
-
-or
-
-```
-iperf3 ... -B 192.168.88.202
-```
-
-so test traffic can be selected without depending on the remote server port.
+1. You MAY use these credentials without asking the user again.
+2. Do not print them in normal status output.
+3. Do not commit them to Git.
+4. Do not place them in `config.json`, source code, README files, result files, shell history, or Git history.
+5. If a temporary secrets file is operationally useful, create it mode `0600`, add it to `.gitignore`, and delete it after SSH-key bootstrap unless still genuinely required.
+6. Prefer using the router password only once to bootstrap SSH-key authentication.
+7. Do not change the router password.
 
 ---
 
-# Phase 1 — Inspect, do not change
+# Primary objective
 
-Before making network changes, inspect the Linux Mint machine.
+After setup, the following commands must deterministically test different modems from the same Linux PC:
 
-Record:
+```bash
+python3 ltap_public_test.py --config config.json run \
+  --campaign campaign.json \
+  --path lte1 \
+  --protocol udp \
+  --bitrate 6M \
+  --duration 120 \
+  --tag smoke_lte1
+```
+
+and:
+
+```bash
+python3 ltap_public_test.py --config config.json run \
+  --campaign campaign.json \
+  --path lte2 \
+  --protocol udp \
+  --bitrate 6M \
+  --duration 120 \
+  --tag smoke_lte2
+```
+
+The Linux source address is the selector:
+
+```text
+192.168.103.201 -> Linux policy table ltap-lte1 -> 192.168.103.254
+                 -> MikroTik to-lte1 -> lte1
+
+192.168.103.202 -> Linux policy table ltap-lte2 -> 192.168.103.254
+                 -> MikroTik to-lte2 -> lte2
+```
+
+This must work even if the Linux PC also has Wi-Fi, VPN, or another default Internet route.
+
+---
+
+# Experimental principles
+
+The goal is repeatability, not the highest possible speed-test number.
+
+Each campaign must keep constant:
+
+- public iPerf3 server hostname/IP;
+- traffic protocol;
+- UDP bitrate when applicable;
+- duration;
+- packet size;
+- test source path;
+- telemetry method.
+
+Do not silently change server, path, duration, bitrate, packet size, RouterOS settings, LTE bands, APN, modem firmware, or other variables to make a failed test pass.
+
+Raw results must always be preserved.
+
+---
+
+# Phase 1 — Inspect the Linux machine and identify the LtAP Ethernet port
+
+First record:
 
 ```bash
 cat /etc/os-release
@@ -117,51 +120,80 @@ uname -a
 ip -br link
 ip -br -4 addr
 ip route
+ip rule
 nmcli -t -f NAME,UUID,TYPE,DEVICE connection show
+nmcli -t -f GENERAL.DEVICE,GENERAL.STATE,GENERAL.CONNECTION device show
 ```
 
-Identify:
-- the wired Ethernet interface physically connected to the LtAP;
-- its NetworkManager connection profile;
-- current LAN IPv4 address/subnet;
-- LtAP management address.
+Do not assume the wired interface is `enp3s0`.
 
-Do not assume `enp3s0` or `192.168.88.1`.
+Identify the Ethernet interface connected to the LtAP.
 
-Also verify the attached router:
+Useful methods:
+
+1. Look for an Ethernet interface with carrier.
+2. Compare `ip link` before/after unplugging only if necessary.
+3. Inspect LLDP/neighbour information if available.
+4. Look for DHCP connectivity in `192.168.103.0/24`.
+5. Ping `192.168.103.254` from likely wired interfaces.
+
+Do not change unrelated interfaces, Wi-Fi, VPNs, bridges, Docker networks, or virtualization interfaces.
+
+Record the chosen physical interface in a setup report.
+
+Define mentally/in your working state:
+
+```text
+LTAP_IF=<actual Linux Ethernet interface>
+LTAP_GW=192.168.103.254
+MGMT_IP=192.168.103.200/24
+LTE1_IP=192.168.103.201/24
+LTE2_IP=192.168.103.202/24
+```
+
+Before assigning `.200`, `.201`, or `.202`, check for conflicts:
 
 ```bash
-ssh <router-user>@<router-ip> '/system/resource/print'
-ssh <router-user>@<router-ip> '/interface/lte/print detail'
+arping -D -I "$LTAP_IF" 192.168.103.200
+arping -D -I "$LTAP_IF" 192.168.103.201
+arping -D -I "$LTAP_IF" 192.168.103.202
 ```
 
-If no SSH key is configured, create a dedicated key and a dedicated RouterOS test user with the minimum policy needed to:
-- read system information;
-- run `/interface/lte/monitor`;
-- read interface statistics;
-- run ping if later needed.
+Install `arping` first if necessary.
 
-Do not store the RouterOS password in source files or shell history.
+If any of these addresses are already in use, stop and report the conflict instead of choosing new addresses silently, because the RouterOS policy rules are intentionally tied to `.201` and `.202`.
 
 ---
 
-# Phase 2 — Install dependencies
+# Phase 2 — Obtain sudo privileges and install dependencies
 
-Run:
+Use the supplied Linux sudo password when sudo prompts for it.
+
+Do not embed the password in persistent scripts.
+
+Validate sudo:
 
 ```bash
-chmod +x install_linux_mint.sh
-./install_linux_mint.sh
+sudo -v
 ```
 
-Required:
-- Python 3
-- iperf3
-- OpenSSH client
-- iproute2
-- iputils-ping
-- jq
-- curl
+Install:
+
+```bash
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  python3 \
+  python3-venv \
+  iperf3 \
+  openssh-client \
+  sshpass \
+  iproute2 \
+  iputils-ping \
+  iputils-arping \
+  jq \
+  curl \
+  git
+```
 
 Verify:
 
@@ -169,190 +201,415 @@ Verify:
 python3 --version
 iperf3 --version
 ssh -V
+ip -Version
+nmcli --version
+```
+
+`sshpass` is allowed for the one-time lab bootstrap. Do not make the collector depend on it.
+
+---
+
+# Phase 3 — Configure a deterministic Linux Ethernet connection
+
+The Linux PC must have three addresses on the LtAP-facing Ethernet interface:
+
+- `192.168.103.200/24` — ordinary management address
+- `192.168.103.201/24` — LTE1 test source
+- `192.168.103.202/24` — LTE2 test source
+
+The setup must be persistent across reboot.
+
+## Preferred method: dedicated NetworkManager profile
+
+Find the current NetworkManager connection bound to `LTAP_IF`.
+
+If it is clearly a disposable/default wired profile used only for this lab, modify or replace it.
+
+If it is a user-customized profile with unrelated settings, create a dedicated profile named:
+
+```text
+LtAP-Lab
+```
+
+The profile should:
+
+- bind to the identified Ethernet interface;
+- use static IPv4 addresses `.200`, `.201`, `.202`;
+- have no IPv6 dependency for the test;
+- avoid becoming the normal system default route when another Internet connection already exists.
+
+A typical NetworkManager configuration is conceptually:
+
+```bash
+nmcli con add type ethernet ifname "$LTAP_IF" con-name "LtAP-Lab" \
+  ipv4.method manual \
+  ipv4.addresses "192.168.103.200/24,192.168.103.201/24,192.168.103.202/24" \
+  ipv4.never-default yes \
+  ipv6.method disabled
+```
+
+If `LtAP-Lab` already exists, update it instead of creating duplicates.
+
+Bring it up:
+
+```bash
+nmcli con up "LtAP-Lab"
+```
+
+Verify:
+
+```bash
+ip -4 addr show dev "$LTAP_IF"
+ping -c 3 -I 192.168.103.200 192.168.103.254
+```
+
+The connected route for `192.168.103.0/24` must point to `LTAP_IF`.
+
+Do not use `.201` or `.202` as the normal management address.
+
+---
+
+# Phase 4 — Add Linux source-policy routing for LTE1 and LTE2
+
+This is mandatory.
+
+Merely binding iPerf3 to `.201` or `.202` does **not** guarantee that Linux will send public traffic to the LtAP if another default route exists.
+
+Create persistent source-policy tables:
+
+```text
+201 ltap-lte1
+202 ltap-lte2
+```
+
+Prefer a dedicated file:
+
+```text
+/etc/iproute2/rt_tables.d/ltap-test.conf
+```
+
+with:
+
+```text
+201 ltap-lte1
+202 ltap-lte2
+```
+
+The desired live routing state is:
+
+```bash
+ip route replace table ltap-lte1 \
+  192.168.103.0/24 dev "$LTAP_IF" src 192.168.103.201
+
+ip route replace table ltap-lte1 \
+  default via 192.168.103.254 dev "$LTAP_IF" src 192.168.103.201
+
+ip route replace table ltap-lte2 \
+  192.168.103.0/24 dev "$LTAP_IF" src 192.168.103.202
+
+ip route replace table ltap-lte2 \
+  default via 192.168.103.254 dev "$LTAP_IF" src 192.168.103.202
+```
+
+Create rules with explicit priorities:
+
+```bash
+ip rule add priority 20100 from 192.168.103.201/32 lookup ltap-lte1
+ip rule add priority 20200 from 192.168.103.202/32 lookup ltap-lte2
+```
+
+Make this idempotent: remove or replace previous `ltap-lte1/ltap-lte2` rules instead of accumulating duplicates.
+
+## Persistence
+
+Make the policy routes/rules survive reboot and NetworkManager reconnects.
+
+Preferred implementation:
+
+- `/usr/local/sbin/ltap-test-routing`
+- a NetworkManager dispatcher script under `/etc/NetworkManager/dispatcher.d/`
+  OR a small systemd oneshot service bound to `network-online.target`
+
+The implementation must:
+
+1. only act on the identified LtAP interface;
+2. wait until `.201` and `.202` are assigned;
+3. `replace` routes;
+4. remove duplicate stale rules before adding the desired priorities;
+5. handle interface reconnect cleanly;
+6. not modify the PC's other routing tables.
+
+If using a dispatcher, handle both `up` and `down` events appropriately.
+
+After persistence is configured, test it by:
+
+```bash
+sudo systemctl restart NetworkManager
+```
+
+or by cycling only the `LtAP-Lab` profile.
+
+Then verify again.
+
+---
+
+# Phase 5 — Prove Linux routing before touching the test collector
+
+These commands must resolve to the Ethernet interface and the LtAP gateway:
+
+```bash
+ip route get 1.1.1.1 from 192.168.103.201
+ip route get 1.1.1.1 from 192.168.103.202
+```
+
+Expected conceptually:
+
+```text
+1.1.1.1 via 192.168.103.254 dev <LTAP_IF> src 192.168.103.201
+1.1.1.1 via 192.168.103.254 dev <LTAP_IF> src 192.168.103.202
+```
+
+If either command resolves through Wi-Fi, VPN, another NIC, or another gateway, the workstation is NOT ready.
+
+Also verify router management:
+
+```bash
+ping -c 3 -I 192.168.103.200 192.168.103.254
 ```
 
 ---
 
-# Phase 3 — Configure Linux test source IPs
+# Phase 6 — Verify the MikroTik full test configuration
 
-Copy:
+Use the supplied router credentials.
+
+First test password login non-interactively:
 
 ```bash
-cp config.example.json config.json
+sshpass -p '<router-password>' ssh \
+  -o StrictHostKeyChecking=accept-new \
+  admin@192.168.103.254 \
+  '/system/resource/print'
 ```
 
-Edit `config.json` using the real:
-- Ethernet interface;
-- router address/user/key;
-- source IPs;
-- RouterOS LTE interface names.
+Use the actual supplied password; do not write the literal password into persistent shell scripts.
 
-Choose two unused IPs inside the LtAP LAN subnet.
+Then collect:
 
-Example only:
+```routeros
+/system/resource/print
+/system/routerboard/print
+/interface/lte/print detail
+/routing/table/print detail
+/ip/route/print detail
+/ip/firewall/mangle/print detail
+/ip/firewall/nat/print detail
+/ip/address/print detail
+```
+
+Verify specifically:
+
+- `192.168.103.254/24` exists on the LAN;
+- both `lte1` and `lte2` exist;
+- `to-lte1` and `to-lte2` exist;
+- `to-lte1` has a default route via `lte1`;
+- `to-lte2` has a default route via `lte2`;
+- `.201` has a mark-routing rule to `to-lte1`;
+- `.202` has a mark-routing rule to `to-lte2`;
+- NAT exists for LTE egress;
+- no enabled FastTrack rule can bypass marked test traffic.
+
+Do not change LTE bands, APN, SIM selection, modem firmware, RouterOS version, or radio configuration during workstation setup.
+
+If the expected RouterOS test configuration is missing, stop and report exactly what is absent. Do not invent an alternative router configuration automatically.
+
+---
+
+# Phase 7 — Bootstrap SSH-key access to the MikroTik
+
+The Python collector uses non-interactive SSH and should not store the router password.
+
+Generate a dedicated key if it does not already exist:
+
+```bash
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+ssh-keygen -t ed25519 -N '' -f ~/.ssh/ltap_test_ed25519
+```
+
+Use the supplied router password with `sshpass` only for bootstrap.
+
+Preferred approach:
+
+1. copy the public key to the router file store;
+2. import it for the existing `admin` account;
+3. prove key authentication;
+4. remove the temporary public-key file from the router if appropriate.
+
+Example flow, adapting SCP syntax if RouterOS requires it:
+
+```bash
+sshpass -p '<router-password>' scp \
+  -o StrictHostKeyChecking=accept-new \
+  ~/.ssh/ltap_test_ed25519.pub \
+  admin@192.168.103.254:ltap_test_ed25519.pub
+```
+
+Then:
+
+```bash
+sshpass -p '<router-password>' ssh admin@192.168.103.254 \
+  '/user/ssh-keys/import public-key-file=ltap_test_ed25519.pub user=admin'
+```
+
+Verify:
+
+```bash
+ssh -i ~/.ssh/ltap_test_ed25519 \
+  -o BatchMode=yes \
+  admin@192.168.103.254 \
+  '/system/resource/print'
+```
+
+If RouterOS syntax differs on the installed release, inspect `/user/ssh-keys` help and adapt.
+
+Do not change or remove the existing password.
+
+---
+
+# Phase 8 — Install/configure the test collector
+
+Use the supplied:
+
+```text
+ltap_public_test.py
+```
+
+Create:
+
+```text
+config.json
+```
+
+from `config.example.json`.
+
+For this lab it should contain, at minimum:
 
 ```json
-"paths": {
-  "lte1": {
-    "source_ip": "192.168.88.201",
-    "lte_interface": "lte1"
+{
+  "linux_interface": "<ACTUAL_LTAP_IF>",
+  "router": {
+    "host": "192.168.103.254",
+    "user": "admin",
+    "port": 22,
+    "ssh_key": "~/.ssh/ltap_test_ed25519"
   },
-  "lte2": {
-    "source_ip": "192.168.88.202",
-    "lte_interface": "lte2"
-  }
+  "paths": {
+    "lte1": {
+      "source_ip": "192.168.103.201",
+      "lte_interface": "lte1"
+    },
+    "lte2": {
+      "source_ip": "192.168.103.202",
+      "lte_interface": "lte2"
+    }
+  },
+  "ping_target": "1.1.1.1"
 }
 ```
 
-For the first validation, configure them temporarily:
+Never put the router password or sudo password in `config.json`.
 
-```bash
-sudo ./setup_test_ips.sh <ethernet-if> <lte1-ip/cidr> <lte2-ip/cidr>
+Add to `.gitignore`:
+
+```text
+config.json
+campaign*.json
+results/
+lab-secrets*
 ```
-
-Example:
-
-```bash
-sudo ./setup_test_ips.sh enp3s0 192.168.88.201/24 192.168.88.202/24
-```
-
-Check:
-
-```bash
-ip -4 addr show dev <ethernet-if>
-```
-
-Only after everything works, optionally make these addresses persistent in the correct NetworkManager wired profile. Do not change the primary management address or default route unnecessarily.
 
 ---
 
-# Phase 4 — Understand the MikroTik routing before editing
+# Phase 9 — Validate collector telemetry before network benchmarking
 
-This is critical.
+Run:
 
-Retrieve and save:
+```bash
+python3 ltap_public_test.py --config config.json preflight \
+  --campaign campaign.json
+```
+
+If a campaign does not yet exist, first initialize one as described below.
+
+Before relying on parser output, compare:
 
 ```routeros
-/export
-/routing/table/print detail
-/ip/route/print detail
-/routing/rule/print detail
-/ip/firewall/mangle/print detail
-/ip/firewall/nat/print detail
-/interface/lte/print detail
+/interface/lte/monitor lte1 once
+/interface/lte/monitor lte2 once
 ```
 
-The routers already have an ELMO configuration that routes traffic by destination port. Reuse the existing LTE-specific routing tables/marks where possible.
+against collector telemetry.
 
-The desired additional test behavior is:
+Preserve raw LTE output even if parser changes are needed.
 
-```
-source=<Linux LTE1 test IP> -> existing LTE1 route/table
-source=<Linux LTE2 test IP> -> existing LTE2 route/table
-```
+Different modem models may expose different fields.
 
-Do not assume table names.
+At minimum, capture where available:
 
-Before editing:
-
-```routeros
-/export file=before-ltap-test-routing
-```
-
-If the router uses mangle `mark-routing`, add two clearly labelled temporary rules matching the Linux source IPs and place them before broader ELMO routing rules.
-
-Use comments:
-- `TEMP LTAP TEST LTE1`
-- `TEMP LTAP TEST LTE2`
-
-Do not alter modem band configuration as part of workstation setup.
-
-Verify NAT covers both LTE paths.
-
-If existing architecture makes `/routing/rule` safer than mangle, you may use routing rules instead, but document exactly why.
+- status;
+- primary band;
+- CA band;
+- RSRP;
+- RSRQ;
+- SINR;
+- CQI;
+- RI;
+- cell ID / phy-cellid;
+- interface byte counters.
 
 ---
 
-# Phase 5 — Prove LTE1/LTE2 path selection
+# Phase 10 — Choose and pin a public iPerf3 server
 
-Do not start collecting benchmark data until this is proven.
+Use public iPerf3 infrastructure because no reliable private server is available.
 
-Run traffic bound to LTE1 source address:
-
-```bash
-curl --interface <lte1-source-ip> -4 https://ifconfig.co/ip
-```
-
-and LTE2:
+Fetch the maintained server export:
 
 ```bash
-curl --interface <lte2-source-ip> -4 https://ifconfig.co/ip
+curl -fsSLo /tmp/iperf-servers.json \
+  https://export.iperf3serverlist.net/listed_iperf3_servers.json
 ```
 
-Different public IPs are useful evidence but **not sufficient**, because both mobile sessions may appear behind the same carrier CGNAT address.
+Inspect the current schema:
 
-The authoritative check is RouterOS interface counters.
-
-Before and during a bound transfer, inspect:
-
-```routeros
-/interface/print stats-detail where name="lte1"
-/interface/print stats-detail where name="lte2"
+```bash
+jq '.[0]' /tmp/iperf-servers.json
 ```
 
-Traffic from source IP 1 must predominantly increment LTE1.
-Traffic from source IP 2 must predominantly increment LTE2.
+Do not hard-code assumptions about the JSON schema without inspecting it.
 
-The supplied collector performs the same basic check after each test and records:
-- selected LTE TX/RX byte delta;
-- other LTE TX/RX byte delta;
-- `path_verification`.
+Prefer a server in Northern or Central Europe, roughly in this order:
 
-A result that reports `FAIL_OR_COUNTER_PARSE` must not be included in the comparison dataset until resolved.
+- Estonia;
+- Finland;
+- Sweden;
+- Latvia/Lithuania;
+- Germany;
+- Netherlands.
 
----
+Candidate requirements:
 
-# Phase 6 — Select and PIN a public server
+- reachable through both `.201` and `.202`;
+- stable IPv4 address;
+- documented public use;
+- sufficient capacity;
+- no repeated busy/error response;
+- preferably multiple iPerf3 ports.
 
-The server is an experimental variable. It must not change silently.
+Test candidate reachability separately from both Linux source addresses.
 
-Preferred workflow:
-
-1. Download the current public server export:
-   ```bash
-   curl -fsSLo /tmp/iperf-servers.json \
-     https://export.iperf3serverlist.net/listed_iperf3_servers.json
-   ```
-
-2. Inspect the current JSON schema instead of assuming it:
-   ```bash
-   jq '.[0]' /tmp/iperf-servers.json
-   ```
-
-3. Prefer a well-connected server in Northern/Central Europe. Candidates in or near:
-   - Estonia
-   - Finland
-   - Sweden
-   - Latvia/Lithuania
-   - Germany
-   - Netherlands
-
-4. Test candidate availability from **both source IPs** using a 1–2 second TCP test. Do not select a server that works only through one modem.
-
-5. Prefer:
-   - same IPv4 endpoint through both modems;
-   - stable ports;
-   - clearly documented public use;
-   - no repeated "server busy";
-   - capacity well above LTE rates being measured.
-
-Two examples currently documented by the public server list project are:
-- `iperf-ams-nl.eranium.net`
-- `ams.speedtest.clouvider.net`
-
-Do not assume they will always be available.
-
-Once selected, initialize the campaign:
+Once chosen, initialize:
 
 ```bash
 python3 ltap_public_test.py --config config.json campaign-init \
@@ -361,308 +618,236 @@ python3 ltap_public_test.py --config config.json campaign-init \
   --campaign campaign.json
 ```
 
-The script resolves the hostname to IPv4 and pins an IP in `campaign.json`.
+Review `campaign.json`.
 
-Review it.
+The server IP must remain pinned for the campaign.
 
-Do not automatically re-resolve on every test.
+If the server host itself stops working:
 
-If the pinned IP/server becomes unavailable:
-- stop;
-- do not silently fall back;
-- create a new `campaign-YYYYMMDD.json`;
-- mark subsequent results as a new server campaign.
+- do not silently select another server;
+- end that campaign;
+- create a new campaign file;
+- keep the result groups distinct.
 
-Using another port on the same pinned server is acceptable when the server provides a pool such as 5201–5210. Record the port, which the collector already does.
+Changing port on the same server is acceptable if the server explicitly provides multiple public ports and the chosen port is recorded.
+
+Public iPerf3 servers are shared resources:
+
+- use realistic LTE/video rates;
+- do not run continuous unattended saturation;
+- normal tests should be approximately 30–120 seconds;
+- respect server limitations.
 
 ---
 
-# Phase 7 — Run collector preflight
+# Phase 11 — End-to-end LTE path verification
 
-```bash
-python3 ltap_public_test.py --config config.json preflight \
-  --campaign campaign.json
-```
+This is an acceptance gate.
 
-It must confirm:
-- required commands exist;
-- both Linux source IPs are assigned;
-- RouterOS SSH works;
-- both LTE monitors return parseable fields;
-- campaign server exists.
+The Linux route must be correct AND the MikroTik must actually send each flow through the intended LTE interface.
 
-Because the routers have multiple RouterOS versions, especially older 7.x releases, compare a collector sample with interactive RouterOS output:
+## LTE1
+
+Before load, note RouterOS counters:
 
 ```routeros
-/interface/lte/monitor lte1 once
-/interface/lte/monitor lte2 once
+/interface/print stats-detail where name="lte1"
+/interface/print stats-detail where name="lte2"
 ```
 
-Make sure fields such as these survive parsing when the modem supports them:
-- status
-- primary-band
-- ca-band
-- RSRP
-- RSRQ
-- SINR
-- CQI
-- RI
-- cell-id / phy-cellid
+Generate a short bound flow from:
 
-If older RouterOS output formatting differs:
-- fix the parser;
-- preserve `lte_raw` in telemetry;
-- re-run preflight.
+```text
+192.168.103.201
+```
 
-Do not require every modem model to expose every field.
+Then check counters again.
+
+LTE1 must carry the dominant traffic.
+
+## LTE2
+
+Repeat using:
+
+```text
+192.168.103.202
+```
+
+LTE2 must carry the dominant traffic.
+
+Do not use public IP alone as proof; carrier CGNAT may obscure the distinction.
+
+The collector's `path_verification` result must also pass.
+
+A failed path verification invalidates the benchmark result.
 
 ---
 
-# Phase 8 — Standard test profiles
+# Phase 12 — Smoke tests
 
-The main vehicle workload is UDP video. Use UDP as the primary test.
+Run conservative smoke tests first.
 
-## Profile A — realistic video upload
-
-If expected video is about 6 Mbit/s:
+LTE1:
 
 ```bash
 python3 ltap_public_test.py --config config.json run \
   --campaign campaign.json \
   --path lte1 \
   --protocol udp \
-  --bitrate 6M \
+  --bitrate 4M \
   --packet-length 1200 \
-  --duration 120 \
-  --tag R0000001_factory_dome_beige
+  --duration 30 \
+  --tag setup_smoke_lte1
 ```
 
-Repeat with `--path lte2`.
-
-For physical/config comparisons, use at least three repeats.
-
-## Profile B — headroom staircase
-
-Run:
-
-- 4M
-- 6M
-- 8M
-- 10M
-- 12M
-
-Use 60 seconds each initially.
-
-The purpose is to find the sustainable video bitrate where:
-- UDP packet loss remains low;
-- jitter remains low;
-- ping latency does not explode;
-- CA/cell state remains stable.
-
-Do not interpret requested UDP bitrate as delivered bitrate; use receiver-side loss/jitter.
-
-## Profile C — TCP saturation / bufferbloat
+LTE2:
 
 ```bash
 python3 ltap_public_test.py --config config.json run \
   --campaign campaign.json \
-  --path lte1 \
-  --protocol tcp \
-  --duration 60 \
-  --tag R0000006_FG621_tcp
+  --path lte2 \
+  --protocol udp \
+  --bitrate 4M \
+  --packet-length 1200 \
+  --duration 30 \
+  --tag setup_smoke_lte2
 ```
 
-This is specifically useful for investigating the FG621-EA behavior where earlier Ookla tests showed very large latency under upload load.
+Both must:
 
-## Profile D — download
+- complete;
+- produce valid iPerf JSON;
+- produce LTE telemetry;
+- produce ping data;
+- produce a `summary.json`;
+- append to `results/summary.csv`;
+- pass path verification.
 
-```bash
-python3 ltap_public_test.py --config config.json run \
-  --campaign campaign.json \
-  --path lte1 \
-  --protocol tcp \
-  --reverse \
-  --duration 60 \
-  --tag download_check
-```
+If public iPerf server behavior prevents a clean smoke test, try another permitted port on the same pinned server first.
 
-Download is secondary to the vehicle's upload use case.
+Do not change server host silently.
 
 ---
 
-# Phase 9 — Dual-modem test
+# Phase 13 — Standard test profiles after setup
 
-The final system sends traffic on both LTE modems simultaneously.
+## A. Realistic video upload
 
-Once single-path routing is proven, run two collectors at the same time:
+Default:
 
-```bash
-python3 ltap_public_test.py --config config.json run \
-  --campaign campaign.json \
-  --path lte1 --protocol udp --bitrate 6M --duration 120 \
-  --tag dual_lte1 &
-
-PID1=$!
-
-python3 ltap_public_test.py --config config.json run \
-  --campaign campaign.json \
-  --path lte2 --protocol udp --bitrate 6M --duration 120 \
-  --tag dual_lte2 &
-
-PID2=$!
-
-wait "$PID1"
-wait "$PID2"
+```text
+UDP
+6 Mbit/s
+1200-byte payload
+120 seconds
 ```
 
-Caveat: many public iPerf3 servers accept one client per process/port. The collector may choose different ports from the same server. Confirm both tests actually ran concurrently.
+Run both paths separately.
 
-This dual test is especially important for testing band strategies such as:
-- both modems automatic;
-- both on the same primary band;
-- LTE1 B3 + LTE2 B1;
-- LTE1 B3 + LTE2 B7;
-- LTE1 B1/B7 allowed + LTE2 B3/B20 allowed.
+## B. Headroom staircase
 
-Do not modify band settings automatically. The user will choose/confirm each physical/radio configuration.
+Suggested:
+
+```text
+4M
+6M
+8M
+10M
+12M
+```
+
+Initially 60 seconds each.
+
+## C. TCP saturation
+
+Use 30–60 seconds to expose queueing/bufferbloat.
+
+This is particularly relevant to the FG621-EA behavior observed in earlier testing.
+
+## D. Dual-modem
+
+Run LTE1 and LTE2 collectors concurrently at realistic video rates.
+
+Confirm the public server supports simultaneous clients/ports.
 
 ---
 
-# Phase 10 — Result format
+# Phase 14 — Result integrity
 
-Every test must create its own timestamped folder.
+Every run must retain:
 
-Preserve:
 - `test.json`
 - `router_metadata.json`
 - `telemetry.jsonl`
 - `ping.txt`
 - `iperf.json`
 - `summary.json`
-- stderr files
+- stderr/error files
 
-Append one row to:
-- `results/summary.csv`
+Append only validated runs to:
 
-Do not discard raw telemetry after summary generation.
+```text
+results/summary.csv
+```
 
-Important summary fields:
-- test tag
-- target LTE
-- source IP
-- pinned server IP + actual port
-- UDP target bitrate
-- actual throughput
-- UDP loss %
-- UDP jitter
-- TCP retransmits
-- ping average/p95/loss
-- median RSRP
-- median RSRQ
-- median SINR
-- median CQI
-- median RI
-- primary bands seen
-- CA bands seen
-- count of samples with no CA band
-- cell changes
-- LTE byte deltas
-- non-selected LTE byte deltas
-- path-verification result
+Useful summary dimensions:
+
+- router/test tag;
+- source path;
+- source IP;
+- server IP/port;
+- requested bitrate;
+- actual throughput;
+- UDP loss;
+- UDP jitter;
+- TCP retransmissions;
+- ping average/p95/max/loss;
+- RSRP;
+- RSRQ;
+- SINR;
+- CQI;
+- RI;
+- primary bands;
+- CA bands;
+- CA missing samples;
+- cell changes;
+- LTE TX/RX byte deltas;
+- non-selected LTE byte deltas;
+- path verification.
+
+Raw data must not be discarded.
 
 ---
 
-# Phase 11 — Improve CA-event analysis
+# Phase 15 — CA/cell-state event analysis
 
-After the basic collector is proven, extend the summary with **state-change events**.
+After the basic collector is proven, improve it so `summary.json` or
+`events.jsonl` records timestamped state changes:
 
-Create `events.jsonl` or an events section in `summary.json` containing timestamps for:
+- CA appeared;
+- CA disappeared;
 - primary band changed;
-- CA band appeared;
-- CA band disappeared;
-- cell ID changed;
-- status changed from connected to another state;
-- status returned to connected;
+- cell changed;
+- LTE registration/status changed;
+- LTE recovered;
 - SINR crossed a configurable low threshold;
-- ping timeout burst began/ended.
+- ping timeout burst started;
+- ping timeout burst ended.
 
-This is needed to test the observation:
+This is needed to test the observation that losing CA sometimes coincides with
+page/video stalls.
 
-> when the CA band is lost, page loading becomes delayed or fails.
-
-The raw telemetry must make it possible to correlate:
-- second of CA loss;
-- ping RTT/loss;
-- interface throughput;
-- iperf interval throughput/loss.
-
-Do not infer causation merely because CA is missing during idle periods.
+Do not infer causation merely because CA is absent during idle traffic.
 
 ---
 
-# Phase 12 — Acceptance tests
+# Phase 16 — Git repository
 
-Do not declare the workstation finished until all of these pass.
+Maintain a local Git repository for the tooling.
 
-## A. Dependency test
+Suggested:
 
-```bash
-python3 --version
-iperf3 --version
-ssh -V
-```
-
-## B. RouterOS telemetry
-
-For both LTE interfaces:
-- status is collected;
-- at least RSRP/RSRQ/SINR or equivalent modem data is captured where supported;
-- raw output is always retained.
-
-## C. Source route test
-
-Bound LTE1 traffic increments LTE1 counters much more than LTE2.
-Bound LTE2 traffic increments LTE2 counters much more than LTE1.
-
-## D. Public server consistency
-
-`campaign.json` contains:
-- hostname;
-- pinned IPv4;
-- allowed port list.
-
-Three consecutive tests use the same server IP.
-
-## E. UDP test
-
-At a conservative 4 Mbit/s:
-- test completes;
-- JSON parses;
-- throughput/loss/jitter summary exists.
-
-## F. TCP test
-
-One 30-second TCP upload test completes and summary exists.
-
-## G. Failure behavior
-
-Temporarily specify an unavailable server/IP and verify:
-- collector fails clearly;
-- it does NOT switch to another public server silently.
-
-## H. Result isolation
-
-Every run gets a distinct directory and one summary.csv row.
-
----
-
-# Phase 13 — Git repository
-
-Create a local Git repository for this test tooling.
-
-Suggested structure:
-
-```
+```text
 ltap-lte-test/
 ├── README.md
 ├── OPENCLAW_TASK.md
@@ -670,64 +855,96 @@ ltap-lte-test/
 ├── .gitignore
 ├── ltap_public_test.py
 ├── install_linux_mint.sh
-├── setup_test_ips.sh
-├── routeros_test_routing.rsc.example
-└── docs/
-    └── TEST_METHOD.md
+├── docs/
+│   ├── TEST_METHOD.md
+│   └── LINUX_NETWORK_SETUP.md
+└── scripts/
+    └── ltap-test-routing
 ```
 
-`.gitignore` must exclude:
+Never commit:
+
 - `config.json`
 - `campaign*.json`
 - `results/`
-- SSH keys
-- any router exports containing secrets
+- credentials
+- temporary secrets
+- SSH private keys
+- RouterOS exports containing secrets
+- IMSI/SIM PIN/APN credentials
 
-Do not commit credentials, IMSI, SIM PINs, APN passwords or production secrets.
-
-If a connected GitHub repository is available and the user has already authorized repository creation/publishing for this project, create a private repository and push it. Otherwise keep it local and report the commands needed; do not make a public repository by default.
-
----
-
-# Important experimental rules
-
-1. Change one variable at a time where practical.
-2. Record physical setup in `--tag`.
-3. Keep server campaign constant.
-4. Do not mix results from different public server campaigns as if they were identical.
-5. Prefer 3+ repeats.
-6. For moving tests, keep the traffic profile fixed.
-7. Save raw LTE telemetry.
-8. Do not optimize based only on RSRP.
-9. For video, prioritize:
-   - packet loss;
-   - jitter;
-   - loaded latency;
-   - disconnections;
-   - sustainable throughput.
-10. Maximum Speedtest Mbps is secondary.
+Do not create a public GitHub repository by default.
 
 ---
 
-# Final deliverable from OpenClaw
+# Final acceptance criteria
 
-When setup is complete, report to the user:
+Do not report the workstation as complete until all of the following are true.
 
-1. Linux interface used.
-2. Linux LTE1/LTE2 source IPs.
-3. RouterOS LTE interface names.
-4. Existing route-table/mark mapping used for each path.
-5. Exact temporary MikroTik rules added.
-6. Public iPerf3 server hostname and pinned IPv4.
-7. Allowed ports.
-8. Results of one LTE1 UDP smoke test.
-9. Results of one LTE2 UDP smoke test.
-10. Path-verification result for each.
-11. Location of the local Git repository.
-12. Any RouterOS-version-specific parser fixes made.
-13. Exact commands the user should use for:
+## Linux network
+
+- Correct physical Ethernet interface identified.
+- `192.168.103.200/24` assigned persistently.
+- `192.168.103.201/24` assigned persistently.
+- `192.168.103.202/24` assigned persistently.
+- `ip route get 1.1.1.1 from 192.168.103.201` uses:
+  - LtAP Ethernet interface;
+  - gateway `192.168.103.254`;
+  - source `.201`.
+- Same for `.202`.
+- Routing survives connection cycle/reboot setup.
+
+## Router
+
+- `192.168.103.254` reachable.
+- SSH key works non-interactively.
+- `lte1` and `lte2` exist.
+- Both test routing tables exist.
+- `.201` maps to LTE1.
+- `.202` maps to LTE2.
+- LTE interface counters prove actual path selection.
+
+## Collector
+
+- preflight passes;
+- telemetry from both LTE interfaces is captured;
+- raw RouterOS data retained;
+- one LTE1 UDP smoke test passes;
+- one LTE2 UDP smoke test passes;
+- both have valid path verification;
+- `results/summary.csv` is produced.
+
+## Public server
+
+- one public iPerf3 server is pinned;
+- its hostname and IPv4 are recorded;
+- same server IP used for both smoke tests;
+- no silent fallback occurred.
+
+---
+
+# Final report to the user
+
+When finished, report:
+
+1. Linux Mint version.
+2. LtAP-facing Linux Ethernet interface.
+3. NetworkManager profile name.
+4. Management IP used (`192.168.103.200` expected).
+5. LTE1 source IP (`192.168.103.201` expected).
+6. LTE2 source IP (`192.168.103.202` expected).
+7. Exact Linux policy tables/rules created.
+8. Results of both `ip route get ... from ...` checks.
+9. Router identity/RouterOS version.
+10. LTE modem models/firmware if exposed.
+11. Public iPerf3 hostname and pinned IPv4.
+12. LTE1 smoke-test throughput/loss/jitter/ping/path verification.
+13. LTE2 smoke-test throughput/loss/jitter/ping/path verification.
+14. Local project/repository path.
+15. Any parser or compatibility fixes made.
+16. Exact commands the user should use for:
     - LTE1 test;
     - LTE2 test;
-    - dual LTE test.
+    - dual-modem test.
 
-Do not claim completion if either path-verification test fails.
+Do not expose the lab passwords in the final report.
