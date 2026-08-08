@@ -1,6 +1,6 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T14:14:16+00:00
+Updated: 2026-08-08T14:25:35+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
@@ -17,7 +17,7 @@ This stability report is generated incrementally. Final production recommendatio
 | A3-P2 | PHASE_A_REPEATABILITY | P2 | 3 | COMPLETE | 3 | 20 | 6M/6M | PASS_DUAL | 5.97821865978874 | 0.3536 | 34.7 | 5.99738260358391 | 0.0349335196454381 | 30.9 |
 | A3-P4 | PHASE_A_REPEATABILITY | P4 | 3 | FAILED_AFTER_RETRIES | 3,20 | 3,7,20 | 6M/6M | FAIL_IPERF_OR_PATH |  |  | 3212.0 | 5.9698886151501585 | 0.49493333333333334 | 33.8 |
 | A3-P1 | PHASE_A_REPEATABILITY | P1 | 3 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.980677225789583 | 0.3122666666666667 | 44.0 | 5.995640852346307 | 0.0632 | 33.8 |
-| A3-P3 | PHASE_A_REPEATABILITY | P3 | 3 | PENDING | 3 | 7 | 6M/6M |  |  |  |  |  |  |  |
+| A3-P3 | PHASE_A_REPEATABILITY | P3 | 3 | COMPLETE | 3 | 7 | 6M/6M | PASS_DUAL | 5.950584251997252 | 0.812 | 38.5 | 5.965591562354438 | 0.5624 | 39.0 |
 | B-P1 | PHASE_B_ENDURANCE | P1 | 1 | PENDING | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
 | B-P2 | PHASE_B_ENDURANCE | P2 | 1 | PENDING | 3 | 20 | 6M/6M |  |  |  |  |  |  |  |
 | C-P1-6_6 | PHASE_C_HEADROOM | P1 | 1 | PENDING | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |

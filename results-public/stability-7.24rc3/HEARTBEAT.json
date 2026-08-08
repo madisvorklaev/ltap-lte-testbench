@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-08T14:14:11+00:00",
+  "timestamp": "2026-08-08T14:25:21+00:00",
   "pid": 191084,
-  "current_item": "A3-P1",
+  "current_item": "A3-P3",
   "phase": "PHASE_A_REPEATABILITY",
   "current_item_state": "RUNNING",
-  "elapsed_seconds": 10856,
-  "last_successful_telemetry_timestamp": "2026-08-08T14:03:46+00:00",
+  "elapsed_seconds": 11526,
+  "last_successful_telemetry_timestamp": "2026-08-08T14:15:05+00:00",
   "router_reachable": true,
   "server_reachable": true,
-  "completed": 10,
+  "completed": 11,
   "total": 29,
   "retry_queue_length": 0,
   "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "19ee5e01da268b51281172642aedc09729de0db8",
+  "last_pushed_commit": "336f15938f8218e83b9fc327941f849c2478f97b",
   "bands_currently_configured": {
     "lte1": "3",
-    "lte2": "3"
+    "lte2": "7"
   }
 }
