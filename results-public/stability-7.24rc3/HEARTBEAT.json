@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-08T20:05:51+00:00",
+  "timestamp": "2026-08-08T20:08:23+00:00",
   "pid": 191084,
-  "current_item": "E-P4",
-  "phase": "PHASE_E_DYNAMIC_OBSERVATION",
+  "current_item": "F-P1-LTE1-1",
+  "phase": "PHASE_F_RECOVERY",
   "current_item_state": "RUNNING",
-  "elapsed_seconds": 31956,
-  "last_successful_telemetry_timestamp": "2026-08-08T17:56:19+00:00",
+  "elapsed_seconds": 32108,
+  "last_successful_telemetry_timestamp": "2026-08-08T20:07:11+00:00",
   "router_reachable": true,
   "server_reachable": true,
-  "completed": 24,
+  "completed": 25,
   "total": 29,
   "retry_queue_length": 0,
   "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "36f724ff8f6971d2dc5ef43762017769985c947d",
+  "last_pushed_commit": "402b29d6aee2d99d3b34217ae909472be6309352",
   "bands_currently_configured": {
-    "lte1": "3,20",
-    "lte2": "3,7,20"
+    "lte1": "3",
+    "lte2": "3"
   }
 }
