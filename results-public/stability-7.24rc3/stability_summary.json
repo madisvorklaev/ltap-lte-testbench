@@ -1,6 +1,6 @@
 {
   "campaign_id": "stability-7.24rc3",
-  "updated_at": "2026-08-08T14:02:56+00:00",
+  "updated_at": "2026-08-08T14:14:16+00:00",
   "items": {
     "A1-P1": {
       "item_id": "A1-P1",
@@ -207,20 +207,20 @@
       "phase": "PHASE_A_REPEATABILITY",
       "candidate": "P1",
       "repeat": 3,
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "COMPLETE",
+      "attempts": 1,
       "lte1_band": "3",
       "lte2_band": "3",
       "lte1_bitrate": "6M",
       "lte2_bitrate": "6M",
       "duration": 600,
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "dual_status": "PASS_DUAL",
+      "lte1_mbps": 5.980677225789583,
+      "lte1_loss_percent": 0.3122666666666667,
+      "lte1_ping_p95_ms": 44.0,
+      "lte2_mbps": 5.995640852346307,
+      "lte2_loss_percent": 0.0632,
+      "lte2_ping_p95_ms": 33.8
     },
     "A3-P3": {
       "item_id": "A3-P3",
