@@ -1,6 +1,6 @@
 {
   "campaign_id": "band-matrix-7.24rc3",
-  "updated_at": "2026-08-08T06:22:48+00:00",
+  "updated_at": "2026-08-08T06:36:15+00:00",
   "items": {
     "R1-M0": {
       "item_id": "R1-M0",
@@ -60,7 +60,7 @@
     },
     "R1-M4": {
       "item_id": "R1-M4",
-      "state": "SANITIZING",
+      "state": "COMPLETE",
       "attempts": 2,
       "lte1_band": "7",
       "lte2_band": "3",
@@ -74,11 +74,11 @@
     },
     "R1-M5": {
       "item_id": "R1-M5",
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "SANITIZING",
+      "attempts": 3,
       "lte1_band": "38",
       "lte2_band": "3",
-      "dual_status": null,
+      "dual_status": "FAIL_IPERF_OR_PATH",
       "lte1_mbps": null,
       "lte1_loss_percent": null,
       "lte1_ping_p95_ms": null,
