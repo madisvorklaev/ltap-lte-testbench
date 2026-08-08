@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-08-08T09:58:34+00:00",
+  "timestamp": "2026-08-08T10:03:04+00:00",
   "pid": 89006,
-  "current_item": "C5",
+  "current_item": "C6",
   "current_item_state": "WAITING_REGISTRATION",
-  "elapsed_seconds": 15872,
-  "last_successful_telemetry_timestamp": "2026-08-08T09:58:30+00:00",
+  "elapsed_seconds": 16142,
+  "last_successful_telemetry_timestamp": "2026-08-08T10:03:02+00:00",
   "router_reachable": true,
   "server_reachable": true,
-  "completed": 18,
+  "completed": 19,
   "total": 20,
   "retry_queue_length": 0,
   "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "6a85d6e62708739fdf081da12befc7d1cd5a95ef",
+  "last_pushed_commit": "04973fc84c151797fc589ffc9886bf03c9a6052a",
   "bands_currently_configured": {
-    "lte1": "8",
-    "lte2": "3"
+    "lte1": "3",
+    "lte2": "8"
   }
 }

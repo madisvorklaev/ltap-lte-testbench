@@ -3,15 +3,15 @@
   "campaign_id": "band-matrix-7.24rc3",
   "state": "RUNNING",
   "started_at": "2026-08-08T05:34:02+00:00",
-  "updated_at": "2026-08-08T09:59:00+00:00",
+  "updated_at": "2026-08-08T10:03:18+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 19,
+  "completed_count": 20,
   "mandatory_total": 20,
-  "current_item": "C5",
+  "current_item": "C6",
   "push_pending": false,
   "bands_restored": false,
   "items": {
@@ -1241,12 +1241,48 @@
       "last_error": "band did not register/verify"
     },
     "C6": {
-      "state": "PENDING",
+      "state": "SKIPPED_BAND_UNAVAILABLE",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-08T09:59:04+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-08T09:59:09+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          }
+        },
+        {
+          "at": "2026-08-08T10:01:16+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          }
+        },
+        {
+          "at": "2026-08-08T10:03:18+00:00",
+          "state": "SKIPPED_BAND_UNAVAILABLE",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          },
+          "last_error": "band did not register/verify"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "8"
+      },
+      "last_error": "band did not register/verify"
     }
   },
-  "last_pushed_commit": "6a85d6e62708739fdf081da12befc7d1cd5a95ef",
+  "last_pushed_commit": "04973fc84c151797fc589ffc9886bf03c9a6052a",
   "routerboard_firmware": "7.24rc3",
   "reset_at": "2026-08-08T06:38:48+00:00",
   "reset_reason": "Parser/readback bug fixed; prior items invalidated and must be rerun with verified band readback and primary-band checks."
