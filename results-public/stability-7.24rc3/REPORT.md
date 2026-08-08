@@ -1,6 +1,6 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T16:59:13+00:00
+Updated: 2026-08-08T17:05:17+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
@@ -27,7 +27,7 @@ This stability report is generated incrementally. Final production recommendatio
 | C-P4-6_6 | PHASE_C_HEADROOM | P4 | 1 | COMPLETE | 3,20 | 3,7,20 | 6M/6M | PASS_DUAL | 5.97590604936976 | 0.384 | 38.7 | 5.98897188156908 | 0.16586666666666666 | 34.0 |
 | C-P4-8_8 | PHASE_C_HEADROOM | P4 | 2 | COMPLETE | 3,20 | 3,7,20 | 8M/8M | PASS_DUAL | 7.934611160969696 | 0.772 | 1089.0 | 7.9873531655242305 | 0.1232 | 44.8 |
 | C-P4-8_6 | PHASE_C_HEADROOM | P4 | 3 | COMPLETE | 3,20 | 3,7,20 | 8M/6M | PASS_DUAL | 7.743870317486645 | 2.1092 | 1285.0 | 5.995567358632573 | 0.05226666666666667 | 37.0 |
-| C-P4-6_8 | PHASE_C_HEADROOM | P4 | 4 | PENDING | 3,20 | 3,7,20 | 6M/8M |  |  |  |  |  |  |  |
+| C-P4-6_8 | PHASE_C_HEADROOM | P4 | 4 | COMPLETE | 3,20 | 3,7,20 | 6M/8M | PASS_DUAL | 5.977093319824426 | 0.3616 | 38.1 | 7.984532225043282 | 0.174 | 35.4 |
 | D-P1 | PHASE_D_BURST | P1 | 1 | PENDING | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
 | D-P4 | PHASE_D_BURST | P4 | 1 | PENDING | 3,20 | 3,7,20 | 6M/6M |  |  |  |  |  |  |  |
 | E-P4 | PHASE_E_DYNAMIC_OBSERVATION | P4 | 1 | PENDING | 3,20 | 3,7,20 | 6M/6M |  |  |  |  |  |  |  |
