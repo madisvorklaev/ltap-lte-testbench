@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "campaign_id": "stability-7.24rc3",
+  "state": "PHASE_A_REPEATABILITY",
+  "started_at": "2026-08-08T11:13:15+00:00",
+  "updated_at": "2026-08-08T11:13:17+00:00",
+  "routeros": "7.24rc3",
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "completed_count": 0,
+  "mandatory_total": 29,
+  "phase": "PREFLIGHT",
+  "current_item": null,
+  "push_pending": false,
+  "bands_restored": false,
+  "items": {
+    "A1-P1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A1-P2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A1-P3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A1-P4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A2-P4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A2-P3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A2-P2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A2-P1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A3-P2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A3-P4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A3-P1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A3-P3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "B-P1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "B-P2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P1-6_6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P1-8_8": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P1-8_6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P1-6_8": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P4-6_6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P4-8_8": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P4-8_6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C-P4-6_8": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "D-P1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "D-P4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "E-P4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "F-P1-LTE1-1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "F-P1-LTE1-2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "F-P1-LTE2-1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "F-P1-LTE2-2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    }
+  },
+  "last_pushed_commit": null,
+  "routerboard_firmware": "7.24rc3"
+}
