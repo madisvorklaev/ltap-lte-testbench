@@ -275,8 +275,12 @@ class Runner:
     @staticmethod
     def parse_band(raw: str, iface: str) -> str:
         compact = " ".join(raw.splitlines())
-        m = re.search(rf'name="{re.escape(iface)}".*? band="([^"]*)"', compact)
-        return m.group(1) if m else ""
+        block = re.search(rf'name="{re.escape(iface)}"(?P<body>.*?)(?:\s+\d+\s+[R ]?\s*default-name=|$)', compact)
+        body = block.group("body") if block else compact
+        m = re.search(r'band=(?:"([^"]*)"|([^"\s]+))', body)
+        if not m:
+            return ""
+        return (m.group(1) if m.group(1) is not None else m.group(2)) or ""
 
     def set_band(self, iface: str, band: str) -> None:
         escaped = band.replace('"', '\\"')
@@ -576,22 +580,30 @@ class Runner:
         attempts = int(self.progress["items"][item_id].get("attempts", 0))
         try:
             self.transition(item_id, "APPLYING_BANDS", attempts=attempts)
+            verified = False
             for cycle in range(2):
+                if STOP_FILE.exists():
+                    return
                 self.set_band("lte1", item["lte1_band"])
                 self.set_band("lte2", item["lte2_band"])
                 time.sleep(5)
                 bands = self.read_band_values()
                 if (bands["lte1"] or "") != item["lte1_band"] or (bands["lte2"] or "") != item["lte2_band"]:
+                    self.progress["items"][item_id]["last_error"] = f"band readback mismatch: {bands}"
+                    self.save_progress()
                     continue
                 self.transition(item_id, "WAITING_REGISTRATION", bands=bands)
                 if self.wait_registered_and_verified(item):
+                    verified = True
                     break
-                if cycle == 1:
-                    self.transition(item_id, "SKIPPED_BAND_UNAVAILABLE", bands=bands, last_error="band did not register/verify")
-                    self.git_checkpoint(f"band-matrix: {item_id} skipped unavailable")
-                    return
+            if not verified:
+                self.transition(item_id, "SKIPPED_BAND_UNAVAILABLE", bands=self.read_band_values(suppress_errors=True), last_error="band did not register/verify")
+                self.git_checkpoint(f"band-matrix: {item_id} skipped unavailable")
+                return
             self.transition(item_id, "READY")
             for _ in range(3 - attempts):
+                if STOP_FILE.exists():
+                    return
                 attempts += 1
                 self.progress["items"][item_id]["attempts"] = attempts
                 self.transition(item_id, "RUNNING", attempts=attempts)
@@ -606,7 +618,10 @@ class Runner:
                 self.last_error = data.get("dual_status") or "run failed"
                 if attempts < 3:
                     self.transition(item_id, "RETRY_PENDING", attempts=attempts, last_error=self.last_error)
-                    time.sleep(60)
+                    for _ in range(60):
+                        if STOP_FILE.exists():
+                            return
+                        time.sleep(1)
                 else:
                     self.transition(item_id, "FAILED_AFTER_RETRIES", attempts=attempts, last_error=self.last_error)
                     self.git_checkpoint(f"band-matrix: failed {item_id}")

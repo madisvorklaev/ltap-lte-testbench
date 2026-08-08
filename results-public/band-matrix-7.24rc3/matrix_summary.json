@@ -1,286 +1,107 @@
 {
   "campaign_id": "band-matrix-7.24rc3",
-  "updated_at": "2026-08-08T06:36:15+00:00",
-  "items": {
-    "R1-M0": {
+  "updated_at": "2026-08-08T06:38:48+00:00",
+  "reset_reason": "Parser/readback bug fixed; prior items invalidated and must be rerun with verified band readback and primary-band checks.",
+  "items": [
+    {
       "item_id": "R1-M0",
-      "state": "COMPLETE",
-      "attempts": 2,
-      "lte1_band": "",
-      "lte2_band": "",
-      "dual_status": "PASS_DUAL",
-      "lte1_mbps": 5.69994358864274,
-      "lte1_loss_percent": 4.979733333333333,
-      "lte1_ping_p95_ms": 107.0,
-      "lte2_mbps": 5.9430209740742885,
-      "lte2_loss_percent": 0.9296,
-      "lte2_ping_p95_ms": 42.1
+      "state": "PENDING",
+      "attempts": 0
     },
-    "R1-M1": {
+    {
       "item_id": "R1-M1",
-      "state": "COMPLETE",
-      "attempts": 1,
-      "lte1_band": "1,3,7,8,20",
-      "lte2_band": "1,3,7,8,20",
-      "dual_status": "PASS_DUAL",
-      "lte1_mbps": 5.998935797697136,
-      "lte1_loss_percent": 0.0048,
-      "lte1_ping_p95_ms": 38.7,
-      "lte2_mbps": 5.868163802720492,
-      "lte2_loss_percent": 2.1914666666666665,
-      "lte2_ping_p95_ms": 43.9
+      "state": "PENDING",
+      "attempts": 0
     },
-    "R1-M2": {
+    {
       "item_id": "R1-M2",
-      "state": "COMPLETE",
-      "attempts": 1,
-      "lte1_band": "3",
-      "lte2_band": "3",
-      "dual_status": "PASS_DUAL",
-      "lte1_mbps": 5.994208390746288,
-      "lte1_loss_percent": 0.08426666666666667,
-      "lte1_ping_p95_ms": 51.6,
-      "lte2_mbps": 5.997684556201573,
-      "lte2_loss_percent": 0.02666666666666667,
-      "lte2_ping_p95_ms": 34.6
+      "state": "PENDING",
+      "attempts": 0
     },
-    "R1-M3": {
+    {
       "item_id": "R1-M3",
-      "state": "COMPLETE",
-      "attempts": 2,
-      "lte1_band": "3",
-      "lte2_band": "7",
-      "dual_status": "PASS_DUAL",
-      "lte1_mbps": 5.990984252271736,
-      "lte1_loss_percent": 0.13386666666666666,
-      "lte1_ping_p95_ms": 36.6,
-      "lte2_mbps": 5.925330165104699,
-      "lte2_loss_percent": 1.2261333333333333,
-      "lte2_ping_p95_ms": 66.9
+      "state": "PENDING",
+      "attempts": 0
     },
-    "R1-M4": {
+    {
       "item_id": "R1-M4",
-      "state": "COMPLETE",
-      "attempts": 2,
-      "lte1_band": "7",
-      "lte2_band": "3",
-      "dual_status": "PASS_DUAL",
-      "lte1_mbps": 2.721741550684505,
-      "lte1_loss_percent": 52.3088,
-      "lte1_ping_p95_ms": 5171.0,
-      "lte2_mbps": 5.997667238820717,
-      "lte2_loss_percent": 0.014933333333333333,
-      "lte2_ping_p95_ms": 29.6
+      "state": "PENDING",
+      "attempts": 0
     },
-    "R1-M5": {
+    {
       "item_id": "R1-M5",
-      "state": "SANITIZING",
-      "attempts": 3,
-      "lte1_band": "38",
-      "lte2_band": "3",
-      "dual_status": "FAIL_IPERF_OR_PATH",
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "state": "PENDING",
+      "attempts": 0
     },
-    "R1-M6": {
+    {
       "item_id": "R1-M6",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "38",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M6": {
+    {
       "item_id": "R2-M6",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "38",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M5": {
+    {
       "item_id": "R2-M5",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "38",
-      "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M4": {
+    {
       "item_id": "R2-M4",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "7",
-      "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M3": {
+    {
       "item_id": "R2-M3",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "7",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M2": {
+    {
       "item_id": "R2-M2",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M1": {
+    {
       "item_id": "R2-M1",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "1,3,7,8,20",
-      "lte2_band": "1,3,7,8,20",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "R2-M0": {
+    {
       "item_id": "R2-M0",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "",
-      "lte2_band": "",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "C1": {
+    {
       "item_id": "C1",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "20",
-      "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "C2": {
+    {
       "item_id": "C2",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "20",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "C3": {
+    {
       "item_id": "C3",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "1",
-      "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "C4": {
+    {
       "item_id": "C4",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "1",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "C5": {
+    {
       "item_id": "C5",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "8",
-      "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     },
-    "C6": {
+    {
       "item_id": "C6",
       "state": "PENDING",
-      "attempts": 0,
-      "lte1_band": "3",
-      "lte2_band": "8",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "attempts": 0
     }
-  }
+  ]
 }
