@@ -3,15 +3,15 @@
   "campaign_id": "band-matrix-7.24rc3",
   "state": "RUNNING",
   "started_at": "2026-08-08T05:34:02+00:00",
-  "updated_at": "2026-08-08T06:10:14+00:00",
+  "updated_at": "2026-08-08T06:22:48+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 4,
+  "completed_count": 5,
   "mandatory_total": 20,
-  "current_item": "R1-M3",
+  "current_item": "R1-M4",
   "push_pending": false,
   "bands_restored": false,
   "items": {
@@ -226,9 +226,65 @@
       "last_error": "FAIL_IPERF_OR_PATH"
     },
     "R1-M4": {
-      "state": "PENDING",
-      "attempts": 0,
-      "history": []
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-08T06:10:18+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-08T06:10:28+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-08T06:10:28+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-08T06:16:00+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-08T06:16:00+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-08T06:16:01+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-08T06:17:01+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-08T06:22:47+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-08T06:22:47+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-08T06:22:48+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
     },
     "R1-M5": {
       "state": "PENDING",
@@ -306,6 +362,6 @@
       "history": []
     }
   },
-  "last_pushed_commit": "aacb096be7ef07675029bc93b64182b4e4f4da87",
+  "last_pushed_commit": "76fc2ce8be6215e2935dc16bf86db2338d13c56c",
   "routerboard_firmware": "7.24rc3"
 }
