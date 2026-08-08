@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "campaign_id": "band-matrix-7.24rc3",
+  "state": "RUNNING",
+  "started_at": "2026-08-08T05:34:02+00:00",
+  "updated_at": "2026-08-08T05:34:03+00:00",
+  "routeros": "7.24rc3",
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "completed_count": 0,
+  "mandatory_total": 20,
+  "current_item": null,
+  "push_pending": false,
+  "bands_restored": false,
+  "items": {
+    "R1-M0": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R1-M1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R1-M2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R1-M3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R1-M4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R1-M5": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R1-M6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M5": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "R2-M0": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C5": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C6": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    }
+  },
+  "last_pushed_commit": null,
+  "routerboard_firmware": "7.24rc3"
+}
