@@ -3,15 +3,15 @@
   "campaign_id": "band-matrix-7.24rc3",
   "state": "RUNNING",
   "started_at": "2026-08-08T05:34:02+00:00",
-  "updated_at": "2026-08-08T09:50:26+00:00",
+  "updated_at": "2026-08-08T09:54:43+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 17,
+  "completed_count": 18,
   "mandatory_total": 20,
-  "current_item": "C3",
+  "current_item": "C4",
   "push_pending": false,
   "bands_restored": false,
   "items": {
@@ -1159,9 +1159,45 @@
       "last_error": "FAIL_IPERF_OR_PATH"
     },
     "C4": {
-      "state": "PENDING",
+      "state": "SKIPPED_BAND_UNAVAILABLE",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-08T09:50:29+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-08T09:50:34+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "1"
+          }
+        },
+        {
+          "at": "2026-08-08T09:52:41+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "1"
+          }
+        },
+        {
+          "at": "2026-08-08T09:54:43+00:00",
+          "state": "SKIPPED_BAND_UNAVAILABLE",
+          "bands": {
+            "lte1": "3",
+            "lte2": "1"
+          },
+          "last_error": "band did not register/verify"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "1"
+      },
+      "last_error": "band did not register/verify"
     },
     "C5": {
       "state": "PENDING",
@@ -1174,7 +1210,7 @@
       "history": []
     }
   },
-  "last_pushed_commit": "535a8200e74fb0dc6dc36a1da5773c5116ace8ab",
+  "last_pushed_commit": "e69944bc50b86f825d89bccb958c772f6c7d3359",
   "routerboard_firmware": "7.24rc3",
   "reset_at": "2026-08-08T06:38:48+00:00",
   "reset_reason": "Parser/readback bug fixed; prior items invalidated and must be rerun with verified band readback and primary-band checks."
