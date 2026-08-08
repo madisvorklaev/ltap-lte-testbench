@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "band-matrix-7.24rc3",
-  "state": "RUNNING",
+  "state": "COMPLETE",
   "started_at": "2026-08-08T05:34:02+00:00",
-  "updated_at": "2026-08-08T06:36:15+00:00",
+  "updated_at": "2026-08-08T06:36:29+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
@@ -13,7 +13,7 @@
   "mandatory_total": 20,
   "current_item": "R1-M5",
   "push_pending": false,
-  "bands_restored": false,
+  "bands_restored": true,
   "items": {
     "R1-M0": {
       "state": "COMPLETE",
@@ -440,6 +440,6 @@
       "history": []
     }
   },
-  "last_pushed_commit": "8f858b874de289cb521380f196c3ab39ba05406b",
+  "last_pushed_commit": "6243124c369b312919ee40888f3ff1bd0b995fc8",
   "routerboard_firmware": "7.24rc3"
 }
