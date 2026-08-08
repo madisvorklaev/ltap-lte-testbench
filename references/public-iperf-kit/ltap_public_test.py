@@ -33,7 +33,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 
 RADIO_KEYS = {
     "status", "model", "revision", "current-operator", "lac", "cell-id",
@@ -630,6 +630,7 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "routing_mode": cfg.get("routing_mode"),
         "routing_table": path_cfg.get("routing_table"),
         "source_rule_comment": source_comment,
+        "allow_concurrent_other_lte": args.allow_concurrent_other_lte,
     }
     save_json(out_dir / "test.json", meta)
     save_json(out_dir / "router_metadata.json", collect_router_metadata(router, all_lte))
@@ -718,6 +719,8 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         path_verification = "FAIL_SOURCE_RULE_NOT_MATCHED"
     elif selected <= 1_000_000:
         path_verification = "FAIL_WRONG_LTE"
+    elif args.allow_concurrent_other_lte:
+        path_verification = "PASS_CONCURRENT_OTHER_LTE"
     elif selected >= 4 * max(1, other):
         path_verification = "PASS"
     else:
@@ -777,7 +780,7 @@ def run_test(args: argparse.Namespace, cfg: dict[str, Any]) -> int:
         "path_verification": path_verification,
         "test_dir": str(out_dir),
     }
-    valid_for_summary = rc == 0 and not iperf_sum.get("error") and path_verification == "PASS"
+    valid_for_summary = rc == 0 and not iperf_sum.get("error") and path_verification.startswith("PASS")
     if valid_for_summary:
         append_summary_csv(Path(args.output) / "summary.csv", row)
 
@@ -860,6 +863,11 @@ def main() -> int:
     rt.add_argument("--ping-interval", type=float, default=0.2)
     rt.add_argument("--sinr-low-threshold", type=float, default=3.0)
     rt.add_argument("--reverse", action="store_true", help="Server -> client download")
+    rt.add_argument(
+        "--allow-concurrent-other-lte",
+        action="store_true",
+        help="Accept expected traffic on other LTE interfaces during deliberate dual-modem tests",
+    )
     rt.add_argument("--tag", default="manual")
     rt.add_argument("--output", default="results")
 
