@@ -3,22 +3,90 @@
   "campaign_id": "band-matrix-7.24rc3",
   "state": "RUNNING",
   "started_at": "2026-08-08T05:34:02+00:00",
-  "updated_at": "2026-08-08T06:39:32+00:00",
+  "updated_at": "2026-08-08T06:53:52+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 0,
+  "completed_count": 1,
   "mandatory_total": 20,
-  "current_item": null,
+  "current_item": "R1-M0",
   "push_pending": false,
   "bands_restored": false,
   "items": {
     "R1-M0": {
-      "state": "PENDING",
-      "attempts": 0,
-      "history": []
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-08T06:39:35+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-08T06:39:40+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "",
+            "lte2": ""
+          }
+        },
+        {
+          "at": "2026-08-08T06:42:03+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-08T06:42:03+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-08T06:47:26+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-08T06:47:26+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-08T06:47:26+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-08T06:48:26+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-08T06:53:51+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-08T06:53:51+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-08T06:53:52+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "",
+        "lte2": ""
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
     },
     "R1-M1": {
       "state": "PENDING",
@@ -116,7 +184,7 @@
       "history": []
     }
   },
-  "last_pushed_commit": "c33f69ae992bec8a3f8435c924adbf3ee7d645e9",
+  "last_pushed_commit": "3c949a729dd0544620a27281f7ba4b9ee80d5112",
   "routerboard_firmware": "7.24rc3",
   "reset_at": "2026-08-08T06:38:48+00:00",
   "reset_reason": "Parser/readback bug fixed; prior items invalidated and must be rerun with verified band readback and primary-band checks."
