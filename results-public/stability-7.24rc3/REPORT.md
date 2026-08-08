@@ -1,6 +1,6 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T20:10:41+00:00
+Updated: 2026-08-08T20:12:45+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
@@ -33,5 +33,5 @@ This stability report is generated incrementally. Final production recommendatio
 | E-P4 | PHASE_E_DYNAMIC_OBSERVATION | P4 | 1 | FAILED_AFTER_RETRIES | 3,20 | 3,7,20 | 6M/6M | FAIL_IPERF_OR_PATH |  |  | 199.0 |  |  | 35.7 |
 | F-P1-LTE1-1 | PHASE_F_RECOVERY | P1 | 1 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.991693310661399 | 0.034666666666666665 | 56.9 | 5.993476825545599 |  | 32.6 |
 | F-P1-LTE1-2 | PHASE_F_RECOVERY | P1 | 2 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.995064331753325 |  | 71.8 | 5.993980085269304 |  | 31.6 |
-| F-P1-LTE2-1 | PHASE_F_RECOVERY | P1 | 3 | PENDING | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
+| F-P1-LTE2-1 | PHASE_F_RECOVERY | P1 | 3 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.988245937366147 | 0.10133333333333333 | 64.8 | 5.989469394165466 | 0.08266666666666667 | 31.8 |
 | F-P1-LTE2-2 | PHASE_F_RECOVERY | P1 | 4 | PENDING | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
