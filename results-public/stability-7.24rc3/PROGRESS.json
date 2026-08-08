@@ -3,23 +3,59 @@
   "campaign_id": "stability-7.24rc3",
   "state": "PHASE_A_REPEATABILITY",
   "started_at": "2026-08-08T11:13:15+00:00",
-  "updated_at": "2026-08-08T11:13:17+00:00",
+  "updated_at": "2026-08-08T11:17:34+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 0,
+  "completed_count": 1,
   "mandatory_total": 29,
-  "phase": "PREFLIGHT",
-  "current_item": null,
+  "phase": "PHASE_A_REPEATABILITY",
+  "current_item": "A1-P1",
   "push_pending": false,
   "bands_restored": false,
   "items": {
     "A1-P1": {
-      "state": "PENDING",
+      "state": "SKIPPED_BAND_UNAVAILABLE",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-08T11:13:20+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-08T11:13:25+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-08T11:15:32+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-08T11:17:34+00:00",
+          "state": "SKIPPED_BAND_UNAVAILABLE",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          },
+          "last_error": "band did not register/verify"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "last_error": "band did not register/verify"
     },
     "A1-P2": {
       "state": "PENDING",
@@ -162,6 +198,6 @@
       "history": []
     }
   },
-  "last_pushed_commit": null,
+  "last_pushed_commit": "ccf3004fd12c643247622b80837827a1163f35e4",
   "routerboard_firmware": "7.24rc3"
 }

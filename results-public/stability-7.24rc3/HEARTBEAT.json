@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-08T11:13:16+00:00",
+  "timestamp": "2026-08-08T11:17:16+00:00",
   "pid": 191084,
-  "current_item": null,
-  "phase": "PREFLIGHT",
-  "current_item_state": "STARTING",
-  "elapsed_seconds": 1,
-  "last_successful_telemetry_timestamp": null,
+  "current_item": "A1-P1",
+  "phase": "PHASE_A_REPEATABILITY",
+  "current_item_state": "WAITING_REGISTRATION",
+  "elapsed_seconds": 241,
+  "last_successful_telemetry_timestamp": "2026-08-08T11:17:14+00:00",
   "router_reachable": true,
-  "server_reachable": false,
+  "server_reachable": true,
   "completed": 0,
   "total": 29,
   "retry_queue_length": 0,
   "last_error": "",
-  "last_pushed_commit": null,
+  "last_pushed_commit": "ccf3004fd12c643247622b80837827a1163f35e4",
   "bands_currently_configured": {
-    "lte1": "",
-    "lte2": ""
+    "lte1": "3",
+    "lte2": "3"
   }
 }
