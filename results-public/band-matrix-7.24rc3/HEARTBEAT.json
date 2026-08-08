@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-08-08T08:17:20+00:00",
+  "timestamp": "2026-08-08T08:37:06+00:00",
   "pid": 89006,
-  "current_item": "R2-M6",
+  "current_item": "R2-M5",
   "current_item_state": "RUNNING",
-  "elapsed_seconds": 9798,
-  "last_successful_telemetry_timestamp": "2026-08-08T07:59:00+00:00",
+  "elapsed_seconds": 10984,
+  "last_successful_telemetry_timestamp": "2026-08-08T08:18:49+00:00",
   "router_reachable": true,
   "server_reachable": true,
-  "completed": 7,
+  "completed": 8,
   "total": 20,
   "retry_queue_length": 0,
   "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "12c3e9293513ed50fcc1ea80a365a83128712f7f",
+  "last_pushed_commit": "9b12c36fa8689ce7008d727be574c2db113ce3b6",
   "bands_currently_configured": {
-    "lte1": "3",
-    "lte2": "38"
+    "lte1": "38",
+    "lte2": "3"
   }
 }
