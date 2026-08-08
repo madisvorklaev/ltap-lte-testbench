@@ -1,6 +1,6 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T11:41:48+00:00
+Updated: 2026-08-08T11:53:07+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
@@ -9,7 +9,7 @@ This stability report is generated incrementally. Final production recommendatio
 | A1-P1 | PHASE_A_REPEATABILITY | P1 | 1 | SKIPPED_BAND_UNAVAILABLE | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
 | A1-P2 | PHASE_A_REPEATABILITY | P2 | 1 | COMPLETE | 3 | 20 | 6M/6M | PASS_DUAL | 5.98190504401483 | 0.2928 | 36.0 | 5.9944900795870115 | 0.08186666666666667 | 31.3 |
 | A1-P3 | PHASE_A_REPEATABILITY | P3 | 1 | COMPLETE | 3 | 7 | 6M/6M | PASS_DUAL | 5.993729214833388 | 0.0928 | 34.3 | 5.986922195939671 | 0.20853333333333332 | 37.9 |
-| A1-P4 | PHASE_A_REPEATABILITY | P4 | 1 | PENDING | 3,20 | 3,7,20 | 6M/6M |  |  |  |  |  |  |  |
+| A1-P4 | PHASE_A_REPEATABILITY | P4 | 1 | COMPLETE | 3,20 | 3,7,20 | 6M/6M | PASS_DUAL | 5.968857247056297 | 0.5096 | 40.8 | 5.991084574632134 | 0.13946666666666666 | 33.6 |
 | A2-P4 | PHASE_A_REPEATABILITY | P4 | 2 | PENDING | 3,20 | 3,7,20 | 6M/6M |  |  |  |  |  |  |  |
 | A2-P3 | PHASE_A_REPEATABILITY | P3 | 2 | PENDING | 3 | 7 | 6M/6M |  |  |  |  |  |  |  |
 | A2-P2 | PHASE_A_REPEATABILITY | P2 | 2 | PENDING | 3 | 20 | 6M/6M |  |  |  |  |  |  |  |

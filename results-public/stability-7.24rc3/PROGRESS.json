@@ -3,16 +3,16 @@
   "campaign_id": "stability-7.24rc3",
   "state": "PHASE_A_REPEATABILITY",
   "started_at": "2026-08-08T11:13:15+00:00",
-  "updated_at": "2026-08-08T11:41:48+00:00",
+  "updated_at": "2026-08-08T11:53:07+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 3,
+  "completed_count": 4,
   "mandatory_total": 29,
   "phase": "PHASE_A_REPEATABILITY",
-  "current_item": "A1-P3",
+  "current_item": "A1-P4",
   "push_pending": false,
   "bands_restored": false,
   "items": {
@@ -158,9 +158,54 @@
       "dual_status": "PASS_DUAL"
     },
     "A1-P4": {
-      "state": "PENDING",
-      "attempts": 0,
-      "history": []
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-08T11:41:52+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-08T11:41:58+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3,20",
+            "lte2": "3,7,20"
+          }
+        },
+        {
+          "at": "2026-08-08T11:42:43+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-08T11:42:43+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-08T11:53:07+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-08T11:53:07+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-08T11:53:07+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3,20",
+        "lte2": "3,7,20"
+      },
+      "dual_status": "PASS_DUAL"
     },
     "A2-P4": {
       "state": "PENDING",
@@ -288,6 +333,6 @@
       "history": []
     }
   },
-  "last_pushed_commit": "fc15eb76532e871022185df734432236326fdd42",
+  "last_pushed_commit": "ff0800313df2157e3a8760c9dca74e97910a27c1",
   "routerboard_firmware": "7.24rc3"
 }
