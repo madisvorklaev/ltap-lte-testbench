@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-08T15:55:12+00:00",
+  "timestamp": "2026-08-08T16:14:28+00:00",
   "pid": 191084,
-  "current_item": "B-P2",
-  "phase": "PHASE_B_ENDURANCE",
+  "current_item": "C-P1-6_6",
+  "phase": "PHASE_C_HEADROOM",
   "current_item_state": "RUNNING",
-  "elapsed_seconds": 16917,
-  "last_successful_telemetry_timestamp": "2026-08-08T14:57:43+00:00",
+  "elapsed_seconds": 18073,
+  "last_successful_telemetry_timestamp": "2026-08-08T15:56:31+00:00",
   "router_reachable": true,
   "server_reachable": true,
-  "completed": 13,
+  "completed": 14,
   "total": 29,
   "retry_queue_length": 0,
   "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "96fc809336eb716f7f399e85dc14029cd0e77a34",
+  "last_pushed_commit": "cae141473f0e7b7baa673c127b956d4098b0b0c9",
   "bands_currently_configured": {
     "lte1": "3",
-    "lte2": "20"
+    "lte2": "3"
   }
 }

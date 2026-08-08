@@ -1,6 +1,6 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T15:55:39+00:00
+Updated: 2026-08-08T16:14:48+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
@@ -20,7 +20,7 @@ This stability report is generated incrementally. Final production recommendatio
 | A3-P3 | PHASE_A_REPEATABILITY | P3 | 3 | COMPLETE | 3 | 7 | 6M/6M | PASS_DUAL | 5.950584251997252 | 0.812 | 38.5 | 5.965591562354438 | 0.5624 | 39.0 |
 | B-P1 | PHASE_B_ENDURANCE | P1 | 1 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.970392343940047 | 0.4889777777777778 | 43.0 | 5.992785268884175 | 0.11671111111111111 | 33.5 |
 | B-P2 | PHASE_B_ENDURANCE | P2 | 1 | COMPLETE | 3 | 20 | 6M/6M | PASS_DUAL | 5.898151835453474 | 1.69413634513128 | 545.0 | 5.960637490531073 | 0.6542233852860183 | 32.7 |
-| C-P1-6_6 | PHASE_C_HEADROOM | P1 | 1 | PENDING | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
+| C-P1-6_6 | PHASE_C_HEADROOM | P1 | 1 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.984489972078469 | 0.2336 | 51.0 | 5.992429579481392 | 0.10506666666666667 | 39.7 |
 | C-P1-8_8 | PHASE_C_HEADROOM | P1 | 2 | PENDING | 3 | 3 | 8M/8M |  |  |  |  |  |  |  |
 | C-P1-8_6 | PHASE_C_HEADROOM | P1 | 3 | PENDING | 3 | 3 | 8M/6M |  |  |  |  |  |  |  |
 | C-P1-6_8 | PHASE_C_HEADROOM | P1 | 4 | PENDING | 3 | 3 | 6M/8M |  |  |  |  |  |  |  |
