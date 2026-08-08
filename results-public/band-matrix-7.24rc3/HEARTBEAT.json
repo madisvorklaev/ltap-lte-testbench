@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-08-08T10:03:04+00:00",
+  "timestamp": "2026-08-08T10:03:34+00:00",
   "pid": 89006,
   "current_item": "C6",
-  "current_item_state": "WAITING_REGISTRATION",
-  "elapsed_seconds": 16142,
-  "last_successful_telemetry_timestamp": "2026-08-08T10:03:02+00:00",
+  "current_item_state": "SKIPPED_BAND_UNAVAILABLE",
+  "elapsed_seconds": 16172,
+  "last_successful_telemetry_timestamp": "2026-08-08T10:03:12+00:00",
   "router_reachable": true,
   "server_reachable": true,
-  "completed": 19,
+  "completed": 20,
   "total": 20,
   "retry_queue_length": 0,
   "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "04973fc84c151797fc589ffc9886bf03c9a6052a",
+  "last_pushed_commit": "0a783376b60ece25cf27468323fd372567e9ecfa",
   "bands_currently_configured": {
-    "lte1": "3",
-    "lte2": "8"
+    "lte1": "",
+    "lte2": ""
   }
 }

@@ -240,7 +240,8 @@ class Runner:
 
     def close(self) -> None:
         self.stop_heartbeat.set()
-        self.heartbeat_thread.join(timeout=3)
+        if self.heartbeat_thread.is_alive():
+            self.heartbeat_thread.join(timeout=3)
         try:
             self.router.close()
         except Exception:
@@ -571,6 +572,7 @@ class Runner:
                 for x in self.progress["items"].values()
             ):
                 self.restore_bands()
+                self.update_matrix_summary()
                 self.git_checkpoint("band-matrix: update completion state")
         finally:
             self.close()
@@ -598,6 +600,7 @@ class Runner:
                     break
             if not verified:
                 self.transition(item_id, "SKIPPED_BAND_UNAVAILABLE", bands=self.read_band_values(suppress_errors=True), last_error="band did not register/verify")
+                self.update_matrix_summary()
                 self.git_checkpoint(f"band-matrix: {item_id} skipped unavailable")
                 return
             self.transition(item_id, "READY")
@@ -613,6 +616,7 @@ class Runner:
                 self.publish_run(item_id, data)
                 if ok:
                     self.transition(item_id, "COMPLETE", attempts=attempts, dual_status=data.get("dual_status"))
+                    self.update_matrix_summary()
                     self.git_checkpoint(f"band-matrix: complete {item_id}")
                     return
                 self.last_error = data.get("dual_status") or "run failed"
@@ -624,6 +628,7 @@ class Runner:
                         time.sleep(1)
                 else:
                     self.transition(item_id, "FAILED_AFTER_RETRIES", attempts=attempts, last_error=self.last_error)
+                    self.update_matrix_summary()
                     self.git_checkpoint(f"band-matrix: failed {item_id}")
                     return
         except Exception as exc:

@@ -1,6 +1,6 @@
 # LtAP Band Matrix band-matrix-7.24rc3
 
-Updated: 2026-08-08T09:50:26+00:00
+Updated: 2026-08-08T10:08:49+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
@@ -22,7 +22,7 @@ This report is generated incrementally. Final production recommendations are int
 | R2-M0 | COMPLETE |  |  | PASS_DUAL | 5.760546329365408 | 3.9675089867625255 | 97.7 | 5.90061692641423 | 1.6341333333333334 | 50.8 |
 | C1 | COMPLETE | 20 | 3 | PASS_DUAL | 5.925049683647094 | 1.2320131414735092 | 39.8 | 5.988614554349264 | 0.17226758542712228 | 31.3 |
 | C2 | COMPLETE | 3 | 20 | PASS_DUAL | 5.99151185290651 | 0.1232 | 35.5 | 5.997155639118967 | 0.029866666666666666 | 32.1 |
-| C3 | SANITIZING | 1 | 3 | FAIL_IPERF_OR_PATH |  |  |  | 5.879449164961265 | 1.9877333333333334 | 32.7 |
-| C4 | PENDING | 3 | 1 |  |  |  |  |  |  |  |
-| C5 | PENDING | 8 | 3 |  |  |  |  |  |  |  |
-| C6 | PENDING | 3 | 8 |  |  |  |  |  |  |  |
+| C3 | FAILED_AFTER_RETRIES | 1 | 3 | FAIL_IPERF_OR_PATH |  |  |  | 5.879449164961265 | 1.9877333333333334 | 32.7 |
+| C4 | SKIPPED_BAND_UNAVAILABLE | 3 | 1 |  |  |  |  |  |  |  |
+| C5 | SKIPPED_BAND_UNAVAILABLE | 8 | 3 |  |  |  |  |  |  |  |
+| C6 | SKIPPED_BAND_UNAVAILABLE | 3 | 8 |  |  |  |  |  |  |  |
