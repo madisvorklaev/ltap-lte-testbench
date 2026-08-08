@@ -1,13 +1,13 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T11:17:34+00:00
+Updated: 2026-08-08T11:30:29+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
 | Item | Phase | Candidate | Repeat | State | LTE1 band | LTE2 band | Load | Status | LTE1 Mbps | LTE1 loss % | LTE1 p95 ms | LTE2 Mbps | LTE2 loss % | LTE2 p95 ms |
 | --- | --- | --- | ---: | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | A1-P1 | PHASE_A_REPEATABILITY | P1 | 1 | SKIPPED_BAND_UNAVAILABLE | 3 | 3 | 6M/6M |  |  |  |  |  |  |  |
-| A1-P2 | PHASE_A_REPEATABILITY | P2 | 1 | PENDING | 3 | 20 | 6M/6M |  |  |  |  |  |  |  |
+| A1-P2 | PHASE_A_REPEATABILITY | P2 | 1 | COMPLETE | 3 | 20 | 6M/6M | PASS_DUAL | 5.98190504401483 | 0.2928 | 36.0 | 5.9944900795870115 | 0.08186666666666667 | 31.3 |
 | A1-P3 | PHASE_A_REPEATABILITY | P3 | 1 | PENDING | 3 | 7 | 6M/6M |  |  |  |  |  |  |  |
 | A1-P4 | PHASE_A_REPEATABILITY | P4 | 1 | PENDING | 3,20 | 3,7,20 | 6M/6M |  |  |  |  |  |  |  |
 | A2-P4 | PHASE_A_REPEATABILITY | P4 | 2 | PENDING | 3,20 | 3,7,20 | 6M/6M |  |  |  |  |  |  |  |
