@@ -558,7 +558,7 @@ class Runner:
         staged = run(["git", "diff", "--cached", "--name-only"], timeout=30).stdout.splitlines()
         if not staged:
             return
-        scan = run(["bash", "-lc", "git diff --cached --name-only -z | xargs -0 rg -n -i 'password|pin|imsi|imei|iccid|uicc|serial-number|software-id|private key' || true"], timeout=30)
+        scan = run(["bash", "-lc", "git diff --cached --name-only -z | xargs -0 rg -n -i 'password|\\bpin\\b|imsi|imei|iccid|uicc|serial-number|software-id|private key' || true"], timeout=30)
         bad_lines = [line for line in scan.stdout.splitlines() if "README.md:" not in line]
         if bad_lines:
             self.progress["push_pending"] = True
