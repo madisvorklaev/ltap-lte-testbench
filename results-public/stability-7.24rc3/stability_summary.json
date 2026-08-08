@@ -1,6 +1,6 @@
 {
   "campaign_id": "stability-7.24rc3",
-  "updated_at": "2026-08-08T17:43:09+00:00",
+  "updated_at": "2026-08-08T17:55:43+00:00",
   "items": {
     "A1-P1": {
       "item_id": "A1-P1",
@@ -467,20 +467,20 @@
       "phase": "PHASE_D_BURST",
       "candidate": "P4",
       "repeat": 1,
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "COMPLETE",
+      "attempts": 1,
       "lte1_band": "3,20",
       "lte2_band": "3,7,20",
       "lte1_bitrate": "6M",
       "lte2_bitrate": "6M",
       "duration": 675,
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "dual_status": "PASS_DUAL",
+      "lte1_mbps": 5.988655608317679,
+      "lte1_loss_percent": 0.18157037037037038,
+      "lte1_ping_p95_ms": 108.0,
+      "lte2_mbps": 5.996857467727183,
+      "lte2_loss_percent": 0.045037037037037035,
+      "lte2_ping_p95_ms": 34.7
     },
     "E-P4": {
       "item_id": "E-P4",
