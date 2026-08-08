@@ -1,6 +1,6 @@
 {
   "campaign_id": "band-matrix-7.24rc3",
-  "updated_at": "2026-08-08T08:50:18+00:00",
+  "updated_at": "2026-08-08T08:56:36+00:00",
   "items": {
     "R1-M0": {
       "item_id": "R1-M0",
@@ -144,7 +144,7 @@
     },
     "R2-M3": {
       "item_id": "R2-M3",
-      "state": "SANITIZING",
+      "state": "COMPLETE",
       "attempts": 1,
       "lte1_band": "3",
       "lte2_band": "7",
@@ -158,17 +158,17 @@
     },
     "R2-M2": {
       "item_id": "R2-M2",
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "SANITIZING",
+      "attempts": 1,
       "lte1_band": "3",
       "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "dual_status": "PASS_DUAL",
+      "lte1_mbps": 5.9973509092593,
+      "lte1_loss_percent": 0.02666666666666667,
+      "lte1_ping_p95_ms": 36.2,
+      "lte2_mbps": 5.9988158284891835,
+      "lte2_loss_percent": 0.0021333333333333334,
+      "lte2_ping_p95_ms": 32.1
     },
     "R2-M1": {
       "item_id": "R2-M1",

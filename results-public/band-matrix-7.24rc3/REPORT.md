@@ -1,6 +1,6 @@
 # LtAP Band Matrix band-matrix-7.24rc3
 
-Updated: 2026-08-08T08:50:18+00:00
+Updated: 2026-08-08T08:56:36+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
@@ -16,8 +16,8 @@ This report is generated incrementally. Final production recommendations are int
 | R2-M6 | FAILED_AFTER_RETRIES | 3 | 38 | FAIL_IPERF_OR_PATH | 5.988679261016365 | 0.1717351651750952 | 34.0 |  |  | 14543.0 |
 | R2-M5 | FAILED_AFTER_RETRIES | 38 | 3 | FAIL_IPERF_OR_PATH |  |  | 10170.0 | 5.994995371950854 | 0.0672 | 30.7 |
 | R2-M4 | COMPLETE | 7 | 3 | PASS_DUAL | 5.38814592034805 | 8.89546666666667 | 1962.0 | 5.996227542141803 | 0.04533333333333334 | 30.6 |
-| R2-M3 | SANITIZING | 3 | 7 | PASS_DUAL | 5.97824296177527 | 0.34346666666666664 | 34.9 | 5.9379934286582 | 1.0154720825177734 | 62.0 |
-| R2-M2 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| R2-M3 | COMPLETE | 3 | 7 | PASS_DUAL | 5.97824296177527 | 0.34346666666666664 | 34.9 | 5.9379934286582 | 1.0154720825177734 | 62.0 |
+| R2-M2 | SANITIZING | 3 | 3 | PASS_DUAL | 5.9973509092593 | 0.02666666666666667 | 36.2 | 5.9988158284891835 | 0.0021333333333333334 | 32.1 |
 | R2-M1 | PENDING | 1,3,7,8,20 | 1,3,7,8,20 |  |  |  |  |  |  |  |
 | R2-M0 | PENDING |  |  |  |  |  |  |  |  |  |
 | C1 | PENDING | 20 | 3 |  |  |  |  |  |  |  |
