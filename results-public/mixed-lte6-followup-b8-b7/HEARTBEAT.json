@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-08-09T18:10:08+00:00",
+  "pid": 629834,
+  "campaign_state": "STARTING",
+  "current_item": null,
+  "item_state": "SMOKE_SMOKE-DUAL",
+  "item_elapsed_s": 0,
+  "worker_progress_counter": 5,
+  "worker_last_progress_at": "2026-08-09T18:09:44+00:00",
+  "elapsed_seconds": 93,
+  "last_successful_telemetry_timestamp": "2026-08-09T18:09:38+00:00",
+  "router_reachable": true,
+  "server_reachable": true,
+  "lte1_status": "running",
+  "lte2_status": "registered",
+  "lte1_band_config": "",
+  "lte2_band_config": "",
+  "completed": 0,
+  "mandatory_total": 6,
+  "retry_queue_length": 0,
+  "push_pending": false,
+  "last_error": "",
+  "last_local_commit": "764cd93",
+  "last_pushed_commit": null,
+  "bands_currently_configured": {
+    "lte1": "",
+    "lte2": ""
+  },
+  "lte1_primary_band": "B1@15Mhz earfcn: 523 phy-cellid: 69",
+  "lte2_primary_band": "B3@15Mhz earfcn: 1875 phy-cellid: 69"
+}
