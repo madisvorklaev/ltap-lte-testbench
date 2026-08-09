@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-08-09T20:00:46+00:00",
-  "pid": 675324,
+  "timestamp": "2026-08-09T20:05:06+00:00",
+  "pid": 675421,
   "campaign_state": "COMPLETE",
   "current_item": "B3",
   "item_state": "STARTING",
   "item_elapsed_s": 0,
   "worker_progress_counter": 79,
   "worker_last_progress_at": "2026-08-09T19:47:43+00:00",
-  "elapsed_seconds": 6731,
+  "elapsed_seconds": 6991,
   "last_successful_telemetry_timestamp": null,
   "router_reachable": true,
   "server_reachable": false,
@@ -20,12 +20,12 @@
   "retry_queue_length": 0,
   "push_pending": false,
   "last_error": "",
-  "last_local_commit": "b73e5a4",
-  "last_pushed_commit": "b73e5a4f0aa957ac6c70af7d3de7103f9578e3b7",
+  "last_local_commit": "97a2322",
+  "last_pushed_commit": "97a23226f6e0af3e4f0f353adca4d2cf01ed66f1",
   "bands_currently_configured": {
     "lte1": "",
     "lte2": ""
   },
-  "lte1_primary_band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+  "lte1_primary_band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
   "lte2_primary_band": "B3@15Mhz earfcn: 1875 phy-cellid: 69"
 }
