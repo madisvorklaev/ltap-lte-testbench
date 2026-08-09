@@ -1,6 +1,6 @@
 {
   "campaign_id": "mixed-lte6-matrix-7.24rc3",
-  "updated_at": "2026-08-09T11:00:11+00:00",
+  "updated_at": "2026-08-09T11:14:05+00:00",
   "items": {
     "R1-M0": {
       "item_id": "R1-M0",
@@ -74,17 +74,17 @@
     },
     "R1-M5": {
       "item_id": "R1-M5",
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 3,
       "lte1_band": "38",
       "lte2_band": "3",
-      "dual_status": null,
+      "dual_status": "FAIL_IPERF_OR_PATH",
       "lte1_mbps": null,
       "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
+      "lte1_ping_p95_ms": 60.4,
       "lte2_mbps": null,
       "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "lte2_ping_p95_ms": 29.4
     },
     "R1-M6": {
       "item_id": "R1-M6",
