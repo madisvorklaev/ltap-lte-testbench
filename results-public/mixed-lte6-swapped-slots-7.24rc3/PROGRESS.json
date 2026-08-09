@@ -3,7 +3,7 @@
   "campaign_id": "mixed-lte6-swapped-slots-7.24rc3",
   "state": "SWAPPED_SLOT_VALIDATION",
   "started_at": "2026-08-09T20:34:13+00:00",
-  "updated_at": "2026-08-09T21:57:05+00:00",
+  "updated_at": "2026-08-09T22:29:00+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "R11e-LTE6",
@@ -20,9 +20,9 @@
   "server_epoch": 1,
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 5,
+  "completed_count": 6,
   "mandatory_total": 11,
-  "current_item": "C3",
+  "current_item": "A1",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -369,9 +369,99 @@
       "last_error": "FAIL_IPERF_OR_PATH"
     },
     "A1": {
-      "state": "PENDING",
-      "attempts": 0,
-      "history": []
+      "state": "COMPLETE",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T21:57:10+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T21:57:15+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          }
+        },
+        {
+          "at": "2026-08-09T21:57:46+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T21:57:46+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T22:06:11+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T22:06:11+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T22:06:12+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T22:07:12+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T22:17:35+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T22:17:35+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T22:17:36+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T22:18:36+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T22:28:59+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T22:28:59+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T22:29:00+00:00",
+          "state": "COMPLETE",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "8"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
     },
     "A2": {
       "state": "PENDING",
@@ -399,9 +489,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "adc539ca1afc816cf9ad0783e55d1457d65020b2",
-  "worker_progress_counter": 73,
-  "worker_last_progress_at": "2026-08-09T21:57:05+00:00",
+  "last_pushed_commit": "86a14a8cbfa9e8788f1e31fe2a4fed1503baed67",
+  "worker_progress_counter": 94,
+  "worker_last_progress_at": "2026-08-09T22:29:00+00:00",
   "routerboard_firmware": "7.24rc3",
   "smoke_tests_completed": true,
   "smoke_tests": {

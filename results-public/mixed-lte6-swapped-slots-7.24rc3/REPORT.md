@@ -1,6 +1,6 @@
 # LtAP mixed LTE6 swapped-slot validation mixed-lte6-swapped-slots-7.24rc3
 
-Updated: 2026-08-09T21:57:05+00:00
+Updated: 2026-08-09T22:29:00+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
@@ -11,7 +11,7 @@ This report is generated incrementally. Final production recommendations are int
 | C1 | COMPLETE | 3 | 3 | PASS_DUAL | 5.99702942677728 | 0.03866666666666667 | 33.9 | 5.5521908369327955 | 7.436533333333333 | 137.0 |
 | C2 | COMPLETE | 3 | 3 | PASS_DUAL | 5.992904430448202 | 0.11066666666666666 | 32.8 | 5.084666787694356 | 15.246933333333333 | 146.0 |
 | C3 | COMPLETE | 3 | 3 | PASS_DUAL | 5.993104986520685 | 0.09946666666666666 | 34.9 | 5.315443793546214 | 11.376533333333333 | 125.0 |
-| A1 | PENDING | 3 | 8 |  |  |  |  |  |  |  |
+| A1 | COMPLETE | 3 | 8 | PASS_DUAL | 5.997801870569692 | 0.028266892801809083 | 33.0 | 5.996825576775693 | 0.04293333333333333 | 32.0 |
 | A2 | PENDING | 3 | 8 |  |  |  |  |  |  |  |
 | A3 | PENDING | 3 | 8 |  |  |  |  |  |  |  |
 | B1 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
