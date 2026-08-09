@@ -1,0 +1,50 @@
+# LtAP Band Matrix mixed-lte6-matrix-7.24rc3
+
+Updated: 2026-08-09T10:02:26+00:00
+
+This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
+
+| Item | State | LTE1 band | LTE2 band | Status | LTE1 Mbps | LTE1 loss % | LTE1 p95 ms | LTE2 Mbps | LTE2 loss % | LTE2 p95 ms |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| R1-M0 | SKIPPED_BAND_UNAVAILABLE |  |  |  |  |  |  |  |  |  |
+| R1-M1 | PENDING | 1,3,7,8,20 | 1,3,7,8,20 |  |  |  |  |  |  |  |
+| R1-M2 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| R1-M3 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
+| R1-M4 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
+| R1-M5 | PENDING | 38 | 3 |  |  |  |  |  |  |  |
+| R1-M6 | PENDING | 3 | 38 |  |  |  |  |  |  |  |
+| R2-M6 | PENDING | 3 | 38 |  |  |  |  |  |  |  |
+| R2-M5 | PENDING | 38 | 3 |  |  |  |  |  |  |  |
+| R2-M4 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
+| R2-M3 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
+| R2-M2 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| R2-M1 | PENDING | 1,3,7,8,20 | 1,3,7,8,20 |  |  |  |  |  |  |  |
+| R2-M0 | PENDING |  |  |  |  |  |  |  |  |  |
+| C1 | PENDING | 20 | 3 |  |  |  |  |  |  |  |
+| C2 | PENDING | 3 | 20 |  |  |  |  |  |  |  |
+| C3 | PENDING | 1 | 3 |  |  |  |  |  |  |  |
+| C4 | PENDING | 3 | 1 |  |  |  |  |  |  |  |
+| C5 | PENDING | 8 | 3 |  |  |  |  |  |  |  |
+| C6 | PENDING | 3 | 8 |  |  |  |  |  |  |  |
+| S1 | PENDING | 3 | None |  |  |  |  |  |  |  |
+| S2 | PENDING | None | 3 |  |  |  |  |  |  |  |
+| S3 | PENDING | 7 | None |  |  |  |  |  |  |  |
+| S4 | PENDING | None | 7 |  |  |  |  |  |  |  |
+| S5 | PENDING | 38 | None |  |  |  |  |  |  |  |
+| S6 | PENDING | None | 38 |  |  |  |  |  |  |  |
+| H-LTE1-4M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE1-6M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE1-8M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE1-10M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE1-12M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE2-4M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE2-6M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE2-8M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE2-10M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE2-12M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| L1-R1 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
+| L1-R2 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
+| L1-R3 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
+| L2-R1 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| L2-R2 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| L2-R3 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
