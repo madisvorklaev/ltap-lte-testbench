@@ -1,6 +1,6 @@
 {
   "campaign_id": "mixed-lte6-swapped-slots-7.24rc3",
-  "updated_at": "2026-08-09T21:34:37+00:00",
+  "updated_at": "2026-08-09T21:57:05+00:00",
   "items": {
     "S1": {
       "item_id": "S1",
@@ -60,17 +60,17 @@
     },
     "C3": {
       "item_id": "C3",
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "COMPLETE",
+      "attempts": 2,
       "lte1_band": "3",
       "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "dual_status": "PASS_DUAL",
+      "lte1_mbps": 5.993104986520685,
+      "lte1_loss_percent": 0.09946666666666666,
+      "lte1_ping_p95_ms": 34.9,
+      "lte2_mbps": 5.315443793546214,
+      "lte2_loss_percent": 11.376533333333333,
+      "lte2_ping_p95_ms": 125.0
     },
     "A1": {
       "item_id": "A1",
