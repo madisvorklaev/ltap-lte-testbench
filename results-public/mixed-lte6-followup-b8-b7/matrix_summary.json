@@ -1,0 +1,90 @@
+{
+  "campaign_id": "mixed-lte6-followup-b8-b7",
+  "updated_at": "2026-08-09T18:29:36+00:00",
+  "items": {
+    "A1": {
+      "item_id": "A1",
+      "state": "COMPLETE",
+      "attempts": 2,
+      "lte1_band": "8",
+      "lte2_band": "3",
+      "dual_status": "PASS_DUAL",
+      "lte1_mbps": 5.997262557057206,
+      "lte1_loss_percent": 0.037333333333333336,
+      "lte1_ping_p95_ms": 30.9,
+      "lte2_mbps": 5.994326178775949,
+      "lte2_loss_percent": 0.08613333333333334,
+      "lte2_ping_p95_ms": 42.9
+    },
+    "A2": {
+      "item_id": "A2",
+      "state": "PENDING",
+      "attempts": 0,
+      "lte1_band": "8",
+      "lte2_band": "3",
+      "dual_status": null,
+      "lte1_mbps": null,
+      "lte1_loss_percent": null,
+      "lte1_ping_p95_ms": null,
+      "lte2_mbps": null,
+      "lte2_loss_percent": null,
+      "lte2_ping_p95_ms": null
+    },
+    "A3": {
+      "item_id": "A3",
+      "state": "PENDING",
+      "attempts": 0,
+      "lte1_band": "8",
+      "lte2_band": "3",
+      "dual_status": null,
+      "lte1_mbps": null,
+      "lte1_loss_percent": null,
+      "lte1_ping_p95_ms": null,
+      "lte2_mbps": null,
+      "lte2_loss_percent": null,
+      "lte2_ping_p95_ms": null
+    },
+    "B1": {
+      "item_id": "B1",
+      "state": "PENDING",
+      "attempts": 0,
+      "lte1_band": "7",
+      "lte2_band": "3",
+      "dual_status": null,
+      "lte1_mbps": null,
+      "lte1_loss_percent": null,
+      "lte1_ping_p95_ms": null,
+      "lte2_mbps": null,
+      "lte2_loss_percent": null,
+      "lte2_ping_p95_ms": null
+    },
+    "B2": {
+      "item_id": "B2",
+      "state": "PENDING",
+      "attempts": 0,
+      "lte1_band": "7",
+      "lte2_band": "3",
+      "dual_status": null,
+      "lte1_mbps": null,
+      "lte1_loss_percent": null,
+      "lte1_ping_p95_ms": null,
+      "lte2_mbps": null,
+      "lte2_loss_percent": null,
+      "lte2_ping_p95_ms": null
+    },
+    "B3": {
+      "item_id": "B3",
+      "state": "PENDING",
+      "attempts": 0,
+      "lte1_band": "7",
+      "lte2_band": "3",
+      "dual_status": null,
+      "lte1_mbps": null,
+      "lte1_loss_percent": null,
+      "lte1_ping_p95_ms": null,
+      "lte2_mbps": null,
+      "lte2_loss_percent": null,
+      "lte2_ping_p95_ms": null
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# LtAP mixed LTE6 B8/B7 follow-up mixed-lte6-followup-b8-b7
+
+Updated: 2026-08-09T18:29:36+00:00
+
+This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
+
+| Item | State | LTE1 band | LTE2 band | Status | LTE1 Mbps | LTE1 loss % | LTE1 p95 ms | LTE2 Mbps | LTE2 loss % | LTE2 p95 ms |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A1 | COMPLETE | 8 | 3 | PASS_DUAL | 5.997262557057206 | 0.037333333333333336 | 30.9 | 5.994326178775949 | 0.08613333333333334 | 42.9 |
+| A2 | PENDING | 8 | 3 |  |  |  |  |  |  |  |
+| A3 | PENDING | 8 | 3 |  |  |  |  |  |  |  |
+| B1 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
+| B2 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
+| B3 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
