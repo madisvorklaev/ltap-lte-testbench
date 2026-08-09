@@ -1,0 +1,108 @@
+{
+  "schema_version": 2,
+  "campaign_id": "mixed-lte6-swapped-slots-7.24rc3",
+  "state": "RUNNING",
+  "started_at": "2026-08-09T20:34:13+00:00",
+  "updated_at": "2026-08-09T20:36:04+00:00",
+  "routeros": "7.24rc3",
+  "modem_lte1": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "modem_lte2": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.04"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_epoch": 1,
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "completed_count": 0,
+  "mandatory_total": 11,
+  "current_item": null,
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": false,
+  "items": {
+    "S1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "S2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "C3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "A3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "B1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "B2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "B3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    }
+  },
+  "last_pushed_commit": null,
+  "worker_progress_counter": 7,
+  "worker_last_progress_at": "2026-08-09T20:36:04+00:00",
+  "routerboard_firmware": "7.24rc3",
+  "smoke_tests_completed": true,
+  "smoke_tests": {
+    "SMOKE-LTE1": {
+      "ok": true,
+      "status": "PASS_SINGLE",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-swapped-slots-7.24rc3/raw/SMOKE-LTE1/attempt-1"
+    },
+    "SMOKE-LTE2": {
+      "ok": true,
+      "status": "PASS_SINGLE",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-swapped-slots-7.24rc3/raw/SMOKE-LTE2/attempt-1"
+    },
+    "SMOKE-DUAL": {
+      "ok": true,
+      "status": "PASS_DUAL",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-swapped-slots-7.24rc3/raw/SMOKE-DUAL/attempt-1"
+    }
+  }
+}
