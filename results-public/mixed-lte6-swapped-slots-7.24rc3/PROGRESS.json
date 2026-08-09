@@ -3,7 +3,7 @@
   "campaign_id": "mixed-lte6-swapped-slots-7.24rc3",
   "state": "SWAPPED_SLOT_VALIDATION",
   "started_at": "2026-08-09T20:34:13+00:00",
-  "updated_at": "2026-08-09T23:15:00+00:00",
+  "updated_at": "2026-08-09T23:19:17+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "R11e-LTE6",
@@ -20,9 +20,9 @@
   "server_epoch": 1,
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 9,
+  "completed_count": 10,
   "mandatory_total": 11,
-  "current_item": "B1",
+  "current_item": "B2",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -659,9 +659,45 @@
       "last_error": "FAIL_IPERF_OR_PATH"
     },
     "B2": {
-      "state": "PENDING",
+      "state": "SKIPPED_BAND_UNAVAILABLE",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-09T23:15:03+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T23:15:09+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T23:17:15+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T23:19:17+00:00",
+          "state": "SKIPPED_BAND_UNAVAILABLE",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          },
+          "last_error": "band did not register/verify"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "7"
+      },
+      "last_error": "band did not register/verify"
     },
     "B3": {
       "state": "PENDING",
@@ -669,9 +705,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "0999fb96617dc571d8c1fd22b5726587076570d7",
-  "worker_progress_counter": 133,
-  "worker_last_progress_at": "2026-08-09T23:15:00+00:00",
+  "last_pushed_commit": "cefe1456a5eaf10cf9da31f6bf7f23463e28f3d7",
+  "worker_progress_counter": 137,
+  "worker_last_progress_at": "2026-08-09T23:19:17+00:00",
   "routerboard_firmware": "7.24rc3",
   "smoke_tests_completed": true,
   "smoke_tests": {
