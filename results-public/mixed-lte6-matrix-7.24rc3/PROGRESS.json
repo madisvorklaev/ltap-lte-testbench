@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
   "campaign_id": "mixed-lte6-matrix-7.24rc3",
-  "state": "COVERAGE_DUAL_MATRIX",
+  "state": "SINGLE_PATH_DIAGNOSTICS",
   "started_at": "2026-08-09T09:56:19+00:00",
-  "updated_at": "2026-08-09T13:45:39+00:00",
+  "updated_at": "2026-08-09T13:51:42+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "FG621-EA",
@@ -20,9 +20,9 @@
   "server_epoch": 1,
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 20,
+  "completed_count": 21,
   "mandatory_total": 42,
-  "current_item": "C6",
+  "current_item": "S1",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -1384,9 +1384,54 @@
       "dual_status": "PASS_DUAL"
     },
     "S1": {
-      "state": "PENDING",
-      "attempts": 0,
-      "history": []
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:45:43+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:45:48+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          }
+        },
+        {
+          "at": "2026-08-09T13:46:18+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:46:18+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:51:41+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T13:51:41+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:51:42+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "8"
+      },
+      "dual_status": "PASS_SINGLE"
     },
     "S2": {
       "state": "PENDING",
@@ -1494,9 +1539,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "375517291647ee5f1c89735c6d313b02a9f39e00",
-  "worker_progress_counter": 285,
-  "worker_last_progress_at": "2026-08-09T13:45:39+00:00",
+  "last_pushed_commit": "38280beb428ee82c76f918e64fde3bbe8720b313",
+  "worker_progress_counter": 293,
+  "worker_last_progress_at": "2026-08-09T13:51:42+00:00",
   "routerboard_firmware": "7.24rc3",
   "smoke_tests_completed": true,
   "smoke_tests": {
