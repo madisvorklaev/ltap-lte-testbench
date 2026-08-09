@@ -1,0 +1,174 @@
+{
+  "item": {
+    "id": "B1",
+    "phase": "SWAPPED_SLOT_VALIDATION",
+    "round": "R11e-LTE6-B3_FG621-B7",
+    "matrix": "R11e-LTE6-B3_FG621-B7",
+    "mode": "dual",
+    "path": null,
+    "lte1_band": "3",
+    "lte2_band": "7",
+    "lte1_bitrate": "6M",
+    "lte2_bitrate": "6M",
+    "bitrate": "6M",
+    "duration": 600,
+    "packet_length": 1200,
+    "required": true
+  },
+  "attempt": 3,
+  "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-swapped-slots-7.24rc3/raw/B1/attempt-3",
+  "processes": [
+    {
+      "rc": 1,
+      "stderr_tail": "Run kept as raw artifacts only; not appended to summary.csv.\niperf3 exited non-zero; inspect iperf_stderr.txt and iperf.json"
+    },
+    {
+      "rc": 1,
+      "stderr_tail": "No usable iperf3 port on pinned server: [{\"port\": 5202, \"rc\": 1, \"stderr\": \"\", \"iperf_error\": \"unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Connection timed out\"}, {\"port\": 5204, \"rc\": 1, \"stderr\": \"\", \"iperf_error\": \"unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Connection timed out\"}, {\"port\": 5206, \"rc\": 1, \"stderr\": \"\", \"iperf_error\": \"unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Connection timed out\"}, {\"port\": 5208, \"rc\": 1, \"stderr\": \"\", \"iperf_error\": \"unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Connection timed out\"}, {\"port\": 5210, \"rc\": 1, \"stderr\": \"\", \"iperf_error\": \"unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Connection timed out\"}]"
+    }
+  ],
+  "lte1": {
+    "test": {
+      "collector_version": "0.4.2",
+      "created_local": "2026-08-10T02:14:40+03:00",
+      "created_utc": "2026-08-09T23:14:40.107+00:00",
+      "tag": "mixed-lte6-swapped-slots-7.24rc3_B1_a3_20260810-021437_lte1",
+      "path": "lte1",
+      "lte_interface": "lte1",
+      "source_ip": "192.168.101.201",
+      "linux_interface": "eno1",
+      "server_hostname": "iperf-ams-nl.eranium.net",
+      "server_ipv4": "217.18.95.142",
+      "server_port": 5201,
+      "port_probe": {
+        "attempts": [
+          {
+            "port": 5201,
+            "rc": 0,
+            "stderr": "",
+            "iperf_error": null,
+            "bps": 5949153.60015432
+          }
+        ]
+      },
+      "protocol": "udp",
+      "direction": "upload",
+      "duration_s": 600,
+      "warmup_s": 10,
+      "cooldown_s": 10,
+      "target_bitrate": "6M",
+      "packet_length": 1200,
+      "routing_mode": "source_ip_lab_mode",
+      "routing_table": "to-lte1",
+      "source_rule_comment": "ELMO TEST: source via lte1",
+      "allow_concurrent_other_lte": true
+    },
+    "iperf": {
+      "error": "the server is busy running a test. try again later"
+    },
+    "ping": {
+      "sent": 101,
+      "received": 100,
+      "loss_percent": 0.990099,
+      "min_ms": 13.68,
+      "avg_ms": 23.243,
+      "max_ms": 31.872,
+      "mdev_ms": 3.158,
+      "p95_ms": 27.7,
+      "sample_count": 100
+    },
+    "radio_target": {
+      "rssi_median": -62.0,
+      "rssi_min": -62.0,
+      "rssi_max": -62.0,
+      "rsrp_median": -94.0,
+      "rsrp_min": -94.0,
+      "rsrp_max": -94.0,
+      "rsrq_median": -11.0,
+      "rsrq_min": -11.0,
+      "rsrq_max": -11.0,
+      "sinr_median": 13.0,
+      "sinr_min": 8.0,
+      "sinr_max": 14.0,
+      "cqi_median": 13.0,
+      "cqi_min": 12.0,
+      "cqi_max": 13.0,
+      "ri_median": 2.0,
+      "ri_min": 1.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B3@15Mhz earfcn: 1875 phy-cellid: 69"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 21,
+      "samples": 21,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 1008012,
+      "rx-byte_delta": 37425,
+      "tx-packet_delta": 810,
+      "rx-packet_delta": 524,
+      "tx-queue-drop_delta": 0
+    },
+    "radio_other": {
+      "lte2": {
+        "rssi_median": null,
+        "rssi_min": null,
+        "rssi_max": null,
+        "rsrp_median": null,
+        "rsrp_min": null,
+        "rsrp_max": null,
+        "rsrq_median": null,
+        "rsrq_min": null,
+        "rsrq_max": null,
+        "sinr_median": null,
+        "sinr_min": null,
+        "sinr_max": null,
+        "cqi_median": null,
+        "cqi_min": null,
+        "cqi_max": null,
+        "ri_median": null,
+        "ri_min": null,
+        "ri_max": null,
+        "primary_bands_seen": [],
+        "ca_bands_seen": [],
+        "ca_missing_samples": 21,
+        "samples": 21,
+        "statuses_seen": [
+          "deregistered"
+        ],
+        "cell_changes": 0,
+        "tx-byte_delta": 0,
+        "rx-byte_delta": 0,
+        "tx-packet_delta": 0,
+        "rx-packet_delta": 0,
+        "tx-queue-drop_delta": 0
+      }
+    },
+    "source_rule": {
+      "comment": "ELMO TEST: source via lte1",
+      "before": {
+        "comment": "ELMO TEST: source via lte1",
+        "rc": 0,
+        "raw": "4402210115\n3608631",
+        "bytes": 4402210115,
+        "packets": 3608631
+      },
+      "after": {
+        "comment": "ELMO TEST: source via lte1",
+        "rc": 0,
+        "raw": "4402218904\n3608737",
+        "bytes": 4402218904,
+        "packets": 3608737
+      },
+      "bytes_delta": 8789,
+      "packets_delta": 106
+    },
+    "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+    "events_count": 0
+  },
+  "lte2": null,
+  "dual_status": "FAIL_IPERF_OR_PATH"
+}
