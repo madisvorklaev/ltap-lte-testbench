@@ -1,6 +1,6 @@
 # LtAP mixed LTE6 B8/B7 follow-up mixed-lte6-followup-b8-b7
 
-Updated: 2026-08-09T19:25:35+00:00
+Updated: 2026-08-09T19:36:39+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
@@ -10,5 +10,5 @@ This report is generated incrementally. Final production recommendations are int
 | A2 | COMPLETE | 8 | 3 | PASS_DUAL | 5.992709104033897 | 0.11173333333333334 | 32.8 | 5.986757077508558 | 0.21146666666666666 | 84.8 |
 | A3 | COMPLETE | 8 | 3 | PASS_DUAL | 5.99134445655467 | 0.1368 | 31.7 | 5.986111442079027 | 0.2232 | 36.0 |
 | B1 | COMPLETE | 7 | 3 | PASS_DUAL | 5.596001393846301 | 6.722133333333334 | 95.7 | 5.983456599710827 | 0.2674666666666667 | 34.0 |
-| B2 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
+| B2 | COMPLETE | 7 | 3 | PASS_DUAL | 5.508518600352748 | 8.182666666666666 | 103.0 | 5.975890350724932 | 0.3930666666666667 | 34.7 |
 | B3 | PENDING | 7 | 3 |  |  |  |  |  |  |  |
