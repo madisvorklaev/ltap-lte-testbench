@@ -46,6 +46,7 @@ SENSITIVE_KEYS = {
 
 TERMINAL_ITEM_STATES = {"COMPLETE", "SKIPPED_BAND_UNAVAILABLE", "FAILED_AFTER_RETRIES"}
 COMMON_FDD_NO_B38 = "1,3,7,8,20"
+REGISTERED_LTE_STATES = {"registered", "running"}
 
 
 def load_collector() -> Any:
@@ -458,7 +459,7 @@ class Runner:
             all_ok = True
             for iface in ("lte1", "lte2"):
                 mon = self.monitor(iface)
-                if mon.get("status") != "registered":
+                if str(mon.get("status", "")).lower() not in REGISTERED_LTE_STATES:
                     all_ok = False
                     continue
                 if not self.primary_band_allowed(mon.get("primary-band", ""), needed[iface]):
@@ -473,7 +474,7 @@ class Runner:
         while time.time() < stable_until:
             for iface in ("lte1", "lte2"):
                 mon = self.monitor(iface)
-                if mon.get("status") != "registered":
+                if str(mon.get("status", "")).lower() not in REGISTERED_LTE_STATES:
                     return False
             time.sleep(5)
         return True
