@@ -1,6 +1,6 @@
 # LtAP mixed LTE6 B8/B7 follow-up mixed-lte6-followup-b8-b7
 
-Updated: 2026-08-09T19:52:20+00:00
+Updated: 2026-08-09T19:56:41+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
