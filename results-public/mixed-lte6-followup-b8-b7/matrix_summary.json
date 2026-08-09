@@ -1,6 +1,6 @@
 {
   "campaign_id": "mixed-lte6-followup-b8-b7",
-  "updated_at": "2026-08-09T19:36:39+00:00",
+  "updated_at": "2026-08-09T19:47:43+00:00",
   "items": {
     "A1": {
       "item_id": "A1",
@@ -74,17 +74,17 @@
     },
     "B3": {
       "item_id": "B3",
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "COMPLETE",
+      "attempts": 1,
       "lte1_band": "7",
       "lte2_band": "3",
-      "dual_status": null,
-      "lte1_mbps": null,
-      "lte1_loss_percent": null,
-      "lte1_ping_p95_ms": null,
-      "lte2_mbps": null,
-      "lte2_loss_percent": null,
-      "lte2_ping_p95_ms": null
+      "dual_status": "PASS_DUAL",
+      "lte1_mbps": 5.671811175804295,
+      "lte1_loss_percent": 5.4552,
+      "lte1_ping_p95_ms": 94.4,
+      "lte2_mbps": 5.979580532716801,
+      "lte2_loss_percent": 0.32986666666666664,
+      "lte2_ping_p95_ms": 33.9
     }
   }
 }
