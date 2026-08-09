@@ -1,12 +1,12 @@
 # LtAP Band Matrix mixed-lte6-matrix-7.24rc3
 
-Updated: 2026-08-09T10:02:26+00:00
+Updated: 2026-08-09T10:19:37+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
 | Item | State | LTE1 band | LTE2 band | Status | LTE1 Mbps | LTE1 loss % | LTE1 p95 ms | LTE2 Mbps | LTE2 loss % | LTE2 p95 ms |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| R1-M0 | SKIPPED_BAND_UNAVAILABLE |  |  |  |  |  |  |  |  |  |
+| R1-M0 | COMPLETE |  |  | PASS_DUAL | 5.030782318001849 | 15.9552 | 137.0 | 5.975234311451309 | 0.3877333333333333 | 35.7 |
 | R1-M1 | PENDING | 1,3,7,8,20 | 1,3,7,8,20 |  |  |  |  |  |  |  |
 | R1-M2 | PENDING | 3 | 3 |  |  |  |  |  |  |  |
 | R1-M3 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
