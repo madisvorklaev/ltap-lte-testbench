@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
   "campaign_id": "mixed-lte6-swapped-slots-7.24rc3",
-  "state": "SWAPPED_SLOT_VALIDATION",
+  "state": "COMPLETE",
   "started_at": "2026-08-09T20:34:13+00:00",
-  "updated_at": "2026-08-09T23:23:34+00:00",
+  "updated_at": "2026-08-09T23:23:47+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "R11e-LTE6",
@@ -25,7 +25,7 @@
   "current_item": "B3",
   "retry_queue": [],
   "push_pending": false,
-  "bands_restored": false,
+  "bands_restored": true,
   "items": {
     "S1": {
       "state": "COMPLETE",
@@ -741,7 +741,7 @@
       "last_error": "band did not register/verify"
     }
   },
-  "last_pushed_commit": "c93cd5609b5b222f52b7518db19cbbd4d5860787",
+  "last_pushed_commit": "deb21a4d652b8bc37dfedbcd93ca271c9682bcc3",
   "worker_progress_counter": 141,
   "worker_last_progress_at": "2026-08-09T23:23:34+00:00",
   "routerboard_firmware": "7.24rc3",
