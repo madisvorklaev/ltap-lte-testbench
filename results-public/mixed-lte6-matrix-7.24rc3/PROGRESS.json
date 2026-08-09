@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
   "campaign_id": "mixed-lte6-matrix-7.24rc3",
-  "state": "RUNNING",
+  "state": "COMPLETE",
   "started_at": "2026-08-09T09:56:19+00:00",
-  "updated_at": "2026-08-09T16:44:23+00:00",
+  "updated_at": "2026-08-09T16:44:37+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "FG621-EA",
@@ -2689,7 +2689,7 @@
       "dual_status": "PASS_DUAL"
     }
   },
-  "last_pushed_commit": "789b1bd532a9b70250a73462586648d13f5b990f",
+  "last_pushed_commit": "c801c89f2a4e511a2082476e1650e95ba33cc422",
   "worker_progress_counter": 516,
   "worker_last_progress_at": "2026-08-09T16:39:46+00:00",
   "routerboard_firmware": "7.24rc3",
