@@ -243,6 +243,8 @@ class Runner:
         self.router = collector.RouterSSH(self.cfg["router"])
         self.progress_path = RUNTIME / "PROGRESS.json"
         self.heartbeat_path = RUNTIME / "HEARTBEAT.json"
+        self.worker_progress_counter = 0
+        self.worker_last_progress_at = now()
         self.progress = self.load_or_init_progress()
         self.current_state = "STARTING"
         self.last_error = ""
@@ -250,7 +252,7 @@ class Runner:
         self.router_reachable = False
         self.server_reachable = False
         self.worker_progress_counter = int(self.progress.get("worker_progress_counter", 0))
-        self.worker_last_progress_at = self.progress.get("worker_last_progress_at") or now()
+        self.worker_last_progress_at = self.progress.get("worker_last_progress_at") or self.worker_last_progress_at
         self.item_started_mono: float | None = None
         self.stop_heartbeat = threading.Event()
         self.heartbeat_thread = threading.Thread(target=self.heartbeat_loop, daemon=True)
