@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
   "campaign_id": "mixed-lte6-matrix-7.24rc3",
-  "state": "PRIMARY_DUAL_MATRIX",
+  "state": "RUNNING",
   "started_at": "2026-08-09T09:56:19+00:00",
-  "updated_at": "2026-08-09T10:02:26+00:00",
+  "updated_at": "2026-08-09T10:07:01+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "FG621-EA",
@@ -20,58 +20,32 @@
   "server_epoch": 1,
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 1,
+  "completed_count": 0,
   "mandatory_total": 42,
-  "current_item": "R1-M0",
+  "current_item": null,
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
   "items": {
     "R1-M0": {
-      "state": "SKIPPED_BAND_UNAVAILABLE",
+      "state": "PENDING",
       "attempts": 0,
       "history": [
         {
-          "at": "2026-08-09T09:58:12+00:00",
-          "state": "APPLYING_BANDS",
-          "attempts": 0
-        },
-        {
-          "at": "2026-08-09T09:58:17+00:00",
-          "state": "WAITING_REGISTRATION",
-          "bands": {
-            "lte1": "",
-            "lte2": ""
-          }
-        },
-        {
-          "at": "2026-08-09T10:00:24+00:00",
-          "state": "WAITING_REGISTRATION",
-          "bands": {
-            "lte1": "",
-            "lte2": ""
-          }
-        },
-        {
-          "at": "2026-08-09T10:02:26+00:00",
-          "state": "SKIPPED_BAND_UNAVAILABLE",
-          "bands": {
-            "lte1": "",
-            "lte2": ""
-          },
-          "last_error": "band did not register/verify"
+          "at": "2026-08-09T10:04:42+00:00",
+          "state": "RESET_AFTER_VERIFIER_FIX"
         }
-      ],
-      "bands": {
-        "lte1": "",
-        "lte2": ""
-      },
-      "last_error": "band did not register/verify"
+      ]
     },
     "R1-M1": {
       "state": "PENDING",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-09T10:04:42+00:00",
+          "state": "RESET_AFTER_VERIFIER_FIX"
+        }
+      ]
     },
     "R1-M2": {
       "state": "PENDING",
@@ -274,9 +248,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "96e6ac95d4169bab62072d7e2f93b1a18e3e052f",
-  "worker_progress_counter": 11,
-  "worker_last_progress_at": "2026-08-09T10:02:26+00:00",
+  "last_pushed_commit": "84f864915c41bdf6d4837f6ca16f0f3569db6b18",
+  "worker_progress_counter": 14,
+  "worker_last_progress_at": "2026-08-09T10:04:42+00:00",
   "routerboard_firmware": "7.24rc3",
   "smoke_tests_completed": true,
   "smoke_tests": {
