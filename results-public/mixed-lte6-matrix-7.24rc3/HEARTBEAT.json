@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-08-09T09:57:51+00:00",
+  "pid": 472396,
+  "campaign_state": "STARTING",
+  "current_item": null,
+  "item_state": "SMOKE_SMOKE-DUAL",
+  "item_elapsed_s": 0,
+  "worker_progress_counter": 5,
+  "worker_last_progress_at": "2026-08-09T09:57:26+00:00",
+  "elapsed_seconds": 92,
+  "last_successful_telemetry_timestamp": "2026-08-09T09:56:20+00:00",
+  "router_reachable": true,
+  "server_reachable": true,
+  "lte1_status": null,
+  "lte2_status": null,
+  "lte1_band_config": "",
+  "lte2_band_config": "",
+  "completed": 0,
+  "mandatory_total": 42,
+  "retry_queue_length": 0,
+  "push_pending": false,
+  "last_error": "",
+  "last_local_commit": "6ea6f54",
+  "last_pushed_commit": null,
+  "bands_currently_configured": {
+    "lte1": "",
+    "lte2": ""
+  }
+}
