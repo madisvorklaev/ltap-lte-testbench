@@ -1,6 +1,6 @@
 # LtAP Band Matrix mixed-lte6-matrix-7.24rc3
 
-Updated: 2026-08-09T14:44:29+00:00
+Updated: 2026-08-09T14:47:54+00:00
 
 This report is generated incrementally. Final production recommendations are intentionally withheld until all required items are terminal.
 
@@ -40,7 +40,7 @@ This report is generated incrementally. Final production recommendations are int
 | H-LTE2-4M | COMPLETE | 3 | 3 | PASS_SINGLE |  |  |  | 3.996692936429751 |  | 32.8 |
 | H-LTE2-6M | COMPLETE | 3 | 3 | PASS_SINGLE |  |  |  | 5.98988933423955 | 0.07733333333333334 | 32.7 |
 | H-LTE2-8M | COMPLETE | 3 | 3 | PASS_SINGLE |  |  |  | 7.964841880836212 | 0.3 | 33.6 |
-| H-LTE2-10M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
+| H-LTE2-10M | COMPLETE | 3 | 3 | PASS_SINGLE |  |  |  | 9.941557861595905 | 0.4624 | 33.5 |
 | H-LTE2-12M | PENDING | 3 | 3 |  |  |  |  |  |  |  |
 | L1-R1 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
 | L1-R2 | PENDING | 3 | 7 |  |  |  |  |  |  |  |
