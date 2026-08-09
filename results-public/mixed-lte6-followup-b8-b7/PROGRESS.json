@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
   "campaign_id": "mixed-lte6-followup-b8-b7",
-  "state": "RUNNING",
+  "state": "COMPLETE",
   "started_at": "2026-08-09T18:08:35+00:00",
-  "updated_at": "2026-08-09T20:09:28+00:00",
+  "updated_at": "2026-08-09T20:09:41+00:00",
   "routeros": "7.24rc3",
   "modem_lte1": {
     "expected": "FG621-EA",
@@ -396,7 +396,7 @@
       "dual_status": "PASS_DUAL"
     }
   },
-  "last_pushed_commit": "08941e507acacc70ea67723adbf6ffe9e7e3a19e",
+  "last_pushed_commit": "896a86edb6cee9bd57b292e51373010bb298e80b",
   "worker_progress_counter": 79,
   "worker_last_progress_at": "2026-08-09T19:47:43+00:00",
   "routerboard_firmware": "7.24rc3",
