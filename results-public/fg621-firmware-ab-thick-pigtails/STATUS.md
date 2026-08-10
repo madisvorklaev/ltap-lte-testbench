@@ -1,17 +1,17 @@
 # Status fg621-firmware-ab-thick-pigtails
 
-- State: POST_UPGRADE_TESTING
+- State: POST_FIRMWARE_F3_B3_B7
 - Current item: F3
-- Progress: 2/14
+- Progress: 3/14
 - Firmware category: PARTIAL_B3_IMPROVEMENT
 - Bands restored: False
-- Last error: 
+- Last error: FAIL_IPERF_OR_PATH
 
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |
 | F1 | COMPLETE | 1 | PASS_DUAL |
 | F2 | COMPLETE | 1 | PASS_DUAL |
-| F3 | RUNNING | 1 | REGISTERED |
+| F3 | FAILED_AFTER_RETRIES | 2 | FAIL_IPERF_OR_PATH |
 | L3-1 | PENDING | 0 |  |
 | L3-2 | PENDING | 0 |  |
 | L3-3 | PENDING | 0 |  |

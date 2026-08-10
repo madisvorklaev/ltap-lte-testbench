@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
-  "state": "POST_UPGRADE_TESTING",
+  "state": "POST_FIRMWARE_F3_B3_B7",
   "started_at": "2026-08-10T17:25:28+00:00",
-  "updated_at": "2026-08-10T17:54:53+00:00",
+  "updated_at": "2026-08-10T18:00:56+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -22,7 +22,7 @@
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 2,
+  "completed_count": 3,
   "mandatory_total": 14,
   "current_item": "F3",
   "retry_queue": [],
@@ -348,8 +348,8 @@
       "dual_status": "PASS_DUAL"
     },
     "F3": {
-      "state": "RUNNING",
-      "attempts": 1,
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 2,
       "history": [
         {
           "at": "2026-08-10T17:45:33+00:00",
@@ -415,6 +415,89 @@
           "at": "2026-08-10T17:46:14+00:00",
           "state": "RUNNING",
           "attempts": 1
+        },
+        {
+          "at": "2026-08-10T17:54:56+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T17:55:01+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-10T17:55:32+00:00",
+          "state": "READY",
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "elisa",
+              "lac": "2022",
+              "current-cellid": "257028629",
+              "enb-id": "1004018",
+              "sector-id": "21",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "24m20s",
+              "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+              "cqi": "0",
+              "rssi": "-63dBm",
+              "rsrp": "-96dBm",
+              "rsrq": "-12dB",
+              "sinr": "4dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "elisa",
+              "current-cellid": "257028639",
+              "enb-id": "1004018",
+              "sector-id": "31",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "9m49s",
+              "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+              "rssi": "-79dBm",
+              "rsrp": "-105dBm",
+              "rsrq": "-10.5dB",
+              "sinr": "11dB"
+            },
+            "registration_verified_at": "2026-08-10T17:55:01+00:00"
+          }
+        },
+        {
+          "at": "2026-08-10T17:55:32+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-10T18:00:55+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T18:00:55+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-10T18:00:56+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH",
+          "registration": "REGISTERED"
         }
       ],
       "bands": {
@@ -437,7 +520,7 @@
           "sector-id": "21",
           "phy-cellid": "69",
           "data-class": "LTE",
-          "session-uptime": "15m3s",
+          "session-uptime": "24m20s",
           "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
           "cqi": "0",
           "rssi": "-63dBm",
@@ -455,15 +538,17 @@
           "sector-id": "31",
           "phy-cellid": "69",
           "data-class": "LTE",
-          "session-uptime": "31s",
+          "session-uptime": "9m49s",
           "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
           "rssi": "-79dBm",
-          "rsrp": "-106dBm",
-          "rsrq": "-12dB",
-          "sinr": "7dB"
+          "rsrp": "-105dBm",
+          "rsrq": "-10.5dB",
+          "sinr": "11dB"
         },
-        "registration_verified_at": "2026-08-10T17:45:43+00:00"
-      }
+        "registration_verified_at": "2026-08-10T17:55:01+00:00"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
     },
     "L3-1": {
       "state": "PENDING",
@@ -521,9 +606,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "e3ed7af87e934112b9d8083c880f39fbd377f838",
-  "worker_progress_counter": 29,
-  "worker_last_progress_at": "2026-08-10T17:46:14+00:00",
+  "last_pushed_commit": "16e5555dce96fb62208fb4777b833b7fadfe86be",
+  "worker_progress_counter": 38,
+  "worker_last_progress_at": "2026-08-10T18:00:56+00:00",
   "baseline_verified_at": "2026-08-10T17:25:29+00:00",
   "firmware_upgrade_started_at": "2026-08-10T17:25:37+00:00",
   "last_error": "",
