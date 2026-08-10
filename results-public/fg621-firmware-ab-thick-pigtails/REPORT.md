@@ -1,6 +1,6 @@
 # FG621 firmware A/B test fg621-firmware-ab-thick-pigtails
 
-Updated: 2026-08-10T17:30:40+00:00
+Updated: 2026-08-10T17:39:24+00:00
 
 A-side reference: `mixed-lte6-thick-pigtails-pre-firmware`.
 FG621 firmware before: `16121.1034.00.01.01.04`.
@@ -10,8 +10,8 @@ RouterOS: `7.24rc3`.
 
 | Test | Modem | Band | Mbps | UDP loss % | p95 RTT | RSRP | SINR | Status |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| F1 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
-| F1 | FG621-EA | 3 |  |  |  |  |  | PENDING |
+| F1 | R11e-LTE6 | 3 | 5.995 | 0.068 | 36.6 | -96 | 4 | PASS_DUAL |
+| F1 | FG621-EA | 3 | 5.491 | 8.474 | 114 | -95 | 3 | PASS_DUAL |
 | F2 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
 | F2 | FG621-EA | 8 |  |  |  |  |  | PENDING |
 | F3 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
@@ -38,13 +38,13 @@ RouterOS: `7.24rc3`.
 
 | FG621 band | Pre-FW Mbps | Post-FW Mbps | Pre loss % | Post loss % | Pre p95 | Post p95 | Pre RSRP | Post RSRP | Pre SINR | Post SINR |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| B3 | 4.94 |  | 17.532 |  | 122 |  | -94 |  | 3 |  |
+| B3 | 4.94 | 5.491 | 17.532 | 8.474 | 122 | 114 | -94 | -95 | 3 | 3 |
 | B8 | 5.941 |  | 0.955 |  | 41.7 |  | -91 |  | 8 |  |
 | B7 | 5.573 |  | 7.096 |  | 104 |  | -105 |  | 13 |  |
 
 | Test | Pre R11e loss | Post R11e loss | Pre p95 | Post p95 | Control stable? |
 |---|---:|---:|---:|---:|---|
-| F1 | 0.206 |  | 42.8 |  | True |
+| F1 | 0.206 | 0.068 | 42.8 | 36.6 | True |
 | F2 | 0.128 |  | 35.5 |  | True |
 | F3 | 0.778 |  | 41.7 |  | True |
 
@@ -53,8 +53,8 @@ RouterOS: `7.24rc3`.
 1. FG621 firmware before: `16121.1034.00.01.01.04`.
 2. Latest stable offered: `16121.1034.00.01.01.10`.
 3. Firmware installed after: `16121.1034.00.01.01.10`.
-4. B3 category: `PENDING`.
-5. B3 throughput/loss/p95 delta: -4.94 Mbps, -17.532 pp loss, -122 ms p95.
+4. B3 category: `PARTIAL_B3_IMPROVEMENT`.
+5. B3 throughput/loss/p95 delta: 0.551 Mbps, -9.058 pp loss, -8 ms p95.
 6. B8 remained good: `True`.
 7. B7 change: see B7 row above.
 8. R11e control stayed stable unless marked otherwise in the control table.
@@ -63,4 +63,4 @@ RouterOS: `7.24rc3`.
 11. R11e firmware should not be tested from this campaign unless separately requested.
 12. Original bands restored: `false`.
 
-FIRMWARE_NO_MEANINGFUL_EFFECT
+FIRMWARE_PARTIAL_IMPROVEMENT

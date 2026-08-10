@@ -1,5 +1,5 @@
 item_id,state,attempts,lte1_band,lte2_band,dual_status,registration,lte1_mbps,lte1_loss_percent,lte1_jitter_ms,lte1_ping_avg_ms,lte1_ping_p95_ms,lte1_ping_max_ms,lte1_ping_loss_percent,lte1_rssi_median,lte1_rsrp_median,lte1_rsrq_median,lte1_sinr_median,lte1_cqi_median,lte1_ri_median,lte1_cell_changes,lte1_tx-queue-drop_delta,lte2_mbps,lte2_loss_percent,lte2_jitter_ms,lte2_ping_avg_ms,lte2_ping_p95_ms,lte2_ping_max_ms,lte2_ping_loss_percent,lte2_rssi_median,lte2_rsrp_median,lte2_rsrq_median,lte2_sinr_median,lte2_cqi_median,lte2_ri_median,lte2_cell_changes,lte2_tx-queue-drop_delta
-F1,PENDING,0,3,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+F1,COMPLETE,1,3,3,PASS_DUAL,REGISTERED,5.994827828490989,0.06826666666666667,1.8007715776285254,26.201,36.6,225.745,0.0628536,-63.0,-96.0,-12.0,4.0,11.0,1.0,0,0,5.49058096236786,8.4736,1.7893815402744937,54.973,114.0,216.883,0.125628,-66.0,-95.0,-13.5,3.0,,2.0,0,0
 F2,PENDING,0,3,8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 F3,PENDING,0,3,7,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 L3-1,PENDING,0,3,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
