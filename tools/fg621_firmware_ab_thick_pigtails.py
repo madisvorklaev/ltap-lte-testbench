@@ -669,21 +669,22 @@ class Runner(thick.Runner):
                 self.wait_until("WAIT_NETWORK", self.verify_lab_routes, 120)
             self.save_original_bands()
             self.update_matrix_summary()
-            self.git_checkpoint("firmware-ab: initialize")
-            before = self.firmware_query()
+            if not self.progress.get("firmware_after"):
+                self.git_checkpoint("firmware-ab: initialize")
+                before = self.firmware_query()
+                self.update_matrix_summary()
+                self.git_checkpoint("firmware-ab: query firmware")
+                if self.progress.get("state", "").startswith("BLOCKED"):
+                    return
+                if not self.firmware_upgrade(before):
+                    self.update_matrix_summary()
+                    self.git_checkpoint("firmware-ab: firmware upgrade failed or blocked")
+                    return
+            self.progress["state"] = "POST_UPGRADE_TESTING"
+            self.last_error = ""
+            self.save_progress()
             self.update_matrix_summary()
-            self.git_checkpoint("firmware-ab: query firmware")
-            if self.progress.get("state", "").startswith("BLOCKED"):
-                return
-            if not self.firmware_upgrade(before):
-                self.update_matrix_summary()
-                self.git_checkpoint("firmware-ab: firmware upgrade failed or blocked")
-                return
-            if self.progress.get("firmware_after"):
-                self.progress["state"] = "POST_UPGRADE_TESTING"
-                self.save_progress()
-                self.update_matrix_summary()
-                self.git_checkpoint("firmware-ab: firmware upgraded")
+            self.git_checkpoint("firmware-ab: firmware upgraded")
             self.run_smoke_after_upgrade()
             for item in items():
                 state = self.progress["items"][item["id"]].get("state")

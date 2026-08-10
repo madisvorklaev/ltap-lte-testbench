@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-08-10T17:29:13+00:00",
-  "pid": 790040,
-  "campaign_state": "WAIT_FG621_REAPPEAR",
+  "timestamp": "2026-08-10T17:30:40+00:00",
+  "pid": 790584,
+  "campaign_state": "POST_UPGRADE_TESTING",
   "current_item": null,
   "item_state": "STARTING",
   "item_elapsed_s": 0,
   "worker_progress_counter": 0,
   "worker_last_progress_at": "2026-08-10T17:25:28+00:00",
-  "elapsed_seconds": 225,
+  "elapsed_seconds": 312,
   "last_successful_telemetry_timestamp": null,
   "router_reachable": true,
   "server_reachable": false,
@@ -20,8 +20,8 @@
   "retry_queue_length": 0,
   "push_pending": false,
   "last_error": "",
-  "last_local_commit": "11e6850",
-  "last_pushed_commit": "11e685006a638eb124ddd5b0a1a2b43bd8900c2f",
+  "last_local_commit": "2859298",
+  "last_pushed_commit": "2859298c65b2ed2859cf549266e2daa3f0e5b6ae",
   "bands_currently_configured": {
     "lte1": "",
     "lte2": ""

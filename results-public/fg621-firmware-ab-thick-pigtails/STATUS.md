@@ -1,11 +1,11 @@
 # Status fg621-firmware-ab-thick-pigtails
 
-- State: BLOCKED_NO_FG621_UPDATE
+- State: POST_UPGRADE_TESTING
 - Current item: -
 - Progress: 0/14
 - Firmware category: None
 - Bands restored: False
-- Last error: No newer stable FG621 firmware offered: installed='16121.1034.00.01.01.10' latest='16121.1034.00.01.01.10'
+- Last error: 
 
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |
