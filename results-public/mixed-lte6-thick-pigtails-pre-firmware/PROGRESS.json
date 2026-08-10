@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "mixed-lte6-thick-pigtails-pre-firmware",
-  "state": "THICK_PIGTAIL_P4_FG621_B3_ISOLATED",
+  "state": "COMPLETE",
   "started_at": "2026-08-10T16:14:58+00:00",
-  "updated_at": "2026-08-10T16:33:26+00:00",
+  "updated_at": "2026-08-10T16:33:40+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -27,7 +27,7 @@
   "current_item": "P4",
   "retry_queue": [],
   "push_pending": false,
-  "bands_restored": false,
+  "bands_restored": true,
   "p4_triggered": false,
   "items": {
     "P1": {
@@ -457,8 +457,9 @@
       "registration": "P4_NOT_TRIGGERED"
     }
   },
-  "last_pushed_commit": "75fb5d264baaaa4162fe2bd8cb6b1ed33a5aaec1",
+  "last_pushed_commit": "f2f56f255370e814b8aca722a379404ad7d67252",
   "worker_progress_counter": 28,
   "worker_last_progress_at": "2026-08-10T16:33:26+00:00",
-  "baseline_verified_at": "2026-08-10T16:15:00+00:00"
+  "baseline_verified_at": "2026-08-10T16:15:00+00:00",
+  "final_monitor_snapshots_recorded_at": "2026-08-10T16:33:40+00:00"
 }

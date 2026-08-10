@@ -1,6 +1,6 @@
 # Thick-pigtail validation mixed-lte6-thick-pigtails-pre-firmware
 
-Updated: 2026-08-10T16:33:27+00:00
+Updated: 2026-08-10T16:33:40+00:00
 
 Thin-pigtail reference: `fg621-pre-firmware-quick-baseline`.
 Physical change: both modems now use thicker beige pigtails.
@@ -32,7 +32,7 @@ RouterOS verified before tests: `7.24rc3`.
 - P1 FG621 B3 loss/p95: 17.532% / 122 ms.
 - P2 FG621 B8 loss: 0.955%.
 - P4 triggered: `false`.
-- Original bands restored: `false`.
+- Original bands restored: `true`.
 - New thicker pigtails did not materially solve the FG621 B3 problem; B8 remains the clean comparison path.
 
 Final recommendation: `PROCEED_TO_FG621_FIRMWARE_TEST`

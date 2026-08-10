@@ -1,9 +1,9 @@
 # Status mixed-lte6-thick-pigtails-pre-firmware
 
-- State: THICK_PIGTAIL_P4_FG621_B3_ISOLATED
+- State: COMPLETE
 - Current item: P4
 - Progress: 4/4
-- Bands restored: False
+- Bands restored: True
 - P4 triggered: False
 - Last error: 
 
