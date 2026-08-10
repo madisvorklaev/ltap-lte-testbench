@@ -1,11 +1,11 @@
 # FG621 firmware A/B test fg621-firmware-ab-thick-pigtails
 
-Updated: 2026-08-10T17:25:34+00:00
+Updated: 2026-08-10T17:29:14+00:00
 
 A-side reference: `mixed-lte6-thick-pigtails-pre-firmware`.
 FG621 firmware before: `16121.1034.00.01.01.04`.
 Latest stable offered: `16121.1034.00.01.01.10`.
-FG621 firmware after: ``.
+FG621 firmware after: `16121.1034.00.01.01.10`.
 RouterOS: `7.24rc3`.
 
 | Test | Modem | Band | Mbps | UDP loss % | p95 RTT | RSRP | SINR | Status |
@@ -52,7 +52,7 @@ RouterOS: `7.24rc3`.
 
 1. FG621 firmware before: `16121.1034.00.01.01.04`.
 2. Latest stable offered: `16121.1034.00.01.01.10`.
-3. Firmware installed after: ``.
+3. Firmware installed after: `16121.1034.00.01.01.10`.
 4. B3 category: `PENDING`.
 5. B3 throughput/loss/p95 delta: -4.94 Mbps, -17.532 pp loss, -122 ms p95.
 6. B8 remained good: `True`.

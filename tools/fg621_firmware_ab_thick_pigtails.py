@@ -10,6 +10,7 @@ import json
 import os
 import re
 import signal
+import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -296,7 +297,17 @@ class Runner(thick.Runner):
         self.progress["state"] = "FIRMWARE_UPGRADE_START"
         self.progress["firmware_upgrade_started_at"] = utcnow()
         self.save_progress()
-        cp = self.router_call("/interface/lte/firmware-upgrade lte2 upgrade=yes", timeout=120)
+        try:
+            cp = self.router_call("/interface/lte/firmware-upgrade lte2 upgrade=yes", timeout=120)
+        except subprocess.TimeoutExpired as exc:
+            self.progress["state"] = "WAIT_FG621_REAPPEAR"
+            self.progress["firmware_upgrade_command_timeout"] = {
+                "at": utcnow(),
+                "timeout_s": exc.timeout,
+                "note": "RouterOS command timed out locally; do not start another upgrade blindly.",
+            }
+            self.save_progress()
+            return self.recover_firmware_upgrade()
         combined = (cp.stdout + "\n" + cp.stderr).lower()
         if cp.returncode != 0:
             if "routeros" in combined and ("upgrade" in combined or "update" in combined or "required" in combined):
@@ -333,6 +344,46 @@ class Runner(thick.Runner):
             time.sleep(10)
         self.progress["state"] = "FAILED_FG621_REAPPEAR_TIMEOUT"
         self.last_error = "FG621 did not reappear with changed firmware within 20 minutes"
+        self.save_progress()
+        return False
+
+    def recover_firmware_upgrade(self) -> bool:
+        before = self.progress.get("firmware_before") or {}
+        old_fw = normalize_fw(before.get("installed") or before.get("installed_firmware") or EXPECTED_LTE2_FIRMWARE)
+        latest = normalize_fw(before.get("latest") or before.get("latest_firmware"))
+        started = self.progress.get("firmware_upgrade_started_at") or utcnow()
+        self.progress["state"] = "WAIT_FG621_REAPPEAR"
+        self.save_progress()
+        deadline = time.time() + 20 * 60
+        try:
+            start_dt = dt.datetime.fromisoformat(str(started).replace("Z", "+00:00"))
+            elapsed = (dt.datetime.now(dt.timezone.utc) - start_dt).total_seconds()
+            deadline = time.time() + max(120, 20 * 60 - elapsed)
+        except ValueError:
+            pass
+        seen_inactive = False
+        while time.time() < deadline:
+            mon = self.monitor("lte2")
+            status = str(mon.get("status", "")).lower()
+            revision = normalize_fw(mon.get("revision"))
+            if not mon or status not in base.REGISTERED_LTE_STATES:
+                seen_inactive = True
+                time.sleep(10)
+                continue
+            if revision and revision != old_fw:
+                after = self.query_after(old_fw, latest, revision, seen_inactive)
+                self.progress["firmware_after"] = after
+                self.progress["state"] = "VERIFY_NEW_FIRMWARE"
+                self.save_progress()
+                return True
+            if revision == old_fw:
+                self.progress["state"] = "FAILED_FIRMWARE_NOT_CHANGED"
+                self.last_error = f"FG621 returned with unchanged firmware {old_fw}"
+                self.save_progress()
+                return False
+            time.sleep(10)
+        self.progress["state"] = "FAILED_FG621_REAPPEAR_TIMEOUT"
+        self.last_error = "FG621 did not reappear with changed firmware within bounded recovery window"
         self.save_progress()
         return False
 
@@ -598,7 +649,20 @@ class Runner(thick.Runner):
     def run(self) -> None:
         self.start_heartbeat()
         try:
-            if not self.verify_baseline():
+            if (
+                self.progress.get("firmware_before")
+                and not self.progress.get("firmware_after")
+                and self.progress.get("state") in {"FIRMWARE_UPGRADE_START", "FIRMWARE_UPGRADING", "WAIT_FG621_REAPPEAR"}
+            ):
+                if not self.recover_firmware_upgrade():
+                    self.update_matrix_summary()
+                    self.git_checkpoint("firmware-ab: firmware recovery failed")
+                    return
+                self.progress["state"] = "POST_UPGRADE_TESTING"
+                self.save_progress()
+                self.update_matrix_summary()
+                self.git_checkpoint("firmware-ab: firmware upgraded")
+            if not self.progress.get("firmware_after") and not self.verify_baseline():
                 self.git_checkpoint("firmware-ab: blocked baseline")
                 return
             if not self.verify_lab_routes():

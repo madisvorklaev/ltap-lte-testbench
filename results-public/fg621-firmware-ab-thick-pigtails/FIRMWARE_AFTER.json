@@ -1,0 +1,33 @@
+{
+  "interface": "lte2",
+  "old_firmware": "16121.1034.00.01.01.04",
+  "new_firmware": "16121.1034.00.01.01.10",
+  "latest_offered_before": "16121.1034.00.01.01.10",
+  "query_after": {
+    "raw": "  installed: 16121.1034.00.01.01.10\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.10        \n     latest: 16121.1034.00.01.01.10        \n     status: firmware is already up to date\n",
+    "installed": "16121.1034.00.01.01.10",
+    "status": "firmware is already up to date",
+    "latest": "16121.1034.00.01.01.10"
+  },
+  "completed_at": "2026-08-10T17:29:14+00:00",
+  "registration_status": "running",
+  "monitor": {
+    "status": "running",
+    "model": "FG621-EA",
+    "revision": "16121.1034.00.01.01.10",
+    "current-operator": "elisa",
+    "current-cellid": "257028629",
+    "enb-id": "1004018",
+    "sector-id": "21",
+    "phy-cellid": "69",
+    "data-class": "LTE",
+    "session-uptime": "35s",
+    "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+    "ri": "2",
+    "rssi": "-65dBm",
+    "rsrp": "-96dBm",
+    "rsrq": "-16dB",
+    "sinr": "3dB"
+  },
+  "modem_restart_observed": false
+}

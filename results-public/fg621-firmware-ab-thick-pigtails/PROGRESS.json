@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
-  "state": "FIRMWARE_QUERY",
+  "state": "POST_UPGRADE_TESTING",
   "started_at": "2026-08-10T17:25:28+00:00",
-  "updated_at": "2026-08-10T17:25:34+00:00",
+  "updated_at": "2026-08-10T17:29:14+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -37,7 +37,39 @@
     "queried_at": "2026-08-10T17:25:34+00:00",
     "returncode": 0
   },
-  "firmware_after": null,
+  "firmware_after": {
+    "interface": "lte2",
+    "old_firmware": "16121.1034.00.01.01.04",
+    "new_firmware": "16121.1034.00.01.01.10",
+    "latest_offered_before": "16121.1034.00.01.01.10",
+    "query_after": {
+      "raw": "  installed: 16121.1034.00.01.01.10\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.10        \n     latest: 16121.1034.00.01.01.10        \n     status: firmware is already up to date\n",
+      "installed": "16121.1034.00.01.01.10",
+      "status": "firmware is already up to date",
+      "latest": "16121.1034.00.01.01.10"
+    },
+    "completed_at": "2026-08-10T17:29:14+00:00",
+    "registration_status": "running",
+    "monitor": {
+      "status": "running",
+      "model": "FG621-EA",
+      "revision": "16121.1034.00.01.01.10",
+      "current-operator": "elisa",
+      "current-cellid": "257028629",
+      "enb-id": "1004018",
+      "sector-id": "21",
+      "phy-cellid": "69",
+      "data-class": "LTE",
+      "session-uptime": "35s",
+      "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+      "ri": "2",
+      "rssi": "-65dBm",
+      "rsrp": "-96dBm",
+      "rsrq": "-16dB",
+      "sinr": "3dB"
+    },
+    "modem_restart_observed": false
+  },
   "firmware_category": null,
   "items": {
     "F1": {
@@ -111,8 +143,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "c553943f3716fd2af7ee95c4d37c883ab37b00a9",
+  "last_pushed_commit": "11e685006a638eb124ddd5b0a1a2b43bd8900c2f",
   "worker_progress_counter": 0,
   "worker_last_progress_at": "2026-08-10T17:25:28+00:00",
-  "baseline_verified_at": "2026-08-10T17:25:29+00:00"
+  "baseline_verified_at": "2026-08-10T17:25:29+00:00",
+  "firmware_upgrade_started_at": "2026-08-10T17:25:37+00:00"
 }
