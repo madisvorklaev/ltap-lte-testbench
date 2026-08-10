@@ -1,6 +1,6 @@
 item_id,phase,state,attempts,band,dual_status,registration,lte1_operator,lte1_sim_id,lte1_modem,lte1_mbps,lte1_loss_percent,lte1_ping_p95_ms,lte1_rsrp_median,lte1_rsrq_median,lte1_sinr_median,lte2_operator,lte2_sim_id,lte2_modem,lte2_mbps,lte2_loss_percent,lte2_ping_p95_ms,lte2_rsrp_median,lte2_rsrq_median,lte2_sinr_median
 A-B3,A,COMPLETE,1,3,PASS_DUAL,REGISTERED,elisa,SIM-0464aca4a8,"""R11e-LTE6""",5.989343370832762,0.15733333333333333,34.1,-96.0,-11.0,5.0,telia,SIM-b536bd05e0,FG621-EA,5.9984966087718465,0,37.8,-97.0,-14.0,6.0
-A-B7,A,PENDING,0,7,,,,,"""R11e-LTE6""",,,,,,,,,FG621-EA,,,,,,
+A-B7,A,COMPLETE,1,7,PASS_DUAL,REGISTERED,elisa,SIM-0464aca4a8,"""R11e-LTE6""",5.5278093725604185,7.367505960031787,755.0,-106.0,-10.5,10.0,telia,SIM-b536bd05e0,FG621-EA,5.99939674778763,0,35.9,-105.0,-11.0,12.0
 A-B20,A,PENDING,0,20,,,,,"""R11e-LTE6""",,,,,,,,,FG621-EA,,,,,,
 B-B3,B,PENDING,0,3,,,,,"""R11e-LTE6""",,,,,,,,,FG621-EA,,,,,,
 B-B7,B,PENDING,0,7,,,,,"""R11e-LTE6""",,,,,,,,,FG621-EA,,,,,,

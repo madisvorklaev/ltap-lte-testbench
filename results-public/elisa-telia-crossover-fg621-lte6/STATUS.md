@@ -2,8 +2,8 @@
 
 - State: PHASE_A_LOADED
 - Phase: PHASE_A
-- Current item: A-B3
-- Progress: 1/6
+- Current item: A-B7
+- Progress: 2/6
 - Selected bands: B3, B7, B20
 - SIM swap verified: False
 - Bands restored: False
@@ -12,7 +12,7 @@
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |
 | A-B3 | COMPLETE | 1 | PASS_DUAL |
-| A-B7 | PENDING | 0 |  |
+| A-B7 | COMPLETE | 1 | PASS_DUAL |
 | A-B20 | PENDING | 0 |  |
 | B-B3 | PENDING | 0 |  |
 | B-B7 | PENDING | 0 |  |
