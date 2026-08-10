@@ -1,6 +1,6 @@
 # FG621 firmware A/B test fg621-firmware-ab-thick-pigtails
 
-Updated: 2026-08-10T17:39:24+00:00
+Updated: 2026-08-10T17:45:28+00:00
 
 A-side reference: `mixed-lte6-thick-pigtails-pre-firmware`.
 FG621 firmware before: `16121.1034.00.01.01.04`.
@@ -12,8 +12,8 @@ RouterOS: `7.24rc3`.
 |---|---|---|---:|---:|---:|---:|---:|---|
 | F1 | R11e-LTE6 | 3 | 5.995 | 0.068 | 36.6 | -96 | 4 | PASS_DUAL |
 | F1 | FG621-EA | 3 | 5.491 | 8.474 | 114 | -95 | 3 | PASS_DUAL |
-| F2 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
-| F2 | FG621-EA | 8 |  |  |  |  |  | PENDING |
+| F2 | R11e-LTE6 | 3 | 5.993 | 0.096 | 37.8 | -96 | 4 | PASS_DUAL |
+| F2 | FG621-EA | 8 | 5.993 | 0.101 | 48.9 | -89 | 5 | PASS_DUAL |
 | F3 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
 | F3 | FG621-EA | 7 |  |  |  |  |  | PENDING |
 | L3-1 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
@@ -39,13 +39,13 @@ RouterOS: `7.24rc3`.
 | FG621 band | Pre-FW Mbps | Post-FW Mbps | Pre loss % | Post loss % | Pre p95 | Post p95 | Pre RSRP | Post RSRP | Pre SINR | Post SINR |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | B3 | 4.94 | 5.491 | 17.532 | 8.474 | 122 | 114 | -94 | -95 | 3 | 3 |
-| B8 | 5.941 |  | 0.955 |  | 41.7 |  | -91 |  | 8 |  |
+| B8 | 5.941 | 5.993 | 0.955 | 0.101 | 41.7 | 48.9 | -91 | -89 | 8 | 5 |
 | B7 | 5.573 |  | 7.096 |  | 104 |  | -105 |  | 13 |  |
 
 | Test | Pre R11e loss | Post R11e loss | Pre p95 | Post p95 | Control stable? |
 |---|---:|---:|---:|---:|---|
 | F1 | 0.206 | 0.068 | 42.8 | 36.6 | True |
-| F2 | 0.128 |  | 35.5 |  | True |
+| F2 | 0.128 | 0.096 | 35.5 | 37.8 | True |
 | F3 | 0.778 |  | 41.7 |  | True |
 
 ## Conclusions
