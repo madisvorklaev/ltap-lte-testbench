@@ -1,7 +1,7 @@
 # Status fg621-firmware-ab-thick-pigtails
 
-- State: POST_FIRMWARE_F2_B3_B8
-- Current item: F2
+- State: POST_UPGRADE_TESTING
+- Current item: F3
 - Progress: 2/14
 - Firmware category: PARTIAL_B3_IMPROVEMENT
 - Bands restored: False
@@ -11,7 +11,7 @@
 | --- | --- | ---: | --- |
 | F1 | COMPLETE | 1 | PASS_DUAL |
 | F2 | COMPLETE | 1 | PASS_DUAL |
-| F3 | PENDING | 0 |  |
+| F3 | RUNNING | 1 | REGISTERED |
 | L3-1 | PENDING | 0 |  |
 | L3-2 | PENDING | 0 |  |
 | L3-3 | PENDING | 0 |  |

@@ -1,6 +1,6 @@
 {
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
-  "updated_at": "2026-08-10T17:45:28+00:00",
+  "updated_at": "2026-08-10T17:54:53+00:00",
   "items": {
     "F1": {
       "item_id": "F1",
@@ -82,12 +82,12 @@
     },
     "F3": {
       "item_id": "F3",
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "RUNNING",
+      "attempts": 1,
       "lte1_band": "3",
       "lte2_band": "7",
       "dual_status": null,
-      "registration": null,
+      "registration": "REGISTERED",
       "lte1_mbps": null,
       "lte1_loss_percent": null,
       "lte1_jitter_ms": null,
