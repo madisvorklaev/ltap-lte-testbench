@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "campaign_id": "elisa-telia-crossover-fg621-lte6",
+  "state": "SIM_IDENTITY_VERIFICATION",
+  "started_at": "2026-08-10T19:38:01+00:00",
+  "updated_at": "2026-08-10T19:38:04+00:00",
+  "routeros": "7.24rc3",
+  "routerboard_firmware": "7.24rc3",
+  "modem_lte1": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "modem_lte2": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.10"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "selected_bands": [],
+  "auto_fallback_selected": false,
+  "phase": "SIM_IDENTITY_VERIFICATION",
+  "phase_a_sim_map": {
+    "phase": "PHASE_A",
+    "collected_at": "2026-08-10T19:38:04+00:00",
+    "interfaces": {
+      "lte1": {
+        "interface": "lte1",
+        "modem": "\"R11e-LTE6\"",
+        "operator": "elisa",
+        "operator_raw": "Elisa EE",
+        "sim_id": "SIM-0464aca4a8",
+        "registration_state": "registered",
+        "apn_present": false
+      },
+      "lte2": {
+        "interface": "lte2",
+        "modem": "FG621-EA",
+        "operator": "telia",
+        "operator_raw": "Telia EE",
+        "sim_id": "SIM-b536bd05e0",
+        "registration_state": "running",
+        "apn_present": false
+      }
+    }
+  },
+  "phase_b_sim_map": null,
+  "sim_swap_verified": false,
+  "completed_count": 0,
+  "mandatory_total": 0,
+  "current_item": null,
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": false,
+  "items": {},
+  "last_pushed_commit": null,
+  "worker_progress_counter": 0,
+  "worker_last_progress_at": "2026-08-10T19:38:01+00:00",
+  "baseline_verified_at": "2026-08-10T19:38:03+00:00"
+}
