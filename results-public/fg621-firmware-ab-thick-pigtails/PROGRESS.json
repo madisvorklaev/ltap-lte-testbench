@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
-  "state": "POST_UPGRADE_TESTING",
+  "state": "BLOCKED_NO_FG621_UPDATE",
   "started_at": "2026-08-10T17:25:28+00:00",
-  "updated_at": "2026-08-10T17:29:17+00:00",
+  "updated_at": "2026-08-10T17:29:22+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -29,12 +29,12 @@
   "push_pending": false,
   "bands_restored": false,
   "firmware_before": {
-    "raw": "  installed: 16121.1034.00.01.01.04\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.04\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.04\n     latest: 16121.1034.00.01.01.10\n     status: update available      \n",
-    "installed": "16121.1034.00.01.01.04",
-    "status": "update available",
+    "raw": "  installed: 16121.1034.00.01.01.10\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.10        \n     latest: 16121.1034.00.01.01.10        \n     status: firmware is already up to date\n",
+    "installed": "16121.1034.00.01.01.10",
+    "status": "firmware is already up to date",
     "latest": "16121.1034.00.01.01.10",
     "interface": "lte2",
-    "queried_at": "2026-08-10T17:25:34+00:00",
+    "queried_at": "2026-08-10T17:29:22+00:00",
     "returncode": 0
   },
   "firmware_after": {
@@ -143,7 +143,7 @@
       "history": []
     }
   },
-  "last_pushed_commit": "3f3ee6ec7c30bffe7c4b2376a450d092cc255a6a",
+  "last_pushed_commit": "fba97782193df0d41348328a8192705a308f4531",
   "worker_progress_counter": 0,
   "worker_last_progress_at": "2026-08-10T17:25:28+00:00",
   "baseline_verified_at": "2026-08-10T17:25:29+00:00",

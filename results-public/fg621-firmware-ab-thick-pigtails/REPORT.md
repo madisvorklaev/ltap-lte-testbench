@@ -1,6 +1,6 @@
 # FG621 firmware A/B test fg621-firmware-ab-thick-pigtails
 
-Updated: 2026-08-10T17:29:17+00:00
+Updated: 2026-08-10T17:29:22+00:00
 
 A-side reference: `mixed-lte6-thick-pigtails-pre-firmware`.
 FG621 firmware before: `16121.1034.00.01.01.04`.
