@@ -1,6 +1,6 @@
 # Elisa/Telia crossover elisa-telia-crossover-fg621-lte6
 
-Updated: 2026-08-10T19:55:28+00:00
+Updated: 2026-08-10T20:08:04+00:00
 
 RouterOS: `7.24rc3`.
 Bands restored: `false`.
@@ -20,7 +20,7 @@ SIM swap verified: `false`.
 |---|---|---|---|---|---:|---:|---:|---|---:|---:|---:|
 | A-B3 | A | 3 | PASS_DUAL | elisa | 5.989 | 0.157 | 34.1 | telia | 5.998 | 0 | 37.8 |
 | A-B7 | A | 7 | PASS_DUAL | elisa | 5.528 | 7.368 | 755 | telia | 5.999 | 0 | 35.9 |
-| A-B20 | A | 20 | PENDING |  |  |  |  |  |  |  |  |
+| A-B20 | A | 20 | FAIL_IPERF_OR_PATH | elisa |  |  | 31.5 | telia | 5.999 | 0 | 35.7 |
 | B-B3 | B | 3 | PENDING |  |  |  |  |  |  |  |  |
 | B-B7 | B | 7 | PENDING |  |  |  |  |  |  |  |  |
 | B-B20 | B | 20 | PENDING |  |  |  |  |  |  |  |  |

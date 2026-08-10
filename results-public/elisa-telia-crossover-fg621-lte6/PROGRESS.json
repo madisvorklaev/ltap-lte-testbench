@@ -3,7 +3,7 @@
   "campaign_id": "elisa-telia-crossover-fg621-lte6",
   "state": "PHASE_A_LOADED",
   "started_at": "2026-08-10T19:38:01+00:00",
-  "updated_at": "2026-08-10T19:55:28+00:00",
+  "updated_at": "2026-08-10T20:08:04+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -53,9 +53,9 @@
   },
   "phase_b_sim_map": null,
   "sim_swap_verified": false,
-  "completed_count": 2,
+  "completed_count": 3,
   "mandatory_total": 6,
-  "current_item": "A-B7",
+  "current_item": "A-B20",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -341,9 +341,168 @@
       "dual_status": "PASS_DUAL"
     },
     "A-B20": {
-      "state": "PENDING",
-      "attempts": 0,
-      "history": []
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-10T19:55:31+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-10T19:55:36+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "20",
+            "lte2": "20"
+          }
+        },
+        {
+          "at": "2026-08-10T19:56:17+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "elisa",
+              "lac": "2022",
+              "current-cellid": "257028619",
+              "enb-id": "1004018",
+              "sector-id": "11",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "19s",
+              "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+              "cqi": "0",
+              "rssi": "-51dBm",
+              "rsrp": "-84dBm",
+              "rsrq": "-15dB",
+              "sinr": "0dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "Telia EE",
+              "current-cellid": "81944342",
+              "enb-id": "320095",
+              "sector-id": "22",
+              "phy-cellid": "364",
+              "data-class": "LTE",
+              "session-uptime": "36s",
+              "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 364",
+              "ri": "2",
+              "rssi": "-59dBm",
+              "rsrp": "-86dBm",
+              "rsrq": "-11.5dB",
+              "sinr": "8dB"
+            },
+            "registration_verified_at": "2026-08-10T19:55:47+00:00"
+          }
+        },
+        {
+          "at": "2026-08-10T19:56:17+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T20:01:40+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T20:01:40+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T20:01:41+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T20:02:41+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-10T20:08:04+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T20:08:04+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-10T20:08:04+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "20",
+        "lte2": "20"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "elisa",
+          "lac": "2022",
+          "current-cellid": "257028619",
+          "enb-id": "1004018",
+          "sector-id": "11",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "19s",
+          "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+          "cqi": "0",
+          "rssi": "-51dBm",
+          "rsrp": "-84dBm",
+          "rsrq": "-15dB",
+          "sinr": "0dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "Telia EE",
+          "current-cellid": "81944342",
+          "enb-id": "320095",
+          "sector-id": "22",
+          "phy-cellid": "364",
+          "data-class": "LTE",
+          "session-uptime": "36s",
+          "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 364",
+          "ri": "2",
+          "rssi": "-59dBm",
+          "rsrp": "-86dBm",
+          "rsrq": "-11.5dB",
+          "sinr": "8dB"
+        },
+        "registration_verified_at": "2026-08-10T19:55:47+00:00"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
     },
     "B-B3": {
       "state": "PENDING",
@@ -361,9 +520,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "56d89c3ec0f30f5885fe5211aafe669101b55369",
-  "worker_progress_counter": 28,
-  "worker_last_progress_at": "2026-08-10T19:55:28+00:00",
+  "last_pushed_commit": "e7a2a84aea54ba961620c0c994b2be2cb17cdcfb",
+  "worker_progress_counter": 43,
+  "worker_last_progress_at": "2026-08-10T20:08:04+00:00",
   "baseline_verified_at": "2026-08-10T19:38:03+00:00",
   "telia_band_discovery": {
     "telia_interface": "lte2",
