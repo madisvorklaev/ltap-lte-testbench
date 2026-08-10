@@ -1,6 +1,6 @@
 # Thick-pigtail validation mixed-lte6-thick-pigtails-pre-firmware
 
-Updated: 2026-08-10T16:33:22+00:00
+Updated: 2026-08-10T16:33:27+00:00
 
 Thin-pigtail reference: `fg621-pre-firmware-quick-baseline`.
 Physical change: both modems now use thicker beige pigtails.
@@ -15,7 +15,7 @@ RouterOS verified before tests: `7.24rc3`.
 | P2 | FG621-EA | 8 | 5.941 | 0.955 | 41.7 | -91 | 8 | PASS_DUAL |
 | P3 | R11e-LTE6 | 3 | 5.952 | 0.778 | 41.7 | -96 | 3 | PASS_DUAL |
 | P3 | FG621-EA | 7 | 5.573 | 7.096 | 104 | -105 | 13 | PASS_DUAL |
-| P4 | FG621-EA | 3 |  |  |  |  |  | PENDING |
+| P4 | FG621-EA | 3 |  |  |  |  |  | P4_NOT_TRIGGERED |
 
 ## Thin vs Thick
 
