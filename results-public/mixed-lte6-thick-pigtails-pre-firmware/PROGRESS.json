@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "campaign_id": "mixed-lte6-thick-pigtails-pre-firmware",
+  "state": "RUNNING",
+  "started_at": "2026-08-10T16:14:58+00:00",
+  "updated_at": "2026-08-10T16:15:02+00:00",
+  "routeros": "7.24rc3",
+  "routerboard_firmware": "7.24rc3",
+  "modem_lte1": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "modem_lte2": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.04"
+  },
+  "physical_change": "Both modems use thicker beige pigtails; previous thin black pigtails removed.",
+  "thin_reference_campaign": "fg621-pre-firmware-quick-baseline",
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "completed_count": 0,
+  "mandatory_total": 4,
+  "current_item": null,
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": false,
+  "p4_triggered": null,
+  "items": {
+    "P1": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "P2": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "P3": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    },
+    "P4": {
+      "state": "PENDING",
+      "attempts": 0,
+      "history": []
+    }
+  },
+  "last_pushed_commit": null,
+  "worker_progress_counter": 0,
+  "worker_last_progress_at": "2026-08-10T16:14:58+00:00",
+  "baseline_verified_at": "2026-08-10T16:15:00+00:00"
+}
