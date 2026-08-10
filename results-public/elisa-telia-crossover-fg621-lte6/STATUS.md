@@ -1,9 +1,9 @@
 # Status elisa-telia-crossover-fg621-lte6
 
-- State: ELISA_OVERLAP_DISCOVERY
-- Phase: SIM_IDENTITY_VERIFICATION
-- Current item: -
-- Progress: 0/6
+- State: PHASE_A_LOADED
+- Phase: PHASE_A
+- Current item: A-B3
+- Progress: 1/6
 - Selected bands: B3, B7, B20
 - SIM swap verified: False
 - Bands restored: False
@@ -11,7 +11,7 @@
 
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |
-| A-B3 | PENDING | 0 |  |
+| A-B3 | COMPLETE | 1 | PASS_DUAL |
 | A-B7 | PENDING | 0 |  |
 | A-B20 | PENDING | 0 |  |
 | B-B3 | PENDING | 0 |  |
