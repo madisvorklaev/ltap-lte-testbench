@@ -1,6 +1,6 @@
 # FG621 firmware A/B test fg621-firmware-ab-thick-pigtails
 
-Updated: 2026-08-10T18:34:45+00:00
+Updated: 2026-08-10T18:34:48+00:00
 
 A-side reference: `mixed-lte6-thick-pigtails-pre-firmware`.
 FG621 firmware before: `16121.1034.00.01.01.04`.
@@ -26,8 +26,8 @@ RouterOS: `7.24rc3`.
 | L8-1 | FG621-EA | 8 |  |  |  |  |  | CONDITIONAL_NOT_TRIGGERED |
 | L8-2 | R11e-LTE6 | 3 |  |  |  |  |  | CONDITIONAL_NOT_TRIGGERED |
 | L8-2 | FG621-EA | 8 |  |  |  |  |  | CONDITIONAL_NOT_TRIGGERED |
-| L8-3 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
-| L8-3 | FG621-EA | 8 |  |  |  |  |  | PENDING |
+| L8-3 | R11e-LTE6 | 3 |  |  |  |  |  | CONDITIONAL_NOT_TRIGGERED |
+| L8-3 | FG621-EA | 8 |  |  |  |  |  | CONDITIONAL_NOT_TRIGGERED |
 | STAIR-4M | FG621-EA | 3 |  |  |  |  |  | PENDING |
 | STAIR-6M | FG621-EA | 3 |  |  |  |  |  | PENDING |
 | STAIR-8M | FG621-EA | 3 |  |  |  |  |  | PENDING |
