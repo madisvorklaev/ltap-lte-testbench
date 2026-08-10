@@ -1,6 +1,6 @@
 # Thick-pigtail validation mixed-lte6-thick-pigtails-pre-firmware
 
-Updated: 2026-08-10T16:34:39+00:00
+Updated: 2026-08-10T16:34:52+00:00
 
 Thin-pigtail reference: `fg621-pre-firmware-quick-baseline`.
 Physical change: both modems now use thicker beige pigtails.

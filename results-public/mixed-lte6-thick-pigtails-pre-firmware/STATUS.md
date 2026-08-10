@@ -1,6 +1,6 @@
 # Status mixed-lte6-thick-pigtails-pre-firmware
 
-- State: RUNNING
+- State: COMPLETE
 - Current item: P4
 - Progress: 4/4
 - Bands restored: True
