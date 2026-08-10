@@ -3,7 +3,7 @@
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
   "state": "CONDITIONAL_LONG_B3_B3",
   "started_at": "2026-08-10T17:25:28+00:00",
-  "updated_at": "2026-08-10T18:34:34+00:00",
+  "updated_at": "2026-08-10T18:34:38+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -22,9 +22,9 @@
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 5,
+  "completed_count": 6,
   "mandatory_total": 14,
-  "current_item": "L3-2",
+  "current_item": "L3-3",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -848,9 +848,17 @@
       "dual_status": "PASS_DUAL"
     },
     "L3-3": {
-      "state": "PENDING",
+      "state": "SKIPPED_NOT_TRIGGERED",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-10T18:34:38+00:00",
+          "state": "SKIPPED_NOT_TRIGGERED",
+          "attempts": 0,
+          "registration": "CONDITIONAL_NOT_TRIGGERED"
+        }
+      ],
+      "registration": "CONDITIONAL_NOT_TRIGGERED"
     },
     "L8-1": {
       "state": "PENDING",
@@ -893,9 +901,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "3b27276ad178feb7f42b5ded9aa8f267055ac9ef",
-  "worker_progress_counter": 62,
-  "worker_last_progress_at": "2026-08-10T18:34:34+00:00",
+  "last_pushed_commit": "9cc697ab2b3f8ce82a2658b34243b0fac60d1db4",
+  "worker_progress_counter": 63,
+  "worker_last_progress_at": "2026-08-10T18:34:38+00:00",
   "baseline_verified_at": "2026-08-10T17:25:29+00:00",
   "firmware_upgrade_started_at": "2026-08-10T17:25:37+00:00",
   "last_error": "",
