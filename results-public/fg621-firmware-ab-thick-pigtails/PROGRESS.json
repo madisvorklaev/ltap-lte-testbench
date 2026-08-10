@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
-  "state": "STARTING",
+  "state": "FIRMWARE_QUERY",
   "started_at": "2026-08-10T17:25:28+00:00",
-  "updated_at": "2026-08-10T17:25:29+00:00",
+  "updated_at": "2026-08-10T17:25:34+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -28,7 +28,15 @@
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
-  "firmware_before": null,
+  "firmware_before": {
+    "raw": "  installed: 16121.1034.00.01.01.04\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.04\n     status: checking...           \n\n  installed: 16121.1034.00.01.01.04\n     latest: 16121.1034.00.01.01.10\n     status: update available      \n",
+    "installed": "16121.1034.00.01.01.04",
+    "status": "update available",
+    "latest": "16121.1034.00.01.01.10",
+    "interface": "lte2",
+    "queried_at": "2026-08-10T17:25:34+00:00",
+    "returncode": 0
+  },
   "firmware_after": null,
   "firmware_category": null,
   "items": {
@@ -103,7 +111,7 @@
       "history": []
     }
   },
-  "last_pushed_commit": null,
+  "last_pushed_commit": "c553943f3716fd2af7ee95c4d37c883ab37b00a9",
   "worker_progress_counter": 0,
   "worker_last_progress_at": "2026-08-10T17:25:28+00:00",
   "baseline_verified_at": "2026-08-10T17:25:29+00:00"

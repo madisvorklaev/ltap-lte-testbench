@@ -1,6 +1,6 @@
 # Status fg621-firmware-ab-thick-pigtails
 
-- State: STARTING
+- State: FIRMWARE_QUERY
 - Current item: -
 - Progress: 0/14
 - Firmware category: None
