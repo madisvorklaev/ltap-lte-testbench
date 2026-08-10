@@ -1,6 +1,6 @@
 # Status fg621-pre-firmware-quick-baseline
 
-- State: RUNNING
+- State: COMPLETE
 - Current item: Q3
 - Progress: 3/3
 - Bands restored: True

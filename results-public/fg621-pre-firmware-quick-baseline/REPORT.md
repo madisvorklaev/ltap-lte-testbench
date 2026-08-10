@@ -1,6 +1,6 @@
 # FG621 pre-firmware quick baseline fg621-pre-firmware-quick-baseline
 
-Updated: 2026-08-10T04:50:43+00:00
+Updated: 2026-08-10T04:50:58+00:00
 
 FG621 firmware expected/verified before tests: `16121.1034.00.01.01.04`.
 RouterOS expected/verified before tests: `7.24rc3`.
