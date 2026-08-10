@@ -1,0 +1,109 @@
+{
+  "elisa_interface": "lte1",
+  "telia_interface": "lte2",
+  "bands": {
+    "B1": {
+      "telia": false,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable or informational-only band"
+    },
+    "B3": {
+      "telia": true,
+      "elisa": true,
+      "selected": true,
+      "reason": "selected by priority algorithm",
+      "elisa_result": {
+        "interface": "lte1",
+        "band": "B3",
+        "started_at": "2026-08-10T19:41:45+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "registered",
+          "current-operator": "elisa",
+          "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+          "enb-id": "1004018",
+          "sector-id": "21",
+          "phy-cellid": "69",
+          "rsrp": "-97dBm",
+          "rsrq": "-12dB",
+          "sinr": "4dB",
+          "cqi": "0",
+          "ri": "1"
+        },
+        "finished_at": "2026-08-10T19:42:00+00:00"
+      }
+    },
+    "B7": {
+      "telia": true,
+      "elisa": true,
+      "selected": true,
+      "reason": "selected by priority algorithm",
+      "elisa_result": {
+        "interface": "lte1",
+        "band": "B7",
+        "started_at": "2026-08-10T19:42:00+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "registered",
+          "current-operator": "elisa",
+          "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+          "enb-id": "1004018",
+          "sector-id": "31",
+          "phy-cellid": "69",
+          "rsrp": "-103dBm",
+          "rsrq": "-12dB",
+          "sinr": "15dB",
+          "cqi": "0",
+          "ri": "2"
+        },
+        "finished_at": "2026-08-10T19:42:25+00:00"
+      }
+    },
+    "B8": {
+      "telia": false,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable or informational-only band"
+    },
+    "B20": {
+      "telia": true,
+      "elisa": true,
+      "selected": true,
+      "reason": "selected by priority algorithm",
+      "elisa_result": {
+        "interface": "lte1",
+        "band": "B20",
+        "started_at": "2026-08-10T19:42:25+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "registered",
+          "current-operator": "elisa",
+          "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 71",
+          "enb-id": "1004018",
+          "sector-id": "13",
+          "phy-cellid": "71",
+          "rsrp": "-85dBm",
+          "rsrq": "-16.5dB",
+          "sinr": "0dB",
+          "cqi": "0",
+          "ri": "1"
+        },
+        "finished_at": "2026-08-10T19:42:50+00:00"
+      }
+    },
+    "B38": {
+      "telia": false,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable or informational-only band"
+    },
+    "B28": {
+      "telia": true,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable or informational-only band"
+    }
+  },
+  "updated_at": "2026-08-10T19:41:45+00:00"
+}

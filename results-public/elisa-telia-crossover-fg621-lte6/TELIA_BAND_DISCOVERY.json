@@ -1,0 +1,120 @@
+{
+  "telia_interface": "lte2",
+  "operator": "telia",
+  "started_at": "2026-08-10T19:38:07+00:00",
+  "bands": {
+    "B1": {
+      "interface": "lte2",
+      "band": "B1",
+      "started_at": "2026-08-10T19:38:07+00:00",
+      "status": "REGISTRATION_TIMEOUT",
+      "last_monitor": {
+        "status": "deregistered",
+        "model": "FG621-EA",
+        "revision": "16121.1034.00.01.01.10"
+      },
+      "finished_at": "2026-08-10T19:39:07+00:00"
+    },
+    "B3": {
+      "interface": "lte2",
+      "band": "B3",
+      "started_at": "2026-08-10T19:39:07+00:00",
+      "status": "AVAILABLE",
+      "snapshot": {
+        "status": "running",
+        "current-operator": "Telia EE",
+        "primary-band": "B3@20Mhz earfcn: 1344 phy-cellid: 310",
+        "enb-id": "200095",
+        "sector-id": "11",
+        "phy-cellid": "310",
+        "rsrp": "-97dBm",
+        "rsrq": "-16dB",
+        "sinr": "-2dB",
+        "ri": "1"
+      },
+      "finished_at": "2026-08-10T19:39:18+00:00"
+    },
+    "B7": {
+      "interface": "lte2",
+      "band": "B7",
+      "started_at": "2026-08-10T19:39:18+00:00",
+      "status": "AVAILABLE",
+      "snapshot": {
+        "status": "running",
+        "current-operator": "Telia EE",
+        "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+        "enb-id": "320095",
+        "sector-id": "20",
+        "phy-cellid": "156",
+        "rsrp": "-105dBm",
+        "rsrq": "-10dB",
+        "sinr": "12dB",
+        "ri": "2",
+        "ca-band": "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+      },
+      "finished_at": "2026-08-10T19:39:23+00:00"
+    },
+    "B8": {
+      "interface": "lte2",
+      "band": "B8",
+      "started_at": "2026-08-10T19:39:23+00:00",
+      "status": "REGISTRATION_TIMEOUT",
+      "last_monitor": {
+        "status": "deregistered",
+        "model": "FG621-EA",
+        "revision": "16121.1034.00.01.01.10"
+      },
+      "finished_at": "2026-08-10T19:40:24+00:00"
+    },
+    "B20": {
+      "interface": "lte2",
+      "band": "B20",
+      "started_at": "2026-08-10T19:40:24+00:00",
+      "status": "AVAILABLE",
+      "snapshot": {
+        "status": "running",
+        "current-operator": "Telia EE",
+        "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 329",
+        "enb-id": "200095",
+        "sector-id": "12",
+        "phy-cellid": "329",
+        "rsrp": "-88dBm",
+        "rsrq": "-12dB",
+        "sinr": "9dB",
+        "ri": "2"
+      },
+      "finished_at": "2026-08-10T19:40:34+00:00"
+    },
+    "B38": {
+      "interface": "lte2",
+      "band": "B38",
+      "started_at": "2026-08-10T19:40:34+00:00",
+      "status": "REGISTRATION_TIMEOUT",
+      "last_monitor": {
+        "status": "deregistered",
+        "model": "FG621-EA",
+        "revision": "16121.1034.00.01.01.10"
+      },
+      "finished_at": "2026-08-10T19:41:34+00:00"
+    },
+    "B28": {
+      "interface": "lte2",
+      "band": "B28",
+      "started_at": "2026-08-10T19:41:34+00:00",
+      "status": "AVAILABLE",
+      "snapshot": {
+        "status": "running",
+        "current-operator": "Telia EE",
+        "primary-band": "B28@10Mhz earfcn: 9460 phy-cellid: 202",
+        "enb-id": "330095",
+        "sector-id": "25",
+        "phy-cellid": "202",
+        "rsrp": "-81dBm",
+        "rsrq": "-10dB",
+        "sinr": "4dB"
+      },
+      "finished_at": "2026-08-10T19:41:44+00:00"
+    }
+  },
+  "finished_at": "2026-08-10T19:41:45+00:00"
+}
