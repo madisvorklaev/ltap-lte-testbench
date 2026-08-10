@@ -3,7 +3,7 @@
   "campaign_id": "fg621-firmware-ab-thick-pigtails",
   "state": "CONDITIONAL_FG621_B3_STAIRCASE",
   "started_at": "2026-08-10T17:25:28+00:00",
-  "updated_at": "2026-08-10T18:34:55+00:00",
+  "updated_at": "2026-08-10T18:34:58+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -22,9 +22,9 @@
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
-  "completed_count": 11,
+  "completed_count": 12,
   "mandatory_total": 14,
-  "current_item": "STAIR-6M",
+  "current_item": "STAIR-8M",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -926,9 +926,17 @@
       "registration": "CONDITIONAL_NOT_TRIGGERED"
     },
     "STAIR-8M": {
-      "state": "PENDING",
+      "state": "SKIPPED_NOT_TRIGGERED",
       "attempts": 0,
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-10T18:34:58+00:00",
+          "state": "SKIPPED_NOT_TRIGGERED",
+          "attempts": 0,
+          "registration": "CONDITIONAL_NOT_TRIGGERED"
+        }
+      ],
+      "registration": "CONDITIONAL_NOT_TRIGGERED"
     },
     "STAIR-10M": {
       "state": "PENDING",
@@ -941,9 +949,9 @@
       "history": []
     }
   },
-  "last_pushed_commit": "b99ff9af29e231b0c044c8c06aaac1f567ebfddf",
-  "worker_progress_counter": 68,
-  "worker_last_progress_at": "2026-08-10T18:34:55+00:00",
+  "last_pushed_commit": "4e9cd59c0ff01211cb7b6206c0c794854f732aac",
+  "worker_progress_counter": 69,
+  "worker_last_progress_at": "2026-08-10T18:34:58+00:00",
   "baseline_verified_at": "2026-08-10T17:25:29+00:00",
   "firmware_upgrade_started_at": "2026-08-10T17:25:37+00:00",
   "last_error": "",
