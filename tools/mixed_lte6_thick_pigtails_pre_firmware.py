@@ -320,6 +320,11 @@ class Runner(quick.Runner):
         return rows
 
     def recommendation(self) -> str:
+        if not all(
+            self.progress["items"].get(item_id, {}).get("state") in base.TERMINAL_ITEM_STATES
+            for item_id in ("P1", "P2", "P3", "P4")
+        ):
+            return "PENDING_TERMINAL_RESULTS"
         p1 = item_summary("P1")
         p2 = item_summary("P2")
         r11e_loss = metric(p1, "lte1", "loss")
