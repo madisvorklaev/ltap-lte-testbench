@@ -1,6 +1,6 @@
 # FG621 firmware A/B test fg621-firmware-ab-thick-pigtails
 
-Updated: 2026-08-10T18:35:04+00:00
+Updated: 2026-08-10T18:35:18+00:00
 
 A-side reference: `mixed-lte6-thick-pigtails-pre-firmware`.
 FG621 firmware before: `16121.1034.00.01.01.04`.
@@ -61,6 +61,6 @@ RouterOS: `7.24rc3`.
 9. Firmware attribution depends on the B3 and B8 deltas above.
 10. Unrestricted FG621 band selection is acceptable only if B3 no longer shows impairment.
 11. R11e firmware should not be tested from this campaign unless separately requested.
-12. Original bands restored: `false`.
+12. Original bands restored: `true`.
 
 FIRMWARE_PARTIAL_IMPROVEMENT

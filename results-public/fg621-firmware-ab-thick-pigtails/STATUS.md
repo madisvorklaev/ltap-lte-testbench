@@ -1,10 +1,10 @@
 # Status fg621-firmware-ab-thick-pigtails
 
-- State: CONDITIONAL_FG621_B3_STAIRCASE
+- State: COMPLETE
 - Current item: STAIR-12M
 - Progress: 14/14
 - Firmware category: PARTIAL_B3_IMPROVEMENT
-- Bands restored: False
+- Bands restored: True
 - Last error: FAIL_IPERF_OR_PATH
 
 | Item | State | Attempts | Status |
