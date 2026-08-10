@@ -1,6 +1,6 @@
 # Thick-pigtail validation mixed-lte6-thick-pigtails-pre-firmware
 
-Updated: 2026-08-10T16:27:19+00:00
+Updated: 2026-08-10T16:33:22+00:00
 
 Thin-pigtail reference: `fg621-pre-firmware-quick-baseline`.
 Physical change: both modems now use thicker beige pigtails.
@@ -13,8 +13,8 @@ RouterOS verified before tests: `7.24rc3`.
 | P1 | FG621-EA | 3 | 4.94 | 17.532 | 122 | -94 | 3 | PASS_DUAL |
 | P2 | R11e-LTE6 | 3 | 5.991 | 0.128 | 35.5 | -96 | 4 | PASS_DUAL |
 | P2 | FG621-EA | 8 | 5.941 | 0.955 | 41.7 | -91 | 8 | PASS_DUAL |
-| P3 | R11e-LTE6 | 3 |  |  |  |  |  | PENDING |
-| P3 | FG621-EA | 7 |  |  |  |  |  | PENDING |
+| P3 | R11e-LTE6 | 3 | 5.952 | 0.778 | 41.7 | -96 | 3 | PASS_DUAL |
+| P3 | FG621-EA | 7 | 5.573 | 7.096 | 104 | -105 | 13 | PASS_DUAL |
 | P4 | FG621-EA | 3 |  |  |  |  |  | PENDING |
 
 ## Thin vs Thick
@@ -25,7 +25,7 @@ RouterOS verified before tests: `7.24rc3`.
 | FG621-EA | 3 | 5.326 | 4.94 | 11.211 | 17.532 | 123 | 122 | -94 | -94 | 4 | 3 |
 | R11e-LTE6 | 3 | 5.993 | 5.991 | 0.097 | 0.128 | 31 | 35.5 |  | -96 |  | 4 |
 | FG621-EA | 8 | 5.994 | 5.941 | 0.078 | 0.955 | 46.9 | 41.7 | -83 | -91 | 5 | 8 |
-| FG621-EA | 7 | 5.799 |  | 3.326 |  | 137 |  | -105 |  | 10 |  |
+| FG621-EA | 7 | 5.799 | 5.573 | 3.326 | 7.096 | 137 | 104 | -105 | -105 | 10 | 13 |
 
 ## Interpretation
 

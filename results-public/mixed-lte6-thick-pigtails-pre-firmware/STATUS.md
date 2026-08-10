@@ -1,8 +1,8 @@
 # Status mixed-lte6-thick-pigtails-pre-firmware
 
-- State: THICK_PIGTAIL_P2_B3_B8
-- Current item: P2
-- Progress: 2/4
+- State: THICK_PIGTAIL_P3_B7_CHECK
+- Current item: P3
+- Progress: 3/4
 - Bands restored: False
 - P4 triggered: None
 - Last error: 
@@ -11,5 +11,5 @@
 | --- | --- | ---: | --- |
 | P1 | COMPLETE | 1 | PASS_DUAL |
 | P2 | COMPLETE | 1 | PASS_DUAL |
-| P3 | PENDING | 0 |  |
+| P3 | COMPLETE | 1 | PASS_DUAL |
 | P4 | PENDING | 0 |  |
