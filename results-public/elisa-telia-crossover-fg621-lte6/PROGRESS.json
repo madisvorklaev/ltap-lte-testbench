@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "elisa-telia-crossover-fg621-lte6",
-  "state": "PHASE_A_LOADED",
+  "state": "WAIT_PHYSICAL_SIM_SWAP",
   "started_at": "2026-08-10T19:38:01+00:00",
-  "updated_at": "2026-08-10T20:08:04+00:00",
+  "updated_at": "2026-08-10T20:08:18+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -26,7 +26,7 @@
     "20"
   ],
   "auto_fallback_selected": false,
-  "phase": "PHASE_A",
+  "phase": "WAIT_PHYSICAL_SIM_SWAP",
   "phase_a_sim_map": {
     "phase": "PHASE_A",
     "collected_at": "2026-08-10T19:38:04+00:00",
@@ -58,7 +58,7 @@
   "current_item": "A-B20",
   "retry_queue": [],
   "push_pending": false,
-  "bands_restored": false,
+  "bands_restored": true,
   "items": {
     "A-B3": {
       "state": "COMPLETE",
@@ -520,7 +520,7 @@
       "history": []
     }
   },
-  "last_pushed_commit": "e7a2a84aea54ba961620c0c994b2be2cb17cdcfb",
+  "last_pushed_commit": "4ffdf2ab128739ca4537aa569c72fb484a0fcb27",
   "worker_progress_counter": 43,
   "worker_last_progress_at": "2026-08-10T20:08:04+00:00",
   "baseline_verified_at": "2026-08-10T19:38:03+00:00",

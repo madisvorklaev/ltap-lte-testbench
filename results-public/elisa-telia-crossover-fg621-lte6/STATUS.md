@@ -1,12 +1,12 @@
 # Status elisa-telia-crossover-fg621-lte6
 
-- State: PHASE_A_LOADED
-- Phase: PHASE_A
+- State: WAIT_PHYSICAL_SIM_SWAP
+- Phase: WAIT_PHYSICAL_SIM_SWAP
 - Current item: A-B20
 - Progress: 3/6
 - Selected bands: B3, B7, B20
 - SIM swap verified: False
-- Bands restored: False
+- Bands restored: True
 - Last error: FAIL_IPERF_OR_PATH
 
 | Item | State | Attempts | Status |
