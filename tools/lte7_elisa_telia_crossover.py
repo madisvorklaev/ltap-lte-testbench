@@ -674,7 +674,9 @@ class Runner(quick.Runner):
             return (x.get("loss") is not None and x["loss"] > 5) or (x.get("p95") is not None and x["p95"] > 100)
 
         def good(x: dict[str, Any]) -> bool:
-            return (x.get("mbps") or 0) >= 5.6 and (x.get("loss") or 100) < 2 and (x.get("p95") or 999) < 100
+            loss = x.get("loss")
+            p95 = x.get("p95")
+            return (x.get("mbps") or 0) >= 5.6 and (loss is not None and loss < 2) and (p95 is not None and p95 < 100)
 
         lte1 = stats("lte1")
         lte2 = stats("lte2")
@@ -682,6 +684,27 @@ class Runner(quick.Runner):
             self.progress.setdefault("b7_confirmations", []).append({"id": confirm_id, "phase": phase, "triggered_by": item["id"], "triggered_at": utcnow()})
             self.progress.setdefault("items", {})[confirm_id] = {"state": "PENDING", "attempts": 0, "history": [{"at": utcnow(), "state": "PENDING", "triggered_by": item["id"]}]}
             self.save_progress()
+
+    def backfill_b7_confirmations(self) -> None:
+        changed = False
+        for phase in ("A", "B"):
+            source_id = f"{phase}-B7"
+            confirm_id = f"{phase}-B7-CONFIRM"
+            state = self.progress.get("items", {}).get(source_id, {})
+            if state.get("state") not in base.TERMINAL_ITEM_STATES:
+                continue
+            if any(x.get("id") == confirm_id for x in self.progress.get("b7_confirmations", [])):
+                continue
+            summary = base.load_json(PUBLIC / "runs" / source_id / "summary.json", {})
+            if not summary:
+                continue
+            item = {"id": source_id, "crossover_phase": phase, "lte1_band": "7", "lte2_band": "7"}
+            before = len(self.progress.get("b7_confirmations", []))
+            self.maybe_enqueue_b7_confirmation(item, summary)
+            changed = changed or len(self.progress.get("b7_confirmations", [])) != before
+        if changed:
+            self.update_matrix_summary()
+            self.git_checkpoint("lte7 crossover: enqueue B7 confirmation")
 
     def wait_for_swap(self) -> bool:
         if self.progress.get("sim_swap_verified"):
@@ -872,7 +895,9 @@ class Runner(quick.Runner):
         def good(x: dict[str, Any] | None) -> bool:
             if not x:
                 return False
-            return (x.get("mbps") or 0) >= 5.8 and (x.get("loss") or 100) < 1 and (x.get("p95") or 999) < 60
+            loss = x.get("loss")
+            p95 = x.get("p95")
+            return (x.get("mbps") or 0) >= 5.8 and (loss is not None and loss < 1) and (p95 is not None and p95 < 60)
         a_elisa = b7.get(("LTE7-A", "elisa"))
         a_telia = b7.get(("LTE7-A", "telia"))
         b_elisa = b7.get(("LTE7-B", "elisa"))
@@ -1088,6 +1113,7 @@ class Runner(quick.Runner):
                 self.run_phase("A")
             if not self.wait_for_swap():
                 return
+            self.backfill_b7_confirmations()
             if any(self.progress["items"][item["id"]].get("state") not in base.TERMINAL_ITEM_STATES for item in self.phase_items("B")):
                 self.run_phase("B")
             if all(x.get("state") in base.TERMINAL_ITEM_STATES for x in self.progress["items"].values()):
