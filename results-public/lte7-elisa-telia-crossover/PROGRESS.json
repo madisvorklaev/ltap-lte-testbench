@@ -3,7 +3,7 @@
   "campaign_id": "lte7-elisa-telia-crossover",
   "state": "WAIT_PHYSICAL_SIM_SWAP",
   "started_at": "2026-08-11T15:36:02+00:00",
-  "updated_at": "2026-08-11T16:09:09+00:00",
+  "updated_at": "2026-08-11T16:28:42+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -64,7 +64,7 @@
   "phase_b_sim_map": null,
   "sim_swap_verified": false,
   "modem_map": {
-    "collected_at": "2026-08-11T15:36:04+00:00",
+    "collected_at": "2026-08-11T16:28:30+00:00",
     "interfaces": {
       "lte1": {
         "interface": "lte1",
@@ -729,10 +729,10 @@
       "history": []
     }
   },
-  "last_pushed_commit": "a7f10d43fecb081fd2153b9530d10348507a0f86",
+  "last_pushed_commit": "1f0fca75d92db7952bd67d75d6e9b04e70058e29",
   "worker_progress_counter": 53,
   "worker_last_progress_at": "2026-08-11T16:08:55+00:00",
-  "baseline_verified_at": "2026-08-11T15:36:04+00:00",
+  "baseline_verified_at": "2026-08-11T16:28:30+00:00",
   "telia_band_discovery": {
     "telia_interface": "lte1",
     "operator": "telia",

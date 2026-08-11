@@ -13,8 +13,8 @@ Campaign: LTE7 Elisa/Telia crossover
 - Bands restored: True
 - Last completed result: A-AUTO PASS_DUAL
 - Next action: human SIM swap
-- Last heartbeat: 2026-08-11T16:09:09+00:00
-- Last error: FAIL_IPERF_OR_PATH
+- Last heartbeat: 2026-08-11T16:28:42+00:00
+- Last error: 
 
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |

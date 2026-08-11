@@ -1,6 +1,6 @@
 # dual-operator LTE7 crossover lte7-elisa-telia-crossover
 
-Updated: 2026-08-11T16:09:09+00:00
+Updated: 2026-08-11T16:28:42+00:00
 
 RouterOS: `7.24rc3`.
 Bands restored: `true`.
