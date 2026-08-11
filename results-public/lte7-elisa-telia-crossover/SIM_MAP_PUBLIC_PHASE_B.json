@@ -1,16 +1,16 @@
 {
   "phase": "PHASE_B",
-  "collected_at": "2026-08-11T16:19:47+00:00",
+  "collected_at": "2026-08-11T16:30:15+00:00",
   "interfaces": {
     "lte1": {
       "interface": "lte1",
       "modem": "R11l-LTE7",
       "modem_label": "LTE7-A",
       "modem_id": "MODEM-acff51c319",
-      "operator": "telia",
-      "operator_raw": "Telia",
-      "sim_id": "SIM-b536bd05e0",
-      "registration_state": "registered",
+      "operator": null,
+      "operator_raw": null,
+      "sim_id": "SIM-aad68c966e",
+      "registration_state": "not searching",
       "apn_present": false
     },
     "lte2": {
@@ -18,10 +18,10 @@
       "modem": "R11l-LTE7",
       "modem_label": "LTE7-B",
       "modem_id": "MODEM-f467fcf911",
-      "operator": "elisa",
-      "operator_raw": "Elisa EE",
-      "sim_id": "SIM-0464aca4a8",
-      "registration_state": "registered",
+      "operator": null,
+      "operator_raw": null,
+      "sim_id": "SIM-7aedd85ed4",
+      "registration_state": "not searching",
       "apn_present": false
     }
   }
