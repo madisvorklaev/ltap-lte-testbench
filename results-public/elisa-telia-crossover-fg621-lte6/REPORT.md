@@ -1,9 +1,9 @@
 # Elisa/Telia crossover elisa-telia-crossover-fg621-lte6
 
-Updated: 2026-08-11T05:07:01+00:00
+Updated: 2026-08-11T06:02:44+00:00
 
 RouterOS: `7.24rc3`.
-Bands restored: `false`.
+Bands restored: `true`.
 SIM swap verified: `true`.
 
 ## SIM Map

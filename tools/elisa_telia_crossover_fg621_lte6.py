@@ -782,6 +782,14 @@ class Runner(quick.Runner):
             lines.append(f"| {item_id_} | {row.get('state')} | {row.get('attempts')} | {row.get('dual_status') or row.get('registration') or ''} |")
         (PUBLIC / "STATUS.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    def final_monitor_snapshots(self) -> None:
+        final_dir = RUNTIME / "final"
+        final_dir.mkdir(parents=True, exist_ok=True)
+        base.atomic_write_json(final_dir / "lte1_monitor.json", self.monitor("lte1"))
+        base.atomic_write_json(final_dir / "lte2_monitor.json", self.monitor("lte2"))
+        self.progress["final_monitor_snapshots_recorded_at"] = utcnow()
+        self.save_progress()
+
     def git_checkpoint(self, message: str) -> None:
         paths = [
             "tools/elisa_telia_crossover_fg621_lte6.py",
