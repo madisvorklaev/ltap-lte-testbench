@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "lte7-elisa-telia-crossover",
-  "state": "PHASE_A_LOADED",
+  "state": "PHASE_B_LOADED",
   "started_at": "2026-08-11T15:36:02+00:00",
-  "updated_at": "2026-08-11T16:57:38+00:00",
+  "updated_at": "2026-08-11T17:10:20+00:00",
   "routeros": "7.24rc3",
   "routerboard_firmware": "7.24rc3",
   "modem_lte1": {
@@ -45,7 +45,7 @@
       "triggered_at": "2026-08-11T16:52:18+00:00"
     }
   ],
-  "phase": "PHASE_A",
+  "phase": "PHASE_B",
   "phase_a_sim_map": {
     "phase": "PHASE_A",
     "collected_at": "2026-08-11T15:36:05+00:00",
@@ -122,9 +122,9 @@
       }
     }
   },
-  "completed_count": 8,
+  "completed_count": 9,
   "mandatory_total": 10,
-  "current_item": "A-B7-CONFIRM",
+  "current_item": "B-B7-CONFIRM",
   "retry_queue": [],
   "push_pending": false,
   "bands_restored": false,
@@ -1318,8 +1318,8 @@
       }
     },
     "B-B7-CONFIRM": {
-      "state": "PENDING",
-      "attempts": 0,
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 2,
       "history": [
         {
           "at": "2026-08-11T16:52:18+00:00",
@@ -1382,21 +1382,147 @@
           "at": "2026-08-11T16:57:38+00:00",
           "state": "PENDING",
           "reason": "retry skipped B7 confirmation once"
+        },
+        {
+          "at": "2026-08-11T16:57:41+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-11T16:57:46+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "7",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-11T16:58:32+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "MikroTik",
+              "model": "R11l-LTE7",
+              "revision": "R11l-LTE7_V005",
+              "current-operator": "elisa",
+              "lac": "2022",
+              "current-cellid": "257028639",
+              "enb-id": "1004018",
+              "sector-id": "31",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "26s",
+              "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+              "cqi": "0",
+              "rssi": "-71dBm",
+              "rsrp": "-104dBm",
+              "rsrq": "-12dB",
+              "sinr": "10dB"
+            },
+            "lte2": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "MikroTik",
+              "model": "R11l-LTE7",
+              "revision": "R11l-LTE7_V005",
+              "current-operator": "Telia",
+              "lac": "10012",
+              "current-cellid": "81944340",
+              "enb-id": "320095",
+              "sector-id": "20",
+              "phy-cellid": "156",
+              "data-class": "LTE",
+              "session-uptime": "2m44s",
+              "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+              "cqi": "0",
+              "rssi": "-71dBm",
+              "rsrp": "-101dBm",
+              "rsrq": "-10dB",
+              "sinr": "7dB"
+            },
+            "registration_verified_at": "2026-08-11T16:58:02+00:00"
+          }
+        },
+        {
+          "at": "2026-08-11T16:58:32+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T17:03:55+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T17:03:55+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T17:03:56+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T17:04:56+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-11T17:10:19+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T17:10:19+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-11T17:10:20+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH",
+          "registration": "REGISTERED"
         }
       ],
       "bands": {
         "lte1": "7",
         "lte2": "7"
       },
-      "registration": "BAND_NOT_AVAILABLE",
+      "registration": "REGISTERED",
       "monitor": {
         "lte1": {
-          "status": "not searching",
+          "status": "registered",
           "pin-status": "ok",
-          "registration-status": "not searching",
+          "registration-status": "registered",
           "manufacturer": "MikroTik",
           "model": "R11l-LTE7",
-          "revision": "R11l-LTE7_V005"
+          "revision": "R11l-LTE7_V005",
+          "current-operator": "elisa",
+          "lac": "2022",
+          "current-cellid": "257028639",
+          "enb-id": "1004018",
+          "sector-id": "31",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "26s",
+          "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+          "cqi": "0",
+          "rssi": "-71dBm",
+          "rsrp": "-104dBm",
+          "rsrq": "-12dB",
+          "sinr": "10dB"
         },
         "lte2": {
           "status": "registered",
@@ -1412,21 +1538,24 @@
           "sector-id": "20",
           "phy-cellid": "156",
           "data-class": "LTE",
-          "session-uptime": "16s",
+          "session-uptime": "2m44s",
           "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
           "cqi": "0",
-          "rssi": "-70dBm",
+          "rssi": "-71dBm",
           "rsrp": "-101dBm",
-          "rsrq": "-9dB",
-          "sinr": "11dB"
-        }
+          "rsrq": "-10dB",
+          "sinr": "7dB"
+        },
+        "registration_verified_at": "2026-08-11T16:58:02+00:00"
       },
-      "retry_after_unavailable_done": true
+      "retry_after_unavailable_done": true,
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
     }
   },
-  "last_pushed_commit": "3d62a623d8dd40b94f1f7b1fbeb95fb7827e30a6",
-  "worker_progress_counter": 88,
-  "worker_last_progress_at": "2026-08-11T16:57:35+00:00",
+  "last_pushed_commit": "b40d0c505edec3b69de78e2c04b4e47022d5a5ce",
+  "worker_progress_counter": 103,
+  "worker_last_progress_at": "2026-08-11T17:10:20+00:00",
   "baseline_verified_at": "2026-08-11T16:55:26+00:00",
   "telia_band_discovery": {
     "telia_interface": "lte1",

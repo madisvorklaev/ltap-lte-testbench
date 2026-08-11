@@ -1,20 +1,20 @@
 # Status lte7-elisa-telia-crossover
 
 Campaign: LTE7 Elisa/Telia crossover
-- State: PHASE_A_LOADED
-- Phase: PHASE_A
-- Current item: A-B7-CONFIRM
-- Progress: 8/10
-- Current phase: PHASE_A
-- LTE1: LTE7-A / telia / B7
-- LTE2: LTE7-B / elisa / B7
+- State: PHASE_B_LOADED
+- Phase: PHASE_B
+- Current item: B-B7-CONFIRM
+- Progress: 9/10
+- Current phase: PHASE_B
+- LTE1: LTE7-A / elisa / B7
+- LTE2: LTE7-B / telia / B7
 - Selected bands: B3, B7, B20
 - SIM swap verified: True
 - Bands restored: False
 - Last completed result: B-B20 PASS_DUAL
 - Next action: automatic
-- Last heartbeat: 2026-08-11T16:57:38+00:00
-- Last error: 
+- Last heartbeat: 2026-08-11T17:10:20+00:00
+- Last error: FAIL_IPERF_OR_PATH
 
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |
@@ -25,6 +25,6 @@ Campaign: LTE7 Elisa/Telia crossover
 | A-AUTO | COMPLETE | 1 | PASS_DUAL |
 | B-B3 | COMPLETE | 1 | PASS_DUAL |
 | B-B7 | COMPLETE | 1 | PASS_DUAL |
-| B-B7-CONFIRM | PENDING | 0 | BAND_NOT_AVAILABLE |
+| B-B7-CONFIRM | FAILED_AFTER_RETRIES | 2 | FAIL_IPERF_OR_PATH |
 | B-B20 | COMPLETE | 1 | PASS_DUAL |
 | B-AUTO | WAITING_REGISTRATION | 0 |  |
