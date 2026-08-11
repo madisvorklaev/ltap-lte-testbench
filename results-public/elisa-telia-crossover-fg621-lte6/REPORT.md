@@ -1,6 +1,6 @@
 # Elisa/Telia crossover elisa-telia-crossover-fg621-lte6
 
-Updated: 2026-08-10T20:08:18+00:00
+Updated: 2026-08-11T04:35:29+00:00
 
 RouterOS: `7.24rc3`.
 Bands restored: `true`.

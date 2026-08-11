@@ -7,7 +7,7 @@
 - Selected bands: B3, B7, B20
 - SIM swap verified: False
 - Bands restored: True
-- Last error: FAIL_IPERF_OR_PATH
+- Last error: 
 
 | Item | State | Attempts | Status |
 | --- | --- | ---: | --- |

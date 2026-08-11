@@ -1,0 +1,24 @@
+{
+  "phase": "PHASE_B",
+  "collected_at": "2026-08-10T20:25:24+00:00",
+  "interfaces": {
+    "lte1": {
+      "interface": "lte1",
+      "modem": "\"R11e-LTE6\"",
+      "operator": "elisa",
+      "operator_raw": "Elisa EE",
+      "sim_id": "SIM-0464aca4a8",
+      "registration_state": "registered",
+      "apn_present": false
+    },
+    "lte2": {
+      "interface": "lte2",
+      "modem": "FG621-EA",
+      "operator": "telia",
+      "operator_raw": "Telia EE",
+      "sim_id": "SIM-b536bd05e0",
+      "registration_state": "running",
+      "apn_present": false
+    }
+  }
+}
