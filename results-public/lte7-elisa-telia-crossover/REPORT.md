@@ -1,6 +1,6 @@
 # dual-operator LTE7 crossover lte7-elisa-telia-crossover
 
-Updated: 2026-08-11T15:36:05+00:00
+Updated: 2026-08-11T15:42:27+00:00
 
 RouterOS: `7.24rc3`.
 Bands restored: `false`.
@@ -13,11 +13,19 @@ SIM swap verified: `false`.
 
 ## Selected Bands
 
-- Selected exact bands: `none`
+- Selected exact bands: `B3, B7, B20`
 - AUTO fallback: `false`
 
 | Item | Phase | Band | Status | LTE1 operator | LTE1 Mbps | LTE1 loss % | LTE1 p95 | LTE2 operator | LTE2 Mbps | LTE2 loss % | LTE2 p95 |
 |---|---|---|---|---|---:|---:|---:|---|---:|---:|---:|
+| A-B3 | A | 3 | PENDING |  |  |  |  |  |  |  |  |
+| A-B7 | A | 7 | PENDING |  |  |  |  |  |  |  |  |
+| A-B20 | A | 20 | PENDING |  |  |  |  |  |  |  |  |
+| A-AUTO | A | AUTO | PENDING |  |  |  |  |  |  |  |  |
+| B-B3 | B | 3 | PENDING |  |  |  |  |  |  |  |  |
+| B-B7 | B | 7 | PENDING |  |  |  |  |  |  |  |  |
+| B-B20 | B | 20 | PENDING |  |  |  |  |  |  |  |  |
+| B-AUTO | B | AUTO | PENDING |  |  |  |  |  |  |  |  |
 
 ## Required Answers
 
@@ -27,7 +35,7 @@ SIM swap verified: `false`.
 4. Was the physical crossover verified correctly? `false`.
 5. Which bands were available from Telia? See `TELIA_BAND_DISCOVERY.json`.
 6. Which bands were simultaneously comparable with Elisa? See `COMMON_BANDS.json`.
-7. Was B3 available from both operators? `false`.
+7. Was B3 available from both operators? `true`.
 8. On B3, how did LTE7-A perform with Elisa vs Telia? See matrix table.
 9. On B3, how did LTE7-B perform with Elisa vs Telia? See matrix table.
 10. Does B7 degradation follow operator, LTE7 unit, or path? See final classification.

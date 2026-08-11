@@ -1,0 +1,124 @@
+{
+  "elisa_interface": "lte2",
+  "telia_interface": "lte1",
+  "bands": {
+    "B1": {
+      "telia": false,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable"
+    },
+    "B3": {
+      "telia": true,
+      "elisa": true,
+      "selected": true,
+      "reason": "selected by priority algorithm",
+      "elisa_result": {
+        "interface": "lte2",
+        "band": "B3",
+        "started_at": "2026-08-11T15:40:30+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "registered",
+          "current-operator": "elisa",
+          "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+          "enb-id": "1004018",
+          "sector-id": "21",
+          "phy-cellid": "69",
+          "rsrp": "-96dBm",
+          "rsrq": "-12.5dB",
+          "sinr": "4dB",
+          "cqi": "0",
+          "ri": "2"
+        },
+        "finished_at": "2026-08-11T15:40:46+00:00"
+      }
+    },
+    "B7": {
+      "telia": true,
+      "elisa": true,
+      "selected": true,
+      "reason": "selected by priority algorithm",
+      "elisa_result": {
+        "interface": "lte2",
+        "band": "B7",
+        "started_at": "2026-08-11T15:40:46+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "registered",
+          "current-operator": "elisa",
+          "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+          "enb-id": "1004018",
+          "sector-id": "31",
+          "phy-cellid": "69",
+          "rsrp": "-106dBm",
+          "rsrq": "-11.5dB",
+          "sinr": "9dB",
+          "cqi": "0",
+          "ri": "2"
+        },
+        "finished_at": "2026-08-11T15:41:11+00:00"
+      }
+    },
+    "B8": {
+      "telia": false,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable"
+    },
+    "B20": {
+      "telia": true,
+      "elisa": true,
+      "selected": true,
+      "reason": "selected by priority algorithm",
+      "elisa_result": {
+        "interface": "lte2",
+        "band": "B20",
+        "started_at": "2026-08-11T15:41:11+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "registered",
+          "current-operator": "elisa",
+          "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+          "enb-id": "1004018",
+          "sector-id": "11",
+          "phy-cellid": "69",
+          "rsrp": "-80dBm",
+          "rsrq": "-13.5dB",
+          "sinr": "9dB",
+          "cqi": "0",
+          "ri": "2"
+        },
+        "finished_at": "2026-08-11T15:41:26+00:00"
+      }
+    },
+    "B28": {
+      "telia": true,
+      "elisa": false,
+      "selected": false,
+      "reason": "",
+      "elisa_result": {
+        "interface": "lte2",
+        "band": "B28",
+        "started_at": "2026-08-11T15:41:26+00:00",
+        "status": "REGISTRATION_TIMEOUT",
+        "last_monitor": {
+          "status": "denied",
+          "pin-status": "ok",
+          "registration-status": "denied",
+          "manufacturer": "MikroTik",
+          "model": "R11l-LTE7",
+          "revision": "R11l-LTE7_V005"
+        },
+        "finished_at": "2026-08-11T15:42:27+00:00"
+      }
+    },
+    "B38": {
+      "telia": false,
+      "elisa": false,
+      "selected": false,
+      "reason": "Telia unavailable"
+    }
+  },
+  "updated_at": "2026-08-11T15:40:30+00:00"
+}
