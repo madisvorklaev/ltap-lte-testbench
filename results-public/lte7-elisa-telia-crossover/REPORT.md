@@ -1,6 +1,6 @@
 # dual-operator LTE7 crossover lte7-elisa-telia-crossover
 
-Updated: 2026-08-11T17:10:20+00:00
+Updated: 2026-08-11T17:16:33+00:00
 
 RouterOS: `7.24rc3`.
 Bands restored: `false`.
@@ -27,7 +27,7 @@ SIM swap verified: `true`.
 | B-B7 | B | 7 | PASS_DUAL | elisa | 5.523 | 6.786 | 1992 | telia | 5.999 | 0 | 29.7 |
 | B-B7-CONFIRM | B | 7 | FAIL_IPERF_OR_PATH | elisa | 5.969 | 0.363 | 59.8 | telia |  |  | 32.8 |
 | B-B20 | B | 20 | PASS_DUAL | elisa | 5.997 | 0.03 | 34.7 | telia | 5.999 | 0 | 35 |
-| B-AUTO | B | AUTO | WAITING_REGISTRATION |  |  |  |  |  |  |  |  |
+| B-AUTO | B | AUTO | PASS_DUAL | elisa | 5.223 | 12.937 | 140 | telia | 5.999 | 0 | 30.7 |
 
 ## Required Answers
 
