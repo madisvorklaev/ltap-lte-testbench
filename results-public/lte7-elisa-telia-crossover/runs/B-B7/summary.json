@@ -1,0 +1,398 @@
+{
+  "item": {
+    "id": "B-B7",
+    "phase": "PHASE_B_LOADED",
+    "crossover_phase": "B",
+    "mode": "dual",
+    "lte1_band": "7",
+    "lte2_band": "7",
+    "lte1_bitrate": "6M",
+    "lte2_bitrate": "6M",
+    "duration": 300,
+    "packet_length": 1200,
+    "required": true
+  },
+  "attempt": 1,
+  "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/lte7-elisa-telia-crossover/raw/B-B7/attempt-1",
+  "processes": [
+    {
+      "rc": 0,
+      "stderr_tail": ""
+    },
+    {
+      "rc": 0,
+      "stderr_tail": ""
+    }
+  ],
+  "lte1": {
+    "test": {
+      "collector_version": "0.4.2",
+      "created_local": "2026-08-11T19:39:20+03:00",
+      "created_utc": "2026-08-11T16:39:20.220+00:00",
+      "tag": "lte7-elisa-telia-crossover_B-B7_a1_20260811-193917_lte1",
+      "path": "lte1",
+      "lte_interface": "lte1",
+      "source_ip": "192.168.101.201",
+      "linux_interface": "eno1",
+      "server_hostname": "iperf-ams-nl.eranium.net",
+      "server_ipv4": "217.18.95.142",
+      "server_port": 5201,
+      "port_probe": {
+        "attempts": [
+          {
+            "port": 5201,
+            "rc": 0,
+            "stderr": "",
+            "iperf_error": null,
+            "bps": 5665803.93470614
+          }
+        ]
+      },
+      "protocol": "udp",
+      "direction": "upload",
+      "duration_s": 300,
+      "warmup_s": 10,
+      "cooldown_s": 10,
+      "target_bitrate": "6M",
+      "packet_length": 1200,
+      "routing_mode": "source_ip_lab_mode",
+      "routing_table": "to-lte1",
+      "source_rule_comment": "ELMO TEST: source via lte1",
+      "allow_concurrent_other_lte": true
+    },
+    "iperf": {
+      "bits_per_second": 5523394.551576574,
+      "mbps": 5.523394551576574,
+      "jitter_ms": 2.75171655024204,
+      "lost_packets": 12723,
+      "packets": 185371,
+      "lost_percent": 6.7856
+    },
+    "ping": {
+      "sent": 1604,
+      "received": 1502,
+      "loss_percent": 6.3591,
+      "min_ms": 18.575,
+      "avg_ms": 873.914,
+      "max_ms": 2807.186,
+      "mdev_ms": 779.62,
+      "p95_ms": 1992.0,
+      "sample_count": 1502
+    },
+    "radio_target": {
+      "rssi_median": -74.0,
+      "rssi_min": -77.0,
+      "rssi_max": -72.0,
+      "rsrp_median": -105.0,
+      "rsrp_min": -108.0,
+      "rsrp_max": -104.0,
+      "rsrq_median": -10.5,
+      "rsrq_min": -12.5,
+      "rsrq_max": -9.0,
+      "sinr_median": 10.0,
+      "sinr_min": 5.0,
+      "sinr_max": 15.0,
+      "cqi_median": 12.0,
+      "cqi_min": 11.0,
+      "cqi_max": 14.0,
+      "ri_median": 2.0,
+      "ri_min": 1.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B7@20Mhz earfcn: 2850 phy-cellid: 69"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 324,
+      "samples": 324,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 234226048,
+      "rx-byte_delta": 189371,
+      "tx-packet_delta": 189959,
+      "rx-packet_delta": 2096,
+      "tx-queue-drop_delta": 0
+    },
+    "radio_other": {
+      "lte2": {
+        "rssi_median": -69.0,
+        "rssi_min": -72.0,
+        "rssi_max": -66.0,
+        "rsrp_median": -101.0,
+        "rsrp_min": -103.0,
+        "rsrp_max": -99.0,
+        "rsrq_median": -11.0,
+        "rsrq_min": -13.0,
+        "rsrq_max": -9.5,
+        "sinr_median": 5.0,
+        "sinr_min": -2.0,
+        "sinr_max": 9.0,
+        "cqi_median": 14.0,
+        "cqi_min": 0.0,
+        "cqi_max": 15.0,
+        "ri_median": 2.0,
+        "ri_min": 2.0,
+        "ri_max": 2.0,
+        "primary_bands_seen": [
+          "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+        ],
+        "ca_bands_seen": [],
+        "ca_missing_samples": 324,
+        "samples": 324,
+        "statuses_seen": [
+          "registered"
+        ],
+        "cell_changes": 0,
+        "tx-byte_delta": 234209599,
+        "rx-byte_delta": 182766,
+        "tx-packet_delta": 189936,
+        "rx-packet_delta": 1988,
+        "tx-queue-drop_delta": 0
+      }
+    },
+    "source_rule": {
+      "comment": "ELMO TEST: source via lte1",
+      "before": {
+        "comment": "ELMO TEST: source via lte1",
+        "rc": 0,
+        "raw": "1161022080\n950059",
+        "bytes": 1161022080,
+        "packets": 950059
+      },
+      "after": {
+        "comment": "ELMO TEST: source via lte1",
+        "rc": 0,
+        "raw": "1391409663\n1139185",
+        "bytes": 1391409663,
+        "packets": 1139185
+      },
+      "bytes_delta": 230387583,
+      "packets_delta": 189126
+    },
+    "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+    "events_count": 0,
+    "operator_context": {
+      "interface": "lte1",
+      "modem": "R11l-LTE7",
+      "modem_label": "LTE7-A",
+      "modem_id": "MODEM-acff51c319",
+      "operator": "elisa",
+      "operator_raw": "Elisa EE",
+      "sim_id": "SIM-0464aca4a8",
+      "registration_state": "registered",
+      "apn_present": false
+    },
+    "telemetry_medians": {}
+  },
+  "lte2": {
+    "test": {
+      "collector_version": "0.4.2",
+      "created_local": "2026-08-11T19:39:19+03:00",
+      "created_utc": "2026-08-11T16:39:19.876+00:00",
+      "tag": "lte7-elisa-telia-crossover_B-B7_a1_20260811-193917_lte2",
+      "path": "lte2",
+      "lte_interface": "lte2",
+      "source_ip": "192.168.101.202",
+      "linux_interface": "eno1",
+      "server_hostname": "iperf-ams-nl.eranium.net",
+      "server_ipv4": "217.18.95.142",
+      "server_port": 5202,
+      "port_probe": {
+        "attempts": [
+          {
+            "port": 5202,
+            "rc": 0,
+            "stderr": "",
+            "iperf_error": null,
+            "bps": 6959540.02761048
+          }
+        ]
+      },
+      "protocol": "udp",
+      "direction": "upload",
+      "duration_s": 300,
+      "warmup_s": 10,
+      "cooldown_s": 10,
+      "target_bitrate": "6M",
+      "packet_length": 1200,
+      "routing_mode": "source_ip_lab_mode",
+      "routing_table": "to-lte2",
+      "source_rule_comment": "ELMO TEST: source via lte2",
+      "allow_concurrent_other_lte": true
+    },
+    "iperf": {
+      "bits_per_second": 5998745.38232104,
+      "mbps": 5.99874538232104,
+      "jitter_ms": 1.6702296848584934,
+      "lost_packets": 0,
+      "packets": 187497,
+      "lost_percent": 0
+    },
+    "ping": {
+      "sent": 1590,
+      "received": 1589,
+      "loss_percent": 0.0628931,
+      "min_ms": 13.283,
+      "avg_ms": 22.384,
+      "max_ms": 47.62,
+      "mdev_ms": 3.968,
+      "p95_ms": 29.7,
+      "sample_count": 1589
+    },
+    "radio_target": {
+      "rssi_median": -69.0,
+      "rssi_min": -72.0,
+      "rssi_max": -66.0,
+      "rsrp_median": -101.0,
+      "rsrp_min": -103.0,
+      "rsrp_max": -99.0,
+      "rsrq_median": -11.0,
+      "rsrq_min": -13.0,
+      "rsrq_max": -9.5,
+      "sinr_median": 5.0,
+      "sinr_min": -2.0,
+      "sinr_max": 9.0,
+      "cqi_median": 14.0,
+      "cqi_min": 0.0,
+      "cqi_max": 15.0,
+      "ri_median": 2.0,
+      "ri_min": 2.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 321,
+      "samples": 321,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 234209501,
+      "rx-byte_delta": 182668,
+      "tx-packet_delta": 189935,
+      "rx-packet_delta": 1987,
+      "tx-queue-drop_delta": 0
+    },
+    "radio_other": {
+      "lte1": {
+        "rssi_median": -74.0,
+        "rssi_min": -77.0,
+        "rssi_max": -72.0,
+        "rsrp_median": -105.0,
+        "rsrp_min": -108.0,
+        "rsrp_max": -104.0,
+        "rsrq_median": -10.5,
+        "rsrq_min": -12.5,
+        "rsrq_max": -9.0,
+        "sinr_median": 10.0,
+        "sinr_min": 5.0,
+        "sinr_max": 15.0,
+        "cqi_median": 12.0,
+        "cqi_min": 11.0,
+        "cqi_max": 14.0,
+        "ri_median": 2.0,
+        "ri_min": 1.0,
+        "ri_max": 2.0,
+        "primary_bands_seen": [
+          "B7@20Mhz earfcn: 2850 phy-cellid: 69"
+        ],
+        "ca_bands_seen": [],
+        "ca_missing_samples": 321,
+        "samples": 321,
+        "statuses_seen": [
+          "registered"
+        ],
+        "cell_changes": 0,
+        "tx-byte_delta": 234224578,
+        "rx-byte_delta": 187901,
+        "tx-packet_delta": 189944,
+        "rx-packet_delta": 2081,
+        "tx-queue-drop_delta": 0
+      }
+    },
+    "source_rule": {
+      "comment": "ELMO TEST: source via lte2",
+      "before": {
+        "comment": "ELMO TEST: source via lte2",
+        "rc": 0,
+        "raw": "1166460169\n952016",
+        "bytes": 1166460169,
+        "packets": 952016
+      },
+      "after": {
+        "comment": "ELMO TEST: source via lte2",
+        "rc": 0,
+        "raw": "1396842693\n1141122",
+        "bytes": 1396842693,
+        "packets": 1141122
+      },
+      "bytes_delta": 230382524,
+      "packets_delta": 189106
+    },
+    "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+    "events_count": 28,
+    "operator_context": {
+      "interface": "lte2",
+      "modem": "R11l-LTE7",
+      "modem_label": "LTE7-B",
+      "modem_id": "MODEM-f467fcf911",
+      "operator": "telia",
+      "operator_raw": "Telia",
+      "sim_id": "SIM-b536bd05e0",
+      "registration_state": "registered",
+      "apn_present": false
+    },
+    "telemetry_medians": {}
+  },
+  "dual_status": "PASS_DUAL",
+  "registration": "REGISTERED",
+  "registration_monitor": {
+    "lte1": {
+      "status": "registered",
+      "pin-status": "ok",
+      "registration-status": "registered",
+      "manufacturer": "MikroTik",
+      "model": "R11l-LTE7",
+      "revision": "R11l-LTE7_V005",
+      "current-operator": "elisa",
+      "lac": "2022",
+      "current-cellid": "257028639",
+      "enb-id": "1004018",
+      "sector-id": "31",
+      "phy-cellid": "69",
+      "data-class": "LTE",
+      "session-uptime": "26s",
+      "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+      "cqi": "0",
+      "rssi": "-74dBm",
+      "rsrp": "-105dBm",
+      "rsrq": "-10dB",
+      "sinr": "9dB"
+    },
+    "lte2": {
+      "status": "registered",
+      "pin-status": "ok",
+      "registration-status": "registered",
+      "manufacturer": "MikroTik",
+      "model": "R11l-LTE7",
+      "revision": "R11l-LTE7_V005",
+      "current-operator": "Telia",
+      "lac": "10012",
+      "current-cellid": "81944444",
+      "enb-id": "320095",
+      "sector-id": "124",
+      "phy-cellid": "171",
+      "data-class": "LTE",
+      "session-uptime": "31s",
+      "primary-band": "B7@20Mhz earfcn: 3248 phy-cellid: 171",
+      "cqi": "0",
+      "rssi": "-71dBm",
+      "rsrp": "-101dBm",
+      "rsrq": "-9dB",
+      "sinr": "6dB"
+    },
+    "registration_verified_at": "2026-08-11T16:38:47+00:00"
+  }
+}
