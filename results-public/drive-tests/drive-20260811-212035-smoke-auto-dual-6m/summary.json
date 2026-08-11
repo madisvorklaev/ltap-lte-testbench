@@ -1,0 +1,75 @@
+{
+  "session_id": "drive-20260811-212035-smoke-auto-dual-6m",
+  "kind": "stationary_smoke_test",
+  "completed_utc": "2026-08-11T18:23:43+00:00",
+  "result": "PASS_WITH_RADIO_IMPAIRMENT",
+  "paths": [
+    {
+      "path": "lte1",
+      "source_ip": "192.168.101.201",
+      "server_port": 5201,
+      "mbps": 3.3702232962050656,
+      "udp_loss_percent": 36.06613333333333,
+      "jitter_ms": 7.507701967566005,
+      "ping_loss_percent": 32.967,
+      "ping_avg_ms": 1911.483,
+      "ping_p95_ms": 2990.0,
+      "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+      "bands_seen": [
+        "B38@20Mhz earfcn: 37900 phy-cellid: 3",
+        "B3@15Mhz earfcn: 1875 phy-cellid: 69"
+      ],
+      "ca_seen": [
+        "B38@20Mhz earfcn: 38098 phy-cellid: 3"
+      ],
+      "telemetry_samples": 92,
+      "rsrp_median": -100.0,
+      "rsrq_median": -8.0,
+      "sinr_median": 4.0,
+      "cell_changes": 1,
+      "source_rule_bytes_delta": 57580991,
+      "source_rule_packets_delta": 47080,
+      "lte_tx_bytes_delta": 61103584,
+      "tx_queue_drop_delta": 0,
+      "events_count": 15
+    },
+    {
+      "path": "lte2",
+      "source_ip": "192.168.101.202",
+      "server_port": 5202,
+      "mbps": 5.994718667305988,
+      "udp_loss_percent": 0,
+      "jitter_ms": 1.9858692122386268,
+      "ping_loss_percent": 0.0,
+      "ping_avg_ms": 25.387,
+      "ping_p95_ms": 32.6,
+      "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+      "bands_seen": [
+        "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+      ],
+      "ca_seen": [
+        "B3@20Mhz earfcn: 1344 phy-cellid: 66"
+      ],
+      "telemetry_samples": 86,
+      "rsrp_median": -97.0,
+      "rsrq_median": -10.5,
+      "sinr_median": 12.0,
+      "cell_changes": 0,
+      "source_rule_bytes_delta": 57578283,
+      "source_rule_packets_delta": 47064,
+      "lte_tx_bytes_delta": 59245490,
+      "tx_queue_drop_delta": 0,
+      "events_count": 0
+    }
+  ],
+  "limitations": [
+    "No dedicated variable-length durable drive worker is implemented yet.",
+    "GPS was inspected separately; no GPS track was collected by this collector.",
+    "This is not a scientific moving-drive campaign."
+  ],
+  "gps_status": {
+    "router_gps_monitor": "VALID_FIX_SEEN_AFTER_SMOKE",
+    "satellites": 10,
+    "note": "GPS was not enabled by this smoke test and the existing collector did not record a GPS track."
+  }
+}
