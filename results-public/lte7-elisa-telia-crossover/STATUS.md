@@ -1,19 +1,19 @@
-# Status lte7-elisa-telia-crossover
+ACTION REQUIRED: SWAP ELISA AND TELIA SIM CARDS NOW
 
 Campaign: LTE7 Elisa/Telia crossover
-- State: PHASE_A_LOADED
-- Phase: PHASE_A
+- State: WAIT_PHYSICAL_SIM_SWAP
+- Phase: WAIT_PHYSICAL_SIM_SWAP
 - Current item: A-AUTO
 - Progress: 4/8
-- Current phase: PHASE_A
+- Current phase: WAIT_PHYSICAL_SIM_SWAP
 - LTE1: LTE7-A / telia / AUTO
 - LTE2: LTE7-B / elisa / AUTO
 - Selected bands: B3, B7, B20
 - SIM swap verified: False
-- Bands restored: False
+- Bands restored: True
 - Last completed result: A-AUTO PASS_DUAL
-- Next action: automatic
-- Last heartbeat: 2026-08-11T16:08:55+00:00
+- Next action: human SIM swap
+- Last heartbeat: 2026-08-11T16:09:09+00:00
 - Last error: FAIL_IPERF_OR_PATH
 
 | Item | State | Attempts | Status |
