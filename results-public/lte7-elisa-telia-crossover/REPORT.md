@@ -1,15 +1,15 @@
 # dual-operator LTE7 crossover lte7-elisa-telia-crossover
 
-Updated: 2026-08-11T16:31:50+00:00
+Updated: 2026-08-11T16:31:54+00:00
 
 RouterOS: `7.24rc3`.
-Bands restored: `true`.
-SIM swap verified: `false`.
+Bands restored: `false`.
+SIM swap verified: `true`.
 
 ## SIM Map
 
 - Phase A: `{"lte1": {"apn_present": false, "interface": "lte1", "modem": "R11l-LTE7", "modem_id": "MODEM-acff51c319", "modem_label": "LTE7-A", "operator": "telia", "operator_raw": "Telia", "registration_state": "registered", "sim_id": "SIM-b536bd05e0"}, "lte2": {"apn_present": false, "interface": "lte2", "modem": "R11l-LTE7", "modem_id": "MODEM-f467fcf911", "modem_label": "LTE7-B", "operator": "elisa", "operator_raw": "Elisa EE", "registration_state": "registered", "sim_id": "SIM-0464aca4a8"}}`
-- Phase B: `{}`
+- Phase B: `{"lte1": {"apn_present": false, "interface": "lte1", "modem": "R11l-LTE7", "modem_id": "MODEM-acff51c319", "modem_label": "LTE7-A", "operator": "elisa", "operator_raw": "Elisa EE", "registration_state": "registered", "sim_id": "SIM-0464aca4a8"}, "lte2": {"apn_present": false, "interface": "lte2", "modem": "R11l-LTE7", "modem_id": "MODEM-f467fcf911", "modem_label": "LTE7-B", "operator": "telia", "operator_raw": "Telia", "registration_state": "registered", "sim_id": "SIM-b536bd05e0"}}`
 
 ## Selected Bands
 
@@ -32,7 +32,7 @@ SIM swap verified: `false`.
 1. Which pseudonymous SIM was Elisa? See `SIM_MAP_PUBLIC.json` and Phase B map above.
 2. Which pseudonymous SIM was Telia? See `SIM_MAP_PUBLIC.json` and Phase B map above.
 3. Which modem initially contained each SIM? See Phase A map above.
-4. Was the physical crossover verified correctly? `false`.
+4. Was the physical crossover verified correctly? `true`.
 5. Which bands were available from Telia? See `TELIA_BAND_DISCOVERY.json`.
 6. Which bands were simultaneously comparable with Elisa? See `COMMON_BANDS.json`.
 7. Was B3 available from both operators? `true`.
