@@ -2,8 +2,8 @@
 
 - State: PHASE_B_LOADED
 - Phase: PHASE_B
-- Current item: B-B7
-- Progress: 5/6
+- Current item: B-B20
+- Progress: 6/6
 - Selected bands: B3, B7, B20
 - SIM swap verified: True
 - Bands restored: False
@@ -16,4 +16,4 @@
 | A-B20 | FAILED_AFTER_RETRIES | 2 | FAIL_IPERF_OR_PATH |
 | B-B3 | COMPLETE | 1 | PASS_DUAL |
 | B-B7 | COMPLETE | 2 | PASS_DUAL |
-| B-B20 | PENDING | 0 |  |
+| B-B20 | FAILED_AFTER_RETRIES | 2 | FAIL_IPERF_OR_PATH |
