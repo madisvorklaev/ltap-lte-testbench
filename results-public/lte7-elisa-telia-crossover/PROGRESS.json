@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "campaign_id": "lte7-elisa-telia-crossover",
+  "state": "SIM_IDENTITY_VERIFICATION",
+  "started_at": "2026-08-11T15:36:02+00:00",
+  "updated_at": "2026-08-11T15:36:05+00:00",
+  "routeros": "7.24rc3",
+  "routerboard_firmware": "7.24rc3",
+  "modem_lte1": {
+    "expected": "R11l-LTE7",
+    "detected": "R11l-LTE7",
+    "firmware": "R11l-LTE7_V005",
+    "public_label": "LTE7-A",
+    "modem_id": "MODEM-acff51c319"
+  },
+  "modem_lte2": {
+    "expected": "R11l-LTE7",
+    "detected": "R11l-LTE7",
+    "firmware": "R11l-LTE7_V005",
+    "public_label": "LTE7-B",
+    "modem_id": "MODEM-f467fcf911"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "selected_bands": [],
+  "auto_fallback_selected": false,
+  "include_auto_tests": false,
+  "b7_confirmations": [],
+  "phase": "SIM_IDENTITY_VERIFICATION",
+  "phase_a_sim_map": {
+    "phase": "PHASE_A",
+    "collected_at": "2026-08-11T15:36:05+00:00",
+    "interfaces": {
+      "lte1": {
+        "interface": "lte1",
+        "modem": "R11l-LTE7",
+        "modem_label": "LTE7-A",
+        "modem_id": "MODEM-acff51c319",
+        "operator": "telia",
+        "operator_raw": "Telia",
+        "sim_id": "SIM-b536bd05e0",
+        "registration_state": "registered",
+        "apn_present": false
+      },
+      "lte2": {
+        "interface": "lte2",
+        "modem": "R11l-LTE7",
+        "modem_label": "LTE7-B",
+        "modem_id": "MODEM-f467fcf911",
+        "operator": "elisa",
+        "operator_raw": "Elisa EE",
+        "sim_id": "SIM-0464aca4a8",
+        "registration_state": "registered",
+        "apn_present": false
+      }
+    }
+  },
+  "phase_b_sim_map": null,
+  "sim_swap_verified": false,
+  "modem_map": {
+    "collected_at": "2026-08-11T15:36:04+00:00",
+    "interfaces": {
+      "lte1": {
+        "interface": "lte1",
+        "public_label": "LTE7-A",
+        "modem_id": "MODEM-acff51c319",
+        "model": "R11l-LTE7",
+        "firmware": "R11l-LTE7_V005"
+      },
+      "lte2": {
+        "interface": "lte2",
+        "public_label": "LTE7-B",
+        "modem_id": "MODEM-f467fcf911",
+        "model": "R11l-LTE7",
+        "firmware": "R11l-LTE7_V005"
+      }
+    }
+  },
+  "completed_count": 0,
+  "mandatory_total": 0,
+  "current_item": null,
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": false,
+  "items": {},
+  "last_pushed_commit": null,
+  "worker_progress_counter": 0,
+  "worker_last_progress_at": "2026-08-11T15:36:02+00:00",
+  "baseline_verified_at": "2026-08-11T15:36:04+00:00"
+}
