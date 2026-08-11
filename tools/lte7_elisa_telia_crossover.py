@@ -688,6 +688,8 @@ class Runner(quick.Runner):
     def backfill_b7_confirmations(self) -> None:
         changed = False
         for phase in ("A", "B"):
+            if phase == "A" and self.progress.get("sim_swap_verified"):
+                continue
             source_id = f"{phase}-B7"
             confirm_id = f"{phase}-B7-CONFIRM"
             state = self.progress.get("items", {}).get(source_id, {})
@@ -705,6 +707,45 @@ class Runner(quick.Runner):
         if changed:
             self.update_matrix_summary()
             self.git_checkpoint("lte7 crossover: enqueue B7 confirmation")
+
+    def close_missed_phase_a_confirmations(self) -> None:
+        if not self.progress.get("sim_swap_verified"):
+            return
+        changed = False
+        for confirm in self.progress.get("b7_confirmations", []):
+            if confirm.get("phase") != "A":
+                continue
+            item_id_ = confirm.get("id")
+            state = self.progress.get("items", {}).setdefault(item_id_, {"state": "PENDING", "attempts": 0, "history": []})
+            if state.get("state") in base.TERMINAL_ITEM_STATES:
+                continue
+            state["state"] = "SKIPPED_NOT_AVAILABLE"
+            state["registration"] = "CONFIRMATION_WINDOW_MISSED_AFTER_SIM_SWAP"
+            state.setdefault("history", []).append({"at": utcnow(), "state": "SKIPPED_NOT_AVAILABLE", "registration": "CONFIRMATION_WINDOW_MISSED_AFTER_SIM_SWAP"})
+            changed = True
+        if changed:
+            self.save_progress()
+            self.update_matrix_summary()
+            self.git_checkpoint("lte7 crossover: close missed phase A confirmation")
+
+    def reset_skipped_b7_confirmations_once(self) -> None:
+        changed = False
+        for confirm in self.progress.get("b7_confirmations", []):
+            if confirm.get("phase") != "B":
+                continue
+            item_id_ = confirm.get("id")
+            state = self.progress.get("items", {}).get(item_id_, {})
+            if state.get("state") != "SKIPPED_NOT_AVAILABLE" or state.get("retry_after_unavailable_done"):
+                continue
+            state["state"] = "PENDING"
+            state["attempts"] = 0
+            state["retry_after_unavailable_done"] = True
+            state.setdefault("history", []).append({"at": utcnow(), "state": "PENDING", "reason": "retry skipped B7 confirmation once"})
+            changed = True
+        if changed:
+            self.save_progress()
+            self.update_matrix_summary()
+            self.git_checkpoint("lte7 crossover: retry skipped B7 confirmation")
 
     def wait_for_swap(self) -> bool:
         if self.progress.get("sim_swap_verified"):
@@ -1113,7 +1154,9 @@ class Runner(quick.Runner):
                 self.run_phase("A")
             if not self.wait_for_swap():
                 return
+            self.close_missed_phase_a_confirmations()
             self.backfill_b7_confirmations()
+            self.reset_skipped_b7_confirmations_once()
             if any(self.progress["items"][item["id"]].get("state") not in base.TERMINAL_ITEM_STATES for item in self.phase_items("B")):
                 self.run_phase("B")
             if all(x.get("state") in base.TERMINAL_ITEM_STATES for x in self.progress["items"].values()):
