@@ -1,0 +1,1069 @@
+[
+  {
+    "utc": "2026-08-12T13:29:25.532+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B1"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:29:25.532+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 523
+    },
+    "after": {
+      "earfcn": 6200
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:38:26.998+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:38:26.998+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6200
+    },
+    "after": {
+      "earfcn": 1875
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:41:26.923+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:41:26.923+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1875
+    },
+    "after": {
+      "earfcn": 6200
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:43:52.099+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:43:52.099+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6200
+    },
+    "after": {
+      "earfcn": 1875
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:27:08.429+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B143"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B417"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:28:24.282+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B417"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B140"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:29:21.681+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B140"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B130"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:30:21.435+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B130"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B246"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:31:28.013+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B246"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B432"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:32:06.869+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B432"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B134"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:33:19.580+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B134"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B217"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:33:25.293+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B217"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B427"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:33:34.476+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B427"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B217"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:34:04.914+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B217"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B15"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:34:16.998+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B15"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B406"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:13.529+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B7"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:13.529+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1344
+    },
+    "after": {
+      "earfcn": 3050
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:13.529+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B406"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B325"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:29.051+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B325"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B143"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:55.532+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B143"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B168"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:58.843+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B7"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:35:58.843+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 3050
+    },
+    "after": {
+      "earfcn": 6300
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:36:22.631+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B168"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B41"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:38:50.433+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B479"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B58"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:38:56.997+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B58"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B430"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:05.753+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B430"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B221"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:09.037+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:09.037+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6300
+    },
+    "after": {
+      "earfcn": 1344
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:11.236+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B7"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:11.236+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1344
+    },
+    "after": {
+      "earfcn": 3248
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:11.236+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B221"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B310"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:29.819+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B7"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:29.819+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 3248
+    },
+    "after": {
+      "earfcn": 1344
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:29.819+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B310"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B221"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:35.291+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B221"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B158"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:39:41.897+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B158"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B430"
+      ]
+    },
+    "gps": null
+  },
+  {
+    "utc": "2026-08-12T13:41:57.051+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B7"
+    },
+    "gps": {
+      "utc": "2026-08-12T13:41:56.601+00:00",
+      "router_gps_time": "2026-08-12 13:41:56",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36593333333334,
+      "longitude": 24.9241,
+      "altitude_m": 38.099998,
+      "speed_mps": 17.434521944444445,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 1.5
+    }
+  },
+  {
+    "utc": "2026-08-12T13:41:57.051+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1344
+    },
+    "after": {
+      "earfcn": 3248
+    },
+    "gps": {
+      "utc": "2026-08-12T13:41:56.601+00:00",
+      "router_gps_time": "2026-08-12 13:41:56",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36593333333334,
+      "longitude": 24.9241,
+      "altitude_m": 38.099998,
+      "speed_mps": 17.434521944444445,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 1.5
+    }
+  },
+  {
+    "utc": "2026-08-12T13:41:57.051+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B430"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B171"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-12T13:41:56.601+00:00",
+      "router_gps_time": "2026-08-12 13:41:56",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36593333333334,
+      "longitude": 24.9241,
+      "altitude_m": 38.099998,
+      "speed_mps": 17.434521944444445,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 1.5
+    }
+  },
+  {
+    "utc": "2026-08-12T13:42:00.332+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B7"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-12T13:42:00.794+00:00",
+      "router_gps_time": "2026-08-12 13:42:00",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36524166666666,
+      "longitude": 24.92401166666667,
+      "altitude_m": 43.599998,
+      "speed_mps": 17.54770027777778,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 1.5
+    }
+  },
+  {
+    "utc": "2026-08-12T13:42:00.332+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 3248
+    },
+    "after": {
+      "earfcn": 6300
+    },
+    "gps": {
+      "utc": "2026-08-12T13:42:00.794+00:00",
+      "router_gps_time": "2026-08-12 13:42:00",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36524166666666,
+      "longitude": 24.92401166666667,
+      "altitude_m": 43.599998,
+      "speed_mps": 17.54770027777778,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 1.5
+    }
+  },
+  {
+    "utc": "2026-08-12T13:42:00.332+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B171"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B156"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-12T13:42:00.794+00:00",
+      "router_gps_time": "2026-08-12 13:42:00",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36524166666666,
+      "longitude": 24.92401166666667,
+      "altitude_m": 43.599998,
+      "speed_mps": 17.54770027777778,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 1.5
+    }
+  },
+  {
+    "utc": "2026-08-12T13:26:08+00:00",
+    "end_utc": "2026-08-12T13:26:12+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.306371714752352,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:26:15+00:00",
+    "end_utc": "2026-08-12T13:26:18+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.306371714752352,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:26:30+00:00",
+    "end_utc": "2026-08-12T13:26:43+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 3.802198876362973,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:26:45+00:00",
+    "end_utc": "2026-08-12T13:26:50+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.89518152445337,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:27:00+00:00",
+    "end_utc": "2026-08-12T13:27:03+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.887268775323261,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:27:13+00:00",
+    "end_utc": "2026-08-12T13:27:25+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.471237289937901,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:28:26+00:00",
+    "end_utc": "2026-08-12T13:28:38+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.79720004440969,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:28:40+00:00",
+    "end_utc": "2026-08-12T13:28:43+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.963882685405964,
+    "band": "B1",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:32:28+00:00",
+    "end_utc": "2026-08-12T13:32:30+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.963869637609436,
+    "band": "B20",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:33:11+00:00",
+    "end_utc": "2026-08-12T13:33:15+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.96434573761511,
+    "band": "B20",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:39:59+00:00",
+    "end_utc": "2026-08-12T13:40:09+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.30438348357323,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:40:24+00:00",
+    "end_utc": "2026-08-12T13:40:28+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.253910130305214,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:40:30+00:00",
+    "end_utc": "2026-08-12T13:40:32+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.253910130305214,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:41:06+00:00",
+    "end_utc": "2026-08-12T13:41:08+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.4652021473078447,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:41:15+00:00",
+    "end_utc": "2026-08-12T13:41:19+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.4652021473078447,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:41:22+00:00",
+    "end_utc": "2026-08-12T13:41:26+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.53970304416265,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:39:08+00:00",
+    "end_utc": "2026-08-12T13:39:11+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.965751438752277,
+    "band": "B20",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:41:21+00:00",
+    "end_utc": "2026-08-12T13:41:30+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.173465623517831,
+    "band": "B3",
+    "cell": null,
+    "lat": null,
+    "lon": null
+  },
+  {
+    "utc": "2026-08-12T13:41:54+00:00",
+    "end_utc": "2026-08-12T13:41:57+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 5.209410392834878,
+    "band": "B3",
+    "cell": null,
+    "lat": 59.366308333333336,
+    "lon": 24.92348833333333
+  }
+]

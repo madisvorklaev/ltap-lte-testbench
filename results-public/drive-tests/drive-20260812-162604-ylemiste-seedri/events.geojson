@@ -1,0 +1,149 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T13:41:57.051+00:00",
+        "path": "lte2",
+        "operator": "Telia",
+        "type": "BAND_CHANGE",
+        "before": {
+          "primary_band": "B3"
+        },
+        "after": {
+          "primary_band": "B7"
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9241,
+          59.36593333333334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T13:41:57.051+00:00",
+        "path": "lte2",
+        "operator": "Telia",
+        "type": "EARFCN_CHANGE",
+        "before": {
+          "earfcn": 1344
+        },
+        "after": {
+          "earfcn": 3248
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9241,
+          59.36593333333334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T13:41:57.051+00:00",
+        "path": "lte2",
+        "operator": "Telia",
+        "type": "CA_CHANGE",
+        "before": {
+          "ca_bands": [
+            "B7",
+            "B430"
+          ]
+        },
+        "after": {
+          "ca_bands": [
+            "B7",
+            "B171"
+          ]
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9241,
+          59.36593333333334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T13:42:00.332+00:00",
+        "path": "lte2",
+        "operator": "Telia",
+        "type": "BAND_CHANGE",
+        "before": {
+          "primary_band": "B7"
+        },
+        "after": {
+          "primary_band": "B20"
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.92401166666667,
+          59.36524166666666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T13:42:00.332+00:00",
+        "path": "lte2",
+        "operator": "Telia",
+        "type": "EARFCN_CHANGE",
+        "before": {
+          "earfcn": 3248
+        },
+        "after": {
+          "earfcn": 6300
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.92401166666667,
+          59.36524166666666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T13:42:00.332+00:00",
+        "path": "lte2",
+        "operator": "Telia",
+        "type": "CA_CHANGE",
+        "before": {
+          "ca_bands": [
+            "B7",
+            "B171"
+          ]
+        },
+        "after": {
+          "ca_bands": [
+            "B7",
+            "B156"
+          ]
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.92401166666667,
+          59.36524166666666
+        ]
+      }
+    }
+  ]
+}
