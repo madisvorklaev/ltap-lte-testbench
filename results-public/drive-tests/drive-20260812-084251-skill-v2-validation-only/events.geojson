@@ -1,0 +1,93 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T05:44:54.651+00:00",
+        "path": "lte1",
+        "operator": "Elisa",
+        "type": "BAND_CHANGE",
+        "before": {
+          "primary_band": "B7"
+        },
+        "after": {
+          "primary_band": "B20"
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.920220000000004,
+          59.36641666666666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T05:44:54.651+00:00",
+        "path": "lte1",
+        "operator": "Elisa",
+        "type": "EARFCN_CHANGE",
+        "before": {
+          "earfcn": 2850
+        },
+        "after": {
+          "earfcn": 6200
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.920220000000004,
+          59.36641666666666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T05:45:06.678+00:00",
+        "path": "lte1",
+        "operator": "Elisa",
+        "type": "BAND_CHANGE",
+        "before": {
+          "primary_band": "B20"
+        },
+        "after": {
+          "primary_band": "B1"
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.920046666666668,
+          59.366490000000006
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T05:45:06.678+00:00",
+        "path": "lte1",
+        "operator": "Elisa",
+        "type": "EARFCN_CHANGE",
+        "before": {
+          "earfcn": 6200
+        },
+        "after": {
+          "earfcn": 523
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.920046666666668,
+          59.366490000000006
+        ]
+      }
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 # ELMO LTE Drive Test Report
 
+Resolution: `LEGACY_COARSE_EPOCH_DATA`
+
+This session predates v2 continuous collectors. The analyzer did not fabricate GPS, LTE, or ping samples.
+
+# ELMO LTE Drive Test Report
+
 Session: `drive-20260811-213442-seedri-smarten-seedri`
 State: COMPLETE
 Started UTC: 2026-08-11T18:34:42+00:00

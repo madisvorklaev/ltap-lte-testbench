@@ -156,5 +156,9 @@
   "limitations": [
     "Post-stop report generated from per-epoch collector summaries; sub-second synchronized impairment analysis was not available from this worker version.",
     "LTE operator names were not resolved in this quick report; paths are lte1/lte2."
-  ]
+  ],
+  "skill": "elmo-lte-drive-test",
+  "skill_version": "2.0",
+  "resolution": "LEGACY_COARSE_EPOCH_DATA",
+  "note": "Old run preserved; continuous GPS/LTE/ping streams were not collected."
 }

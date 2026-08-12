@@ -1,0 +1,106 @@
+[
+  {
+    "utc": "2026-08-12T05:44:54.651+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B7"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-12T05:44:55.120+00:00",
+      "router_gps_time": "2026-08-12 05:44:54",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36641666666666,
+      "longitude": 24.920220000000004,
+      "altitude_m": -33.400002,
+      "speed_mps": 3.6731333333333334,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.13
+    }
+  },
+  {
+    "utc": "2026-08-12T05:44:54.651+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 2850
+    },
+    "after": {
+      "earfcn": 6200
+    },
+    "gps": {
+      "utc": "2026-08-12T05:44:55.120+00:00",
+      "router_gps_time": "2026-08-12 05:44:54",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36641666666666,
+      "longitude": 24.920220000000004,
+      "altitude_m": -33.400002,
+      "speed_mps": 3.6731333333333334,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.13
+    }
+  },
+  {
+    "utc": "2026-08-12T05:45:06.678+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B1"
+    },
+    "gps": {
+      "utc": "2026-08-12T05:45:06.505+00:00",
+      "router_gps_time": "2026-08-12 05:45:06",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.366490000000006,
+      "longitude": 24.920046666666668,
+      "altitude_m": -43.099998,
+      "speed_mps": 2.834588888888889,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.7
+    }
+  },
+  {
+    "utc": "2026-08-12T05:45:06.678+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6200
+    },
+    "after": {
+      "earfcn": 523
+    },
+    "gps": {
+      "utc": "2026-08-12T05:45:06.505+00:00",
+      "router_gps_time": "2026-08-12 05:45:06",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.366490000000006,
+      "longitude": 24.920046666666668,
+      "altitude_m": -43.099998,
+      "speed_mps": 2.834588888888889,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.7
+    }
+  }
+]
