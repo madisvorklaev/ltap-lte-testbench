@@ -1,0 +1,31 @@
+{
+  "skill": "elmo-lte-drive-test",
+  "skill_version": "2.0",
+  "resolution": "V2_CONTINUOUS_TIMELINE",
+  "session_id": "drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m",
+  "timeline_rows": 1905,
+  "gps_valid_fixes": 1613,
+  "lte1_samples": 1729,
+  "lte2_samples": 1728,
+  "ping_lte1_samples": 2884,
+  "ping_lte2_samples": 2846,
+  "traffic_loss_resolution_s": 10,
+  "diversity_normal": {
+    "both_good": 4,
+    "elisa_impaired_telia_good": 105,
+    "telia_impaired_elisa_good": 57,
+    "both_impaired": 1739,
+    "longest_both_impaired_interval_s": 355,
+    "percentage_with_at_least_one_good_path": 8.71,
+    "criteria": "normal"
+  },
+  "diversity_strict": {
+    "both_good": 4,
+    "elisa_impaired_telia_good": 100,
+    "telia_impaired_elisa_good": 53,
+    "both_impaired": 1748,
+    "longest_both_impaired_interval_s": 355,
+    "percentage_with_at_least_one_good_path": 8.24,
+    "criteria": "strict"
+  }
+}

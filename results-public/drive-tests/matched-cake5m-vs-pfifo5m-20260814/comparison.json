@@ -1,0 +1,242 @@
+{
+  "created_utc": "2026-08-14T20:08:26Z",
+  "classification": "INCONCLUSIVE_ROUTE_RADIO_VARIABILITY",
+  "classification_reason": "CAKE drive was much worse than the chosen same-route v2 reference on diversity and latency tails, but local artifacts do not prove the reference session queue discipline was PFIFO 5M and the field/radio/GPS conditions differ materially.",
+  "reference_session": "drive-20260812-200856-seedri-smarten-seedri",
+  "cake_session": "drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m",
+  "queue_condition_cake": "Verified live before start: elmo-exp2b-cake, CAKE besteffort/flowblind/cake-bandwidth=0, 5M queue trees on lte1/lte2, counters incrementing.",
+  "deviations": [
+    "The chosen reference drive is the closest completed same-route v2 session, but its local session/report artifacts do not independently record PFIFO 5M queue state.",
+    "Reference drive has 0 valid GPS fixes; CAKE drive has 1613 valid GPS fixes, so geographic alignment is not one-to-one from local artifacts.",
+    "The drives occurred on different days/times, so LTE cell/band choices and RAN load may differ.",
+    "Only route-start was explicitly marked for the CAKE drive; route-end is inferred from stop time."
+  ],
+  "sessions": {
+    "pfifo_reference": {
+      "label": "PFIFO reference",
+      "session_id": "drive-20260812-200856-seedri-smarten-seedri",
+      "state": "COMPLETE",
+      "summary": {
+        "skill": "elmo-lte-drive-test",
+        "skill_version": "2.0",
+        "resolution": "V2_CONTINUOUS_TIMELINE",
+        "session_id": "drive-20260812-200856-seedri-smarten-seedri",
+        "timeline_rows": 1732,
+        "gps_valid_fixes": 0,
+        "lte1_samples": 1562,
+        "lte2_samples": 1562,
+        "ping_lte1_samples": 3366,
+        "ping_lte2_samples": 3423,
+        "traffic_loss_resolution_s": 10,
+        "diversity_normal": {
+          "both_good": 921,
+          "elisa_impaired_telia_good": 641,
+          "telia_impaired_elisa_good": 96,
+          "both_impaired": 74,
+          "longest_both_impaired_interval_s": 12,
+          "percentage_with_at_least_one_good_path": 95.73,
+          "criteria": "normal"
+        },
+        "diversity_strict": {
+          "both_good": 379,
+          "elisa_impaired_telia_good": 1126,
+          "telia_impaired_elisa_good": 55,
+          "both_impaired": 172,
+          "longest_both_impaired_interval_s": 12,
+          "percentage_with_at_least_one_good_path": 90.07,
+          "criteria": "strict"
+        }
+      },
+      "paths": {
+        "lte1": {
+          "ping": {
+            "samples": 3366,
+            "success_samples": 3360,
+            "loss_percent": 0.178,
+            "avg_ms": 405.363,
+            "p50_ms": 68.4,
+            "p95_ms": 2917.0,
+            "p99_ms": 4956.0,
+            "max_ms": 5815.0,
+            "samples_gt_100ms_percent": 33.512,
+            "samples_gt_300ms_percent": 16.013,
+            "samples_gt_1000ms_percent": 10.992,
+            "longest_gt_100ms_s": 65,
+            "longest_gt_300ms_s": 25,
+            "longest_gt_1000ms_s": 14
+          },
+          "traffic": {
+            "epochs": 150,
+            "receiver_mbps_avg": 5.588,
+            "receiver_mbps_p50": 5.927501799397439,
+            "udp_loss_percent_avg": 0.421,
+            "udp_loss_percent_p95": 1.488,
+            "jitter_ms_avg": 2.219,
+            "failed_or_unparsed_epochs": 4
+          },
+          "radio": {
+            "samples": 1728,
+            "band_seconds": {
+              "B3": 1115,
+              "B20": 348,
+              "B38": 249,
+              "B1": 16
+            },
+            "rsrp_avg": -87.153,
+            "sinr_avg": 6.07
+          }
+        },
+        "lte2": {
+          "ping": {
+            "samples": 3423,
+            "success_samples": 3416,
+            "loss_percent": 0.204,
+            "avg_ms": 63.144,
+            "p50_ms": 23.6,
+            "p95_ms": 127.0,
+            "p99_ms": 1286.0,
+            "max_ms": 2999.0,
+            "samples_gt_100ms_percent": 5.726,
+            "samples_gt_300ms_percent": 3.769,
+            "samples_gt_1000ms_percent": 1.519,
+            "longest_gt_100ms_s": 13,
+            "longest_gt_300ms_s": 11,
+            "longest_gt_1000ms_s": 8
+          },
+          "traffic": {
+            "epochs": 154,
+            "receiver_mbps_avg": 5.834,
+            "receiver_mbps_p50": 5.964229533373593,
+            "udp_loss_percent_avg": 0.358,
+            "udp_loss_percent_p95": 1.424,
+            "jitter_ms_avg": 2.073,
+            "failed_or_unparsed_epochs": 0
+          },
+          "radio": {
+            "samples": 1728,
+            "band_seconds": {
+              "B3": 957,
+              "B7": 471,
+              "B20": 300
+            },
+            "rsrp_avg": -97.635,
+            "sinr_avg": 4.171
+          }
+        }
+      }
+    },
+    "cake": {
+      "label": "CAKE 5M",
+      "session_id": "drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m",
+      "state": "COMPLETE",
+      "summary": {
+        "skill": "elmo-lte-drive-test",
+        "skill_version": "2.0",
+        "resolution": "V2_CONTINUOUS_TIMELINE",
+        "session_id": "drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m",
+        "timeline_rows": 1905,
+        "gps_valid_fixes": 1613,
+        "lte1_samples": 1729,
+        "lte2_samples": 1728,
+        "ping_lte1_samples": 2884,
+        "ping_lte2_samples": 2846,
+        "traffic_loss_resolution_s": 10,
+        "diversity_normal": {
+          "both_good": 4,
+          "elisa_impaired_telia_good": 105,
+          "telia_impaired_elisa_good": 57,
+          "both_impaired": 1739,
+          "longest_both_impaired_interval_s": 355,
+          "percentage_with_at_least_one_good_path": 8.71,
+          "criteria": "normal"
+        },
+        "diversity_strict": {
+          "both_good": 4,
+          "elisa_impaired_telia_good": 100,
+          "telia_impaired_elisa_good": 53,
+          "both_impaired": 1748,
+          "longest_both_impaired_interval_s": 355,
+          "percentage_with_at_least_one_good_path": 8.24,
+          "criteria": "strict"
+        }
+      },
+      "paths": {
+        "lte1": {
+          "ping": {
+            "samples": 2884,
+            "success_samples": 2884,
+            "loss_percent": 0.0,
+            "avg_ms": 445.042,
+            "p50_ms": 66.8,
+            "p95_ms": 2461.0,
+            "p99_ms": 6800.0,
+            "max_ms": 16765.0,
+            "samples_gt_100ms_percent": 21.845,
+            "samples_gt_300ms_percent": 13.558,
+            "samples_gt_1000ms_percent": 9.709,
+            "longest_gt_100ms_s": 13,
+            "longest_gt_300ms_s": 13,
+            "longest_gt_1000ms_s": 10
+          },
+          "traffic": {
+            "epochs": 167,
+            "receiver_mbps_avg": 4.671,
+            "receiver_mbps_p50": 4.82585223527618,
+            "udp_loss_percent_avg": 18.682,
+            "udp_loss_percent_p95": 21.424,
+            "jitter_ms_avg": 2.851,
+            "failed_or_unparsed_epochs": 8
+          },
+          "radio": {
+            "samples": 1905,
+            "band_seconds": {
+              "B3": 1411,
+              "B1": 179,
+              "B38": 166,
+              "B20": 149
+            },
+            "rsrp_avg": -88.63,
+            "sinr_avg": 5.586
+          }
+        },
+        "lte2": {
+          "ping": {
+            "samples": 2846,
+            "success_samples": 2846,
+            "loss_percent": 0.0,
+            "avg_ms": 49.394,
+            "p50_ms": 28.4,
+            "p95_ms": 94.3,
+            "p99_ms": 572.0,
+            "max_ms": 3512.0,
+            "samples_gt_100ms_percent": 4.814,
+            "samples_gt_300ms_percent": 1.511,
+            "samples_gt_1000ms_percent": 0.492,
+            "longest_gt_100ms_s": 4,
+            "longest_gt_300ms_s": 4,
+            "longest_gt_1000ms_s": 3
+          },
+          "traffic": {
+            "epochs": 173,
+            "receiver_mbps_avg": 4.804,
+            "receiver_mbps_p50": 4.84930074715722,
+            "udp_loss_percent_avg": 18.761,
+            "udp_loss_percent_p95": 19.76,
+            "jitter_ms_avg": 2.288,
+            "failed_or_unparsed_epochs": 2
+          },
+          "radio": {
+            "samples": 1905,
+            "band_seconds": {
+              "B3": 886,
+              "B20": 780,
+              "B7": 239
+            },
+            "rsrp_avg": -94.56,
+            "sinr_avg": 2.48
+          }
+        }
+      }
+    }
+  }
+}

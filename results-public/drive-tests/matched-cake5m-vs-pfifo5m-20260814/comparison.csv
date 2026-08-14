@@ -1,0 +1,5 @@
+condition,session_id,path,ping_avg_ms,ping_p50_ms,ping_p95_ms,ping_p99_ms,ping_max_ms,ping_loss_percent,ping_gt_100_pct,ping_gt_300_pct,ping_gt_1000_pct,longest_gt_300_s,receiver_mbps_avg,udp_loss_avg,udp_loss_p95,jitter_avg,failed_or_unparsed_epochs,top_bands
+PFIFO_reference,drive-20260812-200856-seedri-smarten-seedri,lte1,405.363,68.4,2917.0,4956.0,5815.0,0.178,33.512,16.013,10.992,25,5.588,0.421,1.488,2.219,4,B3:1115;B20:348;B38:249;B1:16
+PFIFO_reference,drive-20260812-200856-seedri-smarten-seedri,lte2,63.144,23.6,127.0,1286.0,2999.0,0.204,5.726,3.769,1.519,11,5.834,0.358,1.424,2.073,0,B3:957;B7:471;B20:300
+CAKE,drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m,lte1,445.042,66.8,2461.0,6800.0,16765.0,0.0,21.845,13.558,9.709,13,4.671,18.682,21.424,2.851,8,B3:1411;B1:179;B38:166;B20:149
+CAKE,drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m,lte2,49.394,28.4,94.3,572.0,3512.0,0.0,4.814,1.511,0.492,4,4.804,18.761,19.76,2.288,2,B3:886;B20:780;B7:239
