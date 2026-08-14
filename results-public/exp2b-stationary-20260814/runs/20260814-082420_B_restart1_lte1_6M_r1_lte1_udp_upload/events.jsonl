@@ -1,0 +1,4 @@
+{"timestamp_utc": "2026-08-14T05:24:32.830+00:00", "type": "primary_band_changed", "interface": "lte1", "old": "B1@15Mhz earfcn: 523 phy-cellid: 69", "new": "B3@15Mhz earfcn: 1875 phy-cellid: 69"}
+{"timestamp_utc": "2026-08-14T05:25:05.830+00:00", "type": "sinr_low_started", "interface": "lte1", "sinr": 2.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-14T05:25:08.830+00:00", "type": "sinr_low_ended", "interface": "lte1", "sinr": 5.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-14T05:25:35.830+00:00", "type": "primary_band_changed", "interface": "lte1", "old": "B3@15Mhz earfcn: 1875 phy-cellid: 69", "new": "B1@15Mhz earfcn: 523 phy-cellid: 69"}

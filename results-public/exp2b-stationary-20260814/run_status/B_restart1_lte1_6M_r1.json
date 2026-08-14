@@ -1,0 +1,12 @@
+{
+  "run_id": "B_restart1_lte1_6M_r1",
+  "started_utc": "2026-08-14T05:24:17+00:00",
+  "finished_utc": "2026-08-14T05:26:36+00:00",
+  "commands": [
+    "/usr/bin/python3 /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/ltap_public_test.py --config /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/config.json run --path lte1 --campaign /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/campaign.json --protocol udp --bitrate 6M --packet-length 1200 --duration 120 --warmup 5 --cooldown 10 --telemetry-interval 1 --ping-interval 0.2 --allow-concurrent-other-lte --tag B_restart1_lte1_6M_r1 --output /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs"
+  ],
+  "exit_codes": [
+    0
+  ],
+  "ok": true
+}

@@ -1,6 +1,6 @@
 {
   "condition": "B",
-  "timestamp_utc": "2026-08-14T05:13:52+00:00",
+  "timestamp_utc": "2026-08-14T05:23:52+00:00",
   "commands": [
     {
       "command": "/queue/type/print detail where name=\"elmo-exp2b-pfifo\"",
@@ -29,43 +29,43 @@
     {
       "command": "/queue/tree/print stats detail where name=\"ELMO-EXP2B-LTE2\"",
       "rc": 0,
-      "stdout": "1  name=\"ELMO-EXP2B-LTE2\" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0\n   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=76896556 packets=62272\n   dropped=14899",
+      "stdout": "1  name=\"ELMO-EXP2B-LTE2\" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0\n   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=153157462 packets=123694\n   dropped=30013",
       "stderr": ""
     },
     {
       "command": "/ip/firewall/mangle/print stats detail where comment~\"ELMO EXP2B:\"",
       "rc": 0,
-      "stdout": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN       ACTION             BYTES  PACKETS\n;;; ELMO EXP2B: test packet mark lte1\n0 prerouting  mark-packet  278 773 698  228 372\n;;; ELMO EXP2B: test packet mark lte2\n1 prerouting  mark-packet   94 170 038   76 852",
+      "stdout": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN       ACTION             BYTES  PACKETS\n;;; ELMO EXP2B: test packet mark lte1\n0 prerouting  mark-packet  278 773 698  228 372\n;;; ELMO EXP2B: test packet mark lte2\n1 prerouting  mark-packet  187 546 213  153 202",
       "stderr": ""
     },
     {
       "command": "/system/resource/print",
       "rc": 0,
-      "stdout": "                   uptime: 41m13s             \n                  version: 7.24rc3 (testing)  \n               build-time: 2026-07-28 13:55:55\n          minimum-version: 7.11               \n              free-memory: 69.8MiB            \n             total-memory: 128.0MiB           \n                      cpu: MIPS 1004Kc V2.15  \n                cpu-count: 4                  \n            cpu-frequency: 880MHz             \n                 cpu-load: 5%                 \n           free-hdd-space: 3620.0KiB          \n          total-hdd-space: 16.0MiB            \n  write-sect-since-reboot: 369                \n         write-sect-total: 163536             \n        architecture-name: mmips              \n               board-name: LtAP-2HnD          \n                 platform: MikroTik           ",
+      "stdout": "                   uptime: 51m12s             \n                  version: 7.24rc3 (testing)  \n               build-time: 2026-07-28 13:55:55\n          minimum-version: 7.11               \n              free-memory: 70.0MiB            \n             total-memory: 128.0MiB           \n                      cpu: MIPS 1004Kc V2.15  \n                cpu-count: 4                  \n            cpu-frequency: 880MHz             \n                 cpu-load: 3%                 \n           free-hdd-space: 3620.0KiB          \n          total-hdd-space: 16.0MiB            \n  write-sect-since-reboot: 415                \n         write-sect-total: 163582             \n        architecture-name: mmips              \n               board-name: LtAP-2HnD          \n                 platform: MikroTik           ",
       "stderr": ""
     },
     {
       "command": "/interface/lte/monitor lte1 once",
       "rc": 0,
-      "stdout": "               status: registered                         \n           pin-status: ok                                 \n  registration-status: registered                         \n         manufacturer: MikroTik                           \n                model: R11l-LTE7                          \n             revision: R11l-LTE7_V005                     \n     current-operator: Elisa EE                           \n                  lac: 2022                               \n       current-cellid: 257028719                          \n               enb-id: 1004018                            \n            sector-id: 111                                \n           phy-cellid: 69                                 \n           data-class: LTE                                \n       session-uptime: 40m25s                             \n         primary-band: B1@15Mhz earfcn: 523 phy-cellid: 69\n                  cqi: 0                                  \n                 rssi: -60dBm                             \n                 rsrp: -93dBm                             \n                 rsrq: -12dB                              \n                 sinr: 4dB                                ",
+      "stdout": "               status: registered                         \n           pin-status: ok                                 \n  registration-status: registered                         \n         manufacturer: MikroTik                           \n                model: R11l-LTE7                          \n             revision: R11l-LTE7_V005                     \n     current-operator: Elisa EE                           \n                  lac: 2022                               \n       current-cellid: 257028719                          \n               enb-id: 1004018                            \n            sector-id: 111                                \n           phy-cellid: 69                                 \n           data-class: LTE                                \n       session-uptime: 50m24s                             \n         primary-band: B1@15Mhz earfcn: 523 phy-cellid: 69\n                  cqi: 0                                  \n                 rssi: -59dBm                             \n                 rsrp: -92dBm                             \n                 rsrq: -14.5dB                            \n                 sinr: 5dB                                ",
       "stderr": ""
     },
     {
       "command": "/interface/lte/monitor lte2 once",
       "rc": 0,
-      "stdout": "                   ;;; modem AT channel timeout occurred   \n               status: registered                          \n           pin-status: ok                                  \n  registration-status: registered                          \n         manufacturer: MikroTik                            \n                model: R11l-LTE7                           \n             revision: R11l-LTE7_V005                      \n     current-operator: Telia                               \n                  lac: 10012                               \n       current-cellid: 84504341                            \n               enb-id: 330095                              \n            sector-id: 21                                  \n           phy-cellid: 66                                  \n           data-class: LTE                                 \n       session-uptime: 40m19s                              \n         primary-band: B3@20Mhz earfcn: 1344 phy-cellid: 66\n                  cqi: 0                                   \n                 rssi: -61dBm                              \n                 rsrp: -95dBm                              \n                 rsrq: -13dB                               \n                 sinr: 11dB                                ",
+      "stdout": "                   ;;; modem AT channel timeout occurred   \n               status: registered                          \n           pin-status: ok                                  \n  registration-status: registered                          \n         manufacturer: MikroTik                            \n                model: R11l-LTE7                           \n             revision: R11l-LTE7_V005                      \n     current-operator: Telia                               \n                  lac: 10012                               \n       current-cellid: 84504341                            \n               enb-id: 330095                              \n            sector-id: 21                                  \n           phy-cellid: 66                                  \n           data-class: LTE                                 \n       session-uptime: 50m18s                              \n         primary-band: B3@20Mhz earfcn: 1344 phy-cellid: 66\n                  cqi: 0                                   \n                 rssi: -61dBm                              \n                 rsrp: -95dBm                              \n                 rsrq: -11.5dB                             \n                 sinr: 14dB                                ",
       "stderr": ""
     },
     {
       "command": "/interface/print stats-detail where name=\"lte1\"",
       "rc": 0,
-      "stdout": "Flags: R - RUNNING\n0 R name=\"lte1\" last-link-up-time=2026-08-14 07:33:28 link-downs=0\n    rx-byte=714 092 tx-byte=228 242 361 rx-packet=3 416 tx-packet=185 604\n    rx-drop=0 tx-drop=45 tx-queue-drop=44 625 rx-error=0 tx-error=0\n    fp-rx-byte=714 092 fp-tx-byte=0 fp-rx-packet=3 416 fp-tx-packet=0\n    fp-rps-drop=0",
+      "stdout": "Flags: R - RUNNING\n0 R name=\"lte1\" last-link-up-time=2026-08-14 07:33:28 link-downs=0\n    rx-byte=714 092 tx-byte=228 242 361 rx-packet=3 416 tx-packet=185 604\n    rx-drop=0 tx-drop=55 tx-queue-drop=44 625 rx-error=0 tx-error=0\n    fp-rx-byte=714 092 fp-tx-byte=0 fp-rx-packet=3 416 fp-tx-packet=0\n    fp-rps-drop=0",
       "stderr": ""
     },
     {
       "command": "/interface/print stats-detail where name=\"lte2\"",
       "rc": 0,
-      "stdout": "Flags: R - RUNNING\n1 R ;;; modem AT channel timeout occurred\n    name=\"lte2\" last-link-up-time=2026-08-14 07:33:34 link-downs=0\n    rx-byte=104 531 tx-byte=76 917 742 rx-packet=1 171 tx-packet=62 272\n    rx-drop=0 tx-drop=45 tx-queue-drop=14 899 rx-error=0 tx-error=0\n    fp-rx-byte=104 531 fp-tx-byte=0 fp-rx-packet=1 171 fp-tx-packet=0\n    fp-rps-drop=0",
+      "stdout": "Flags: R - RUNNING\n1 R ;;; modem AT channel timeout occurred\n    name=\"lte2\" last-link-up-time=2026-08-14 07:33:34 link-downs=0\n    rx-byte=150 943 tx-byte=153 190 924 rx-packet=1 732 tx-packet=123 694\n    rx-drop=0 tx-drop=55 tx-queue-drop=30 013 rx-error=0 tx-error=0\n    fp-rx-byte=150 943 fp-tx-byte=0 fp-rx-packet=1 732 fp-tx-packet=0\n    fp-rps-drop=0",
       "stderr": ""
     }
   ],

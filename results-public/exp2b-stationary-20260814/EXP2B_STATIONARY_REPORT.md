@@ -1,6 +1,6 @@
 # ELMO Experiment 2b Stationary Report
 
-Updated: 2026-08-14T05:16:39+00:00
+Updated: 2026-08-14T05:32:38+00:00
 Current condition: B
 
 OpenClaw made no RouterOS configuration changes. RSC imports are manual boundaries.
@@ -13,12 +13,16 @@ OpenClaw made no RouterOS configuration changes. RSC imports are manual boundari
 - B_lte2_6M_r1: OK exit_codes=[0]
 - B_lte2_6M_r2: FAILED exit_codes=[1]
 - B_lte2_6M_r2_retry1: OK exit_codes=[0]
+- B_restart1_lte1_6M_r1: OK exit_codes=[0]
+- B_restart1_lte1_6M_r2: OK exit_codes=[0]
+- B_restart1_lte1_6M_r3: FAILED exit_codes=[1]
 
-`B_lte2_6M_r2_retry1` used the same PFIFO condition, pinned server/IP,
-LTE2 source path, 6M offered UDP load, 1200-byte datagrams, and 120s duration.
-Receiver goodput was 4.83 Mbps, UDP loss 19.35%, UDP jitter 2.34 ms, and
-path verification passed. Ping samples showed 82.3% loss during the loaded run,
-with p95 122 ms among received replies.
+Fresh PFIFO restart `B_restart1` stopped at LTE1 repeat 3. The LTE1 path
+verification passed, but iPerf failed with `unable to receive results:`. During
+that run ping showed severe loaded loss/latency (60.9% loss, p95 7159 ms among
+received replies), and LTE1 changed radio state from B1 to B38. This attempt is
+preserved as invalid/inconclusive for B-sequence repeatability, and the
+sequence was stopped instead of continuing into LTE2/dual runs.
 
 ## Evidence Boundary
 
