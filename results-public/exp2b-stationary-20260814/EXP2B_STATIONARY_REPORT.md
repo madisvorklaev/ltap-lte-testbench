@@ -1,28 +1,19 @@
 # ELMO Experiment 2b Stationary Report
 
-Updated: 2026-08-14T05:32:38+00:00
-Current condition: B
+Updated: 2026-08-14T06:14:33+00:00
+Current condition: C
 
-OpenClaw made no RouterOS configuration changes. RSC imports are manual boundaries.
+RouterOS state for this C run was CAKE 5M. The CAKE RSC was imported by OpenClaw immediately before this run at Madis's direct request; the test runner itself made no further RouterOS configuration changes.
 
 ## Current Status
 
-- B_lte1_6M_r1: OK exit_codes=[0]
-- B_lte1_6M_r2: OK exit_codes=[0]
-- B_lte1_6M_r3: OK exit_codes=[0]
-- B_lte2_6M_r1: OK exit_codes=[0]
-- B_lte2_6M_r2: FAILED exit_codes=[1]
-- B_lte2_6M_r2_retry1: OK exit_codes=[0]
-- B_restart1_lte1_6M_r1: OK exit_codes=[0]
-- B_restart1_lte1_6M_r2: OK exit_codes=[0]
-- B_restart1_lte1_6M_r3: FAILED exit_codes=[1]
-
-Fresh PFIFO restart `B_restart1` stopped at LTE1 repeat 3. The LTE1 path
-verification passed, but iPerf failed with `unable to receive results:`. During
-that run ping showed severe loaded loss/latency (60.9% loss, p95 7159 ms among
-received replies), and LTE1 changed radio state from B1 to B38. This attempt is
-preserved as invalid/inconclusive for B-sequence repeatability, and the
-sequence was stopped instead of continuing into LTE2/dual runs.
+- C_lte1_6M_r1: OK exit_codes=[0]
+- C_lte1_6M_r2: OK exit_codes=[0]
+- C_lte1_6M_r3: OK exit_codes=[0]
+- C_lte2_6M_r1: OK exit_codes=[0]
+- C_lte2_6M_r2: OK exit_codes=[0]
+- C_lte2_6M_r3: OK exit_codes=[0]
+- C_dual_6M_r1: FAILED exit_codes=[1, 0]
 
 ## Evidence Boundary
 

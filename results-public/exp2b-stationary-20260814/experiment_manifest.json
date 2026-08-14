@@ -1,9 +1,9 @@
 {
   "experiment": "ELMO Experiment 2b stationary LTE queue-control test",
-  "condition": "B",
-  "git_commit": "c25028c88a651963705b8f7d39043f7d9c4cb3d4",
+  "condition": "C",
+  "git_commit": "2ea76e27eeee724153778c408b84a5a8e1dfbaa1",
   "collector_version": "0.4.2",
-  "created_utc": "2026-08-14T05:23:52+00:00",
+  "created_utc": "2026-08-14T05:51:45+00:00",
   "server_hostname": "iperf-ams-nl.eranium.net",
   "server_ipv4": "217.18.95.142",
   "ports": [
@@ -18,7 +18,7 @@
     5209,
     5210
   ],
-  "fixed_cap": "5M for B/C imported manually by operator",
+  "fixed_cap": "5M for B/C via Experiment 2b RouterOS RSC",
   "test_rates": [
     "6M per path",
     "5M dual lower-load control"
@@ -27,5 +27,5 @@
     "single_path_seconds": 120,
     "dual_seconds": 300
   },
-  "router_changes_by_openclaw": "none"
+  "router_changes_by_openclaw": "CAKE RSC was imported by OpenClaw immediately before Condition C at Madis's direct request; the test runner made no further RouterOS configuration changes"
 }
