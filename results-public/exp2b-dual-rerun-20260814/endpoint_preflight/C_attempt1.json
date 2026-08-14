@@ -1,0 +1,40 @@
+{
+  "condition": "C",
+  "attempt": 1,
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "selected": {
+    "lte1": 5207,
+    "lte2": 5208
+  },
+  "records": [
+    {
+      "pair": {
+        "lte1": 5207,
+        "lte2": 5208
+      },
+      "lte1": {
+        "source_ip": "192.168.101.201",
+        "server": "217.18.95.142",
+        "port": 5207,
+        "started_utc": "2026-08-14T08:45:06.238+00:00",
+        "cmd": "iperf3 -c 217.18.95.142 -p 5207 -4 -B 192.168.101.201 -u -b 256K -l 1200 -t 1 -J",
+        "rc": 0,
+        "ok": true,
+        "error": null,
+        "stderr": ""
+      },
+      "lte2": {
+        "source_ip": "192.168.101.202",
+        "server": "217.18.95.142",
+        "port": 5208,
+        "started_utc": "2026-08-14T08:45:07.592+00:00",
+        "cmd": "iperf3 -c 217.18.95.142 -p 5208 -4 -B 192.168.101.202 -u -b 256K -l 1200 -t 1 -J",
+        "rc": 0,
+        "ok": true,
+        "error": null,
+        "stderr": ""
+      }
+    }
+  ]
+}

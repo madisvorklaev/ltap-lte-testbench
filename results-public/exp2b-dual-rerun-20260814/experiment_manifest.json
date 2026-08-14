@@ -1,0 +1,31 @@
+{
+  "experiment": "ELMO Experiment 2b simultaneous dual-load B/C repair rerun",
+  "created_utc": "2026-08-14T09:07:07.405+00:00",
+  "git_commit": "fb3f0a5881406fab5a7faf1219f03fba4c6cc570",
+  "collector_version": "0.4.2",
+  "result_dir": "results-public/exp2b-dual-rerun-20260814",
+  "source_repo": "/home/madis/projects/ltap-lte-testbench",
+  "conditions": [
+    "B",
+    "C"
+  ],
+  "duration_seconds": 300,
+  "bitrate_per_path": "6M",
+  "packet_length_bytes": 1200,
+  "rsc_import_authorization": "Madis explicitly authorized OpenClaw to import existing PFIFO/CAKE RSC files for this task.",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "available_ports": [
+    5201,
+    5202,
+    5203,
+    5204,
+    5205,
+    5206,
+    5207,
+    5208,
+    5209,
+    5210
+  ],
+  "regenerated_from_existing_artifacts": true
+}
