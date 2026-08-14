@@ -1,0 +1,31 @@
+{
+  "experiment": "ELMO Experiment 2b stationary LTE queue-control test",
+  "condition": "B",
+  "git_commit": "40d5c4cf3933542ac43c8837c61f33115923348b",
+  "collector_version": "0.4.2",
+  "created_utc": "2026-08-14T04:42:13+00:00",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "ports": [
+    5201,
+    5202,
+    5203,
+    5204,
+    5205,
+    5206,
+    5207,
+    5208,
+    5209,
+    5210
+  ],
+  "fixed_cap": "5M for B/C imported manually by operator",
+  "test_rates": [
+    "6M per path",
+    "5M dual lower-load control"
+  ],
+  "durations": {
+    "single_path_seconds": 120,
+    "dual_seconds": 300
+  },
+  "router_changes_by_openclaw": "none"
+}

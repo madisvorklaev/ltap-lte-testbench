@@ -1,0 +1,162 @@
+{
+  "condition": "B",
+  "updated_utc": "2026-08-14T04:54:15+00:00",
+  "run_statuses": [
+    {
+      "run_id": "B_lte1_6M_r1",
+      "started_utc": "2026-08-14T04:42:14+00:00",
+      "finished_utc": "2026-08-14T04:44:42+00:00",
+      "commands": [
+        "/usr/bin/python3 /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/ltap_public_test.py --config /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/config.json run --path lte1 --campaign /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/campaign.json --protocol udp --bitrate 6M --packet-length 1200 --duration 120 --warmup 5 --cooldown 10 --telemetry-interval 1 --ping-interval 0.2 --allow-concurrent-other-lte --tag B_lte1_6M_r1 --output /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs"
+      ],
+      "exit_codes": [
+        0
+      ],
+      "ok": true
+    },
+    {
+      "run_id": "B_lte1_6M_r2",
+      "started_utc": "2026-08-14T04:45:17+00:00",
+      "finished_utc": "2026-08-14T04:47:35+00:00",
+      "commands": [
+        "/usr/bin/python3 /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/ltap_public_test.py --config /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/config.json run --path lte1 --campaign /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/campaign.json --protocol udp --bitrate 6M --packet-length 1200 --duration 120 --warmup 5 --cooldown 10 --telemetry-interval 1 --ping-interval 0.2 --allow-concurrent-other-lte --tag B_lte1_6M_r2 --output /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs"
+      ],
+      "exit_codes": [
+        0
+      ],
+      "ok": true
+    },
+    {
+      "run_id": "B_lte1_6M_r3",
+      "started_utc": "2026-08-14T04:48:10+00:00",
+      "finished_utc": "2026-08-14T04:50:28+00:00",
+      "commands": [
+        "/usr/bin/python3 /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/ltap_public_test.py --config /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/config.json run --path lte1 --campaign /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/campaign.json --protocol udp --bitrate 6M --packet-length 1200 --duration 120 --warmup 5 --cooldown 10 --telemetry-interval 1 --ping-interval 0.2 --allow-concurrent-other-lte --tag B_lte1_6M_r3 --output /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs"
+      ],
+      "exit_codes": [
+        0
+      ],
+      "ok": true
+    },
+    {
+      "run_id": "B_lte2_6M_r1",
+      "started_utc": "2026-08-14T04:51:03+00:00",
+      "finished_utc": "2026-08-14T04:53:22+00:00",
+      "commands": [
+        "/usr/bin/python3 /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/ltap_public_test.py --config /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/config.json run --path lte2 --campaign /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/campaign.json --protocol udp --bitrate 6M --packet-length 1200 --duration 120 --warmup 5 --cooldown 10 --telemetry-interval 1 --ping-interval 0.2 --allow-concurrent-other-lte --tag B_lte2_6M_r1 --output /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs"
+      ],
+      "exit_codes": [
+        0
+      ],
+      "ok": true
+    },
+    {
+      "run_id": "B_lte2_6M_r2",
+      "started_utc": "2026-08-14T04:53:57+00:00",
+      "finished_utc": "2026-08-14T04:54:15+00:00",
+      "commands": [
+        "/usr/bin/python3 /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/ltap_public_test.py --config /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/config.json run --path lte2 --campaign /home/madis/projects/ltap-lte-testbench/references/public-iperf-kit/campaign.json --protocol udp --bitrate 6M --packet-length 1200 --duration 120 --warmup 5 --cooldown 10 --telemetry-interval 1 --ping-interval 0.2 --allow-concurrent-other-lte --tag B_lte2_6M_r2 --output /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs"
+      ],
+      "exit_codes": [
+        1
+      ],
+      "ok": false
+    }
+  ],
+  "runs": [
+    {
+      "tag": "B_lte1_6M_r1",
+      "path": "lte1",
+      "duration_s": 120,
+      "target_bitrate": "6M",
+      "actual_mbps": 1.9603210907421473,
+      "udp_loss_percent": 58.784,
+      "udp_jitter_ms": 8.426916833607514,
+      "ping_avg_ms": 2627.215,
+      "ping_p95_ms": 5000.0,
+      "ping_max_ms": 5102.956,
+      "ping_loss_percent": 66.5254,
+      "primary_bands_seen": "B38@20Mhz earfcn: 37900 phy-cellid: 3|B3@15Mhz earfcn: 1875 phy-cellid: 69",
+      "ca_bands_seen": "B38@20Mhz earfcn: 38098 phy-cellid: 3",
+      "cell_changes": 1,
+      "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+      "test_dir": "/home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs/20260814-074216_B_lte1_6M_r1_lte1_udp_upload"
+    },
+    {
+      "tag": "B_lte1_6M_r2",
+      "path": "lte1",
+      "duration_s": 120,
+      "target_bitrate": "6M",
+      "actual_mbps": 4.82099608508016,
+      "udp_loss_percent": 19.442666666666668,
+      "udp_jitter_ms": 2.3631311860028053,
+      "ping_avg_ms": 104.3,
+      "ping_p95_ms": 129.0,
+      "ping_max_ms": 152.746,
+      "ping_loss_percent": 35.8744,
+      "primary_bands_seen": "B38@20Mhz earfcn: 38098 phy-cellid: 3|B3@15Mhz earfcn: 1875 phy-cellid: 69",
+      "ca_bands_seen": "",
+      "cell_changes": 1,
+      "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+      "test_dir": "/home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs/20260814-074519_B_lte1_6M_r2_lte1_udp_upload"
+    },
+    {
+      "tag": "B_lte1_6M_r3",
+      "path": "lte1",
+      "duration_s": 120,
+      "target_bitrate": "6M",
+      "actual_mbps": 4.81506674788607,
+      "udp_loss_percent": 19.644,
+      "udp_jitter_ms": 2.9857169284112484,
+      "ping_avg_ms": 89.947,
+      "ping_p95_ms": 137.0,
+      "ping_max_ms": 344.534,
+      "ping_loss_percent": 66.8182,
+      "primary_bands_seen": "B1@15Mhz earfcn: 523 phy-cellid: 69|B7@20Mhz earfcn: 2850 phy-cellid: 69",
+      "ca_bands_seen": "",
+      "cell_changes": 0,
+      "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+      "test_dir": "/home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs/20260814-074812_B_lte1_6M_r3_lte1_udp_upload"
+    },
+    {
+      "tag": "B_lte2_6M_r1",
+      "path": "lte2",
+      "duration_s": 120,
+      "target_bitrate": "6M",
+      "actual_mbps": 4.823170468169209,
+      "udp_loss_percent": 19.388,
+      "udp_jitter_ms": 2.4241916419430547,
+      "ping_avg_ms": 102.887,
+      "ping_p95_ms": 127.0,
+      "ping_max_ms": 142.167,
+      "ping_loss_percent": 34.4776,
+      "primary_bands_seen": "B3@20Mhz earfcn: 1344 phy-cellid: 66",
+      "ca_bands_seen": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+      "cell_changes": 0,
+      "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+      "test_dir": "/home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs/20260814-075106_B_lte2_6M_r1_lte2_udp_upload"
+    },
+    {
+      "tag": "B_lte2_6M_r2",
+      "path": "lte2",
+      "duration_s": 120,
+      "target_bitrate": "6M",
+      "actual_mbps": null,
+      "udp_loss_percent": null,
+      "udp_jitter_ms": null,
+      "ping_avg_ms": 24.828,
+      "ping_p95_ms": 29.6,
+      "ping_max_ms": 46.518,
+      "ping_loss_percent": 0.0,
+      "primary_bands_seen": "B3@20Mhz earfcn: 1344 phy-cellid: 66",
+      "ca_bands_seen": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+      "cell_changes": 0,
+      "path_verification": "FAIL_WRONG_LTE",
+      "test_dir": "/home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs/20260814-075400_B_lte2_6M_r2_lte2_udp_upload"
+    }
+  ],
+  "labels": {
+    "network_queue_latency_evidence": "pending final A/B/C comparison",
+    "actual_video_frame_age_evidence": "not collected by this stationary iPerf/ping campaign"
+  }
+}
