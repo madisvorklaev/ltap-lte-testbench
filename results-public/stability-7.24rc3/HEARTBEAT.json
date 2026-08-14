@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-08T20:19:30+00:00",
-  "pid": 191084,
+  "timestamp": "2026-08-14T05:40:40+00:00",
+  "pid": 108367,
   "current_item": "F-P1-LTE2-2",
   "phase": "PHASE_F_RECOVERY",
-  "current_item_state": "RUNNING",
-  "elapsed_seconds": 32775,
-  "last_successful_telemetry_timestamp": "2026-08-08T20:13:19+00:00",
+  "current_item_state": "STARTING",
+  "elapsed_seconds": 498445,
+  "last_successful_telemetry_timestamp": null,
   "router_reachable": true,
-  "server_reachable": true,
-  "completed": 28,
+  "server_reachable": false,
+  "completed": 29,
   "total": 29,
   "retry_queue_length": 0,
-  "last_error": "FAIL_IPERF_OR_PATH",
-  "last_pushed_commit": "593fb3a596c8fd3e60e424978244496c65a00bd7",
+  "last_error": "",
+  "last_pushed_commit": "88b3781872355fdd86ebfe053f963d861fb73b37",
   "bands_currently_configured": {
-    "lte1": "3",
-    "lte2": "3"
+    "lte1": "",
+    "lte2": ""
   }
 }
