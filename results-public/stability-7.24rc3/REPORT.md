@@ -1,6 +1,6 @@
 # LtAP Stability stability-7.24rc3
 
-Updated: 2026-08-08T20:19:47+00:00
+Updated: 2026-08-14T05:40:52+00:00
 
 This stability report is generated incrementally. Final production recommendations are withheld until all phases are terminal.
 
@@ -35,48 +35,3 @@ This stability report is generated incrementally. Final production recommendatio
 | F-P1-LTE1-2 | PHASE_F_RECOVERY | P1 | 2 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.995064331753325 |  | 71.8 | 5.993980085269304 |  | 31.6 |
 | F-P1-LTE2-1 | PHASE_F_RECOVERY | P1 | 3 | COMPLETE | 3 | 3 | 6M/6M | PASS_DUAL | 5.988245937366147 | 0.10133333333333333 | 64.8 | 5.989469394165466 | 0.08266666666666667 | 31.8 |
 | F-P1-LTE2-2 | PHASE_F_RECOVERY | P1 | 4 | FAILED_AFTER_RETRIES | 3 | 3 | 6M/6M | FAIL_IPERF_OR_PATH |  |  |  | 5.99242392115132 | 0.064 | 31.8 |
-
-## Final Analysis
-
-Campaign terminal state: COMPLETE. Mandatory items terminal: 29/29. Result split: 23 COMPLETE, 5 FAILED_AFTER_RETRIES, 1 SKIPPED_BAND_UNAVAILABLE. Original band settings were restored to AUTO/AUTO. No push was pending at completion.
-
-Important implementation caveat: Phase D and Phase F in this run are useful smoke evidence, but they are not a full implementation of the requested bitrate-step burst profile or modem-by-modem AUTO/reapply recovery timing. Treat those two phases as preliminary evidence only.
-
-### Candidate Aggregate
-
-| Candidate | Complete runs | Failed/skipped | Worst loss % | Worst p95 ms | Median worst-path loss % | Median worst-path p95 ms | Grade | Rank |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| P3 fixed B3/B7 | 3 | 0 | 0.812 | 64.0 | 0.755 | 39.0 | GOOD | 1 |
-| P1 fixed B3/B3 | 11 | 2 | 1.139 | 1184.0 | 0.312 | 51.0 | DEGRADED | 2 |
-| P4 restricted dynamic | 6 | 3 | 2.109 | 1285.0 | 0.447 | 74.4 | DEGRADED | 3 |
-| P2 fixed B3/B20 | 3 | 2 | 1.694 | 545.0 | 0.354 | 36.0 | DEGRADED | 4 |
-
-The low-latency repeatability winner in this stationary test is P3, fixed LTE1=B3 and LTE2=B7. It completed all three Phase A repeats with both paths under 1% loss and worst p95 64 ms.
-
-P1 remains a strong conservative stationary candidate at 6/6 and in the 30-minute endurance run, but it had one B3/B3 registration skip at campaign start and becomes queue-sensitive when LTE1 is pushed to 8 Mbit/s. P2 is not as robust as the earlier 5-minute matrix suggested: one Phase A repeat failed after retries and the 30-minute endurance run showed LTE1 loss about 1.69% and p95 about 545 ms. P4 is useful as a restricted dynamic policy but was not stable enough here: two Phase A repeats failed after retries, Phase E failed after retries, and the 8/6 headroom case had LTE1 loss above 2% with p95 above 1.2 s.
-
-### Final Questions
-
-1. B3/B3 stayed clean in its successful 10-minute repeats and 30-minute endurance run, but the first P1 repeat skipped because LTE1 did not register/verify on B3.
-2. B3/B20 did not remain as clean as the original 5-minute result. It had one repeat failure and degraded in endurance on LTE1.
-3. B3/B7 was the most stable tested production candidate in Phase A.
-4. P4 did not remain stable enough; it failed repeatability and dynamic-observation attempts.
-5. Best worst-path p95 latency among repeatability candidates: P3.
-6. Best worst-path UDP loss among candidates with multiple successful runs: P1 median, but P3 had the best reliability/latency balance.
-7. Smallest practical repeat-to-repeat variation: P3.
-8. Queueing starts clearly when LTE1 is offered 8 Mbit/s. P1 8/8 p95 reached about 1184 ms; P4 8/8 and 8/6 reached about 1089-1285 ms.
-9. Burst recovery was not conclusively tested; Phase D used fixed 6/6 smoke loads and should be rerun with real bitrate step changes.
-10. No successful result shows a clear LTE disconnect summary in this compact table, but several FAIL_IPERF_OR_PATH items need raw-artifact review before ruling out transient path/radio drops.
-11. P4 natural dynamic observation was not successful; E-P4 failed after retries, so stationary reselection evidence is inconclusive.
-12. Remote band-change recovery was not conclusively tested; Phase F produced useful P1 60-second smoke data but did not perform the requested AUTO/reapply timing sequence.
-13. Next moving-vehicle candidate: fixed LTE1=B3 and LTE2=B7. Secondary conservative candidate: fixed B3/B3. Do not use B38, and do not allow B7 on LTE1.
-14. Original AUTO band values were restored at the end.
-15. No unexpected RouterOS persistent configuration change is reported by the runner; a deeper config-fingerprint audit should still be reviewed before production rollout.
-
-### Recommendations
-
-Stationary best: P3 fixed LTE1=B3, LTE2=B7.
-
-Moving-vehicle candidate: start with P3 fixed B3/B7 for the first controlled moving test because it was clean and repeatable here. Keep P4 as a later experiment only after the dynamic policy is debugged.
-
-Emergency conservative policy: exclude B38 completely and exclude B7 from LTE1. Use either fixed B3/B3 or fixed B3/B7 depending on whether coverage diversity or the simplest known-good state matters more.
