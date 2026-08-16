@@ -1,0 +1,184 @@
+[
+  {
+    "utc": "2026-08-16T08:47:45.159+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B1"
+    },
+    "after": {
+      "primary_band": "B38"
+    },
+    "gps": {
+      "utc": "2026-08-16T08:47:45.468+00:00",
+      "router_gps_time": "2026-08-16 08:47:45",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.366051666666664,
+      "longitude": 24.920208333333335,
+      "altitude_m": -15.5,
+      "speed_mps": 0.23664444444444444,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 1.03
+    }
+  },
+  {
+    "utc": "2026-08-16T08:47:45.159+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 523
+    },
+    "after": {
+      "earfcn": 38098
+    },
+    "gps": {
+      "utc": "2026-08-16T08:47:45.468+00:00",
+      "router_gps_time": "2026-08-16 08:47:45",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.366051666666664,
+      "longitude": 24.920208333333335,
+      "altitude_m": -15.5,
+      "speed_mps": 0.23664444444444444,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 1.03
+    }
+  },
+  {
+    "utc": "2026-08-16T08:47:52+00:00",
+    "end_utc": "2026-08-16T08:47:55+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.31790617510008,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36604666666667,
+    "lon": 24.920215
+  },
+  {
+    "utc": "2026-08-16T08:48:09+00:00",
+    "end_utc": "2026-08-16T08:48:15+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.1326296690226014,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36605833333333,
+    "lon": 24.920281666666664
+  },
+  {
+    "utc": "2026-08-16T08:48:20+00:00",
+    "end_utc": "2026-08-16T08:48:22+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.3611561535423085,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.366055,
+    "lon": 24.920346666666667
+  },
+  {
+    "utc": "2026-08-16T08:48:28+00:00",
+    "end_utc": "2026-08-16T08:48:34+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.3611561535423085,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36604333333333,
+    "lon": 24.920400000000004
+  },
+  {
+    "utc": "2026-08-16T08:48:48+00:00",
+    "end_utc": "2026-08-16T08:48:52+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 1.7304309641707456,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.366035,
+    "lon": 24.920428333333334
+  },
+  {
+    "utc": "2026-08-16T08:49:07+00:00",
+    "end_utc": "2026-08-16T08:49:11+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 1.7329457772326837,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.366036666666666,
+    "lon": 24.920391666666667
+  },
+  {
+    "utc": "2026-08-16T08:49:20+00:00",
+    "end_utc": "2026-08-16T08:49:23+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 1.9571689490830992,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36602500000001,
+    "lon": 24.920385000000003
+  },
+  {
+    "utc": "2026-08-16T08:49:26+00:00",
+    "end_utc": "2026-08-16T08:49:31+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 1.9571689490830992,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36603,
+    "lon": 24.920413333333332
+  },
+  {
+    "utc": "2026-08-16T08:49:33+00:00",
+    "end_utc": "2026-08-16T08:49:36+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.570714321137322,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36602833333333,
+    "lon": 24.920416666666664
+  },
+  {
+    "utc": "2026-08-16T08:49:38+00:00",
+    "end_utc": "2026-08-16T08:49:43+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.570714321137322,
+    "band": "B38",
+    "cell": null,
+    "lat": 59.36602833333333,
+    "lon": 24.920418333333334
+  }
+]
