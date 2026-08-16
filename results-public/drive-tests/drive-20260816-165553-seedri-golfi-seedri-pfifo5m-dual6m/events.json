@@ -1,0 +1,2044 @@
+[
+  {
+    "utc": "2026-08-16T13:57:09.547+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B1"
+    },
+    "after": {
+      "primary_band": "B38"
+    },
+    "gps": {
+      "utc": "2026-08-16T13:57:09.633+00:00",
+      "router_gps_time": "2026-08-16 13:57:09",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.364583333333336,
+      "longitude": 24.919774999999998,
+      "altitude_m": 14.1,
+      "speed_mps": 8.215677777777778,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.0
+    }
+  },
+  {
+    "utc": "2026-08-16T13:57:09.547+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 523
+    },
+    "after": {
+      "earfcn": 37900
+    },
+    "gps": {
+      "utc": "2026-08-16T13:57:09.633+00:00",
+      "router_gps_time": "2026-08-16 13:57:09",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.364583333333336,
+      "longitude": 24.919774999999998,
+      "altitude_m": 14.1,
+      "speed_mps": 8.215677777777778,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.0
+    }
+  },
+  {
+    "utc": "2026-08-16T13:57:11.823+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B38"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": {
+      "utc": "2026-08-16T13:57:11.738+00:00",
+      "router_gps_time": "2026-08-16 13:57:11",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.364406666666675,
+      "longitude": 24.919853333333336,
+      "altitude_m": 13.0,
+      "speed_mps": 9.748722500000001,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.0
+    }
+  },
+  {
+    "utc": "2026-08-16T13:57:11.823+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 37900
+    },
+    "after": {
+      "earfcn": 1875
+    },
+    "gps": {
+      "utc": "2026-08-16T13:57:11.738+00:00",
+      "router_gps_time": "2026-08-16 13:57:11",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.364406666666675,
+      "longitude": 24.919853333333336,
+      "altitude_m": 13.0,
+      "speed_mps": 9.748722500000001,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.0
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:22.278+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:22.430+00:00",
+      "router_gps_time": "2026-08-16 14:03:22",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.340149999999994,
+      "longitude": 24.914566666666662,
+      "altitude_m": -98.300003,
+      "speed_mps": 15.57223361111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.37
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:22.278+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1875
+    },
+    "after": {
+      "earfcn": 6200
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:22.430+00:00",
+      "router_gps_time": "2026-08-16 14:03:22",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.340149999999994,
+      "longitude": 24.914566666666662,
+      "altitude_m": -98.300003,
+      "speed_mps": 15.57223361111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.37
+    }
+  },
+  {
+    "utc": "2026-08-16T14:05:17.034+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:05:16.575+00:00",
+      "router_gps_time": "2026-08-16 14:05:16",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.32371166666667,
+      "longitude": 24.92583666666667,
+      "altitude_m": -51.200001,
+      "speed_mps": 13.036022222222222,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 2.23
+    }
+  },
+  {
+    "utc": "2026-08-16T14:05:17.034+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6200
+    },
+    "after": {
+      "earfcn": 1875
+    },
+    "gps": {
+      "utc": "2026-08-16T14:05:16.575+00:00",
+      "router_gps_time": "2026-08-16 14:05:16",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.32371166666667,
+      "longitude": 24.92583666666667,
+      "altitude_m": -51.200001,
+      "speed_mps": 13.036022222222222,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 2.23
+    }
+  },
+  {
+    "utc": "2026-08-16T14:06:28.092+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "REGISTRATION_LOST",
+    "before": {
+      "registered": true
+    },
+    "after": {
+      "registered": false
+    },
+    "gps": {
+      "utc": "2026-08-16T14:06:28.102+00:00",
+      "router_gps_time": "2026-08-16 14:06:27",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.316289999999995,
+      "longitude": 24.935373333333338,
+      "altitude_m": -55.799999,
+      "speed_mps": 17.830644444444445,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.74
+    }
+  },
+  {
+    "utc": "2026-08-16T14:06:29.195+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "REGISTRATION_RESTORED",
+    "before": {
+      "registered": false
+    },
+    "after": {
+      "registered": true
+    },
+    "gps": {
+      "utc": "2026-08-16T14:06:29.148+00:00",
+      "router_gps_time": "2026-08-16 14:06:28",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.31613000000001,
+      "longitude": 24.935465,
+      "altitude_m": -55.799999,
+      "speed_mps": 18.35537805555556,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.74
+    }
+  },
+  {
+    "utc": "2026-08-16T14:25:18.249+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:25:18.017+00:00",
+      "router_gps_time": "2026-08-16 14:25:17",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.31252333333334,
+      "longitude": 24.95366166666667,
+      "altitude_m": -267.299988,
+      "speed_mps": 13.452721944444445,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.09
+    }
+  },
+  {
+    "utc": "2026-08-16T14:25:18.249+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1875
+    },
+    "after": {
+      "earfcn": 6200
+    },
+    "gps": {
+      "utc": "2026-08-16T14:25:18.017+00:00",
+      "router_gps_time": "2026-08-16 14:25:17",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.31252333333334,
+      "longitude": 24.95366166666667,
+      "altitude_m": -267.299988,
+      "speed_mps": 13.452721944444445,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.09
+    }
+  },
+  {
+    "utc": "2026-08-16T14:30:22.315+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:30:22.247+00:00",
+      "router_gps_time": "2026-08-16 14:30:21",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33371833333334,
+      "longitude": 24.95438166666667,
+      "altitude_m": 75.800003,
+      "speed_mps": 7.958455555555555,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.25
+    }
+  },
+  {
+    "utc": "2026-08-16T14:30:22.315+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6200
+    },
+    "after": {
+      "earfcn": 1875
+    },
+    "gps": {
+      "utc": "2026-08-16T14:30:22.247+00:00",
+      "router_gps_time": "2026-08-16 14:30:21",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33371833333334,
+      "longitude": 24.95438166666667,
+      "altitude_m": 75.800003,
+      "speed_mps": 7.958455555555555,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.25
+    }
+  },
+  {
+    "utc": "2026-08-16T14:39:26.402+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B7"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:39:26.552+00:00",
+      "router_gps_time": "2026-08-16 14:39:26",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.365991666666666,
+      "longitude": 24.91987333333333,
+      "altitude_m": 36.799999,
+      "speed_mps": 0.3601111111111111,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 0.94
+    }
+  },
+  {
+    "utc": "2026-08-16T14:39:26.402+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1875
+    },
+    "after": {
+      "earfcn": 2850
+    },
+    "gps": {
+      "utc": "2026-08-16T14:39:26.552+00:00",
+      "router_gps_time": "2026-08-16 14:39:26",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.365991666666666,
+      "longitude": 24.91987333333333,
+      "altitude_m": 36.799999,
+      "speed_mps": 0.3601111111111111,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 0.94
+    }
+  },
+  {
+    "utc": "2026-08-16T13:56:18.252+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B7"
+    },
+    "gps": {
+      "utc": "2026-08-16T13:56:18.727+00:00",
+      "router_gps_time": "2026-08-16 13:56:18",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36601833333334,
+      "longitude": 24.919983333333334,
+      "altitude_m": 23.700001,
+      "speed_mps": 1.7542555555555555,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.49
+    }
+  },
+  {
+    "utc": "2026-08-16T13:56:18.252+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1344
+    },
+    "after": {
+      "earfcn": 3050
+    },
+    "gps": {
+      "utc": "2026-08-16T13:56:18.727+00:00",
+      "router_gps_time": "2026-08-16 13:56:18",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36601833333334,
+      "longitude": 24.919983333333334,
+      "altitude_m": 23.700001,
+      "speed_mps": 1.7542555555555555,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.49
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:14.905+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B7"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:15.032+00:00",
+      "router_gps_time": "2026-08-16 13:58:14",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.361713333333334,
+      "longitude": 24.92388,
+      "altitude_m": -28.299999,
+      "speed_mps": 12.367244999999999,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.67
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:14.905+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 3050
+    },
+    "after": {
+      "earfcn": 6300
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:15.032+00:00",
+      "router_gps_time": "2026-08-16 13:58:14",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.361713333333334,
+      "longitude": 24.92388,
+      "altitude_m": -28.299999,
+      "speed_mps": 12.367244999999999,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.67
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:14.905+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B364"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B78"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:15.032+00:00",
+      "router_gps_time": "2026-08-16 13:58:14",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.361713333333334,
+      "longitude": 24.92388,
+      "altitude_m": -28.299999,
+      "speed_mps": 12.367244999999999,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.67
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:30.241+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B78"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B214"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:30.562+00:00",
+      "router_gps_time": "2026-08-16 13:58:30",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35958833333334,
+      "longitude": 24.923768333333335,
+      "altitude_m": -36.099998,
+      "speed_mps": 15.592810833333333,
+      "course_deg": null,
+      "satellites": 3,
+      "hdop": 2.68
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:33.535+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B214"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B29"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:33.665+00:00",
+      "router_gps_time": "2026-08-16 13:58:33",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35940166666666,
+      "longitude": 24.923855000000003,
+      "altitude_m": -39.200001,
+      "speed_mps": 12.140889166666666,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 5.46
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:35.718+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B29"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B214"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:35.732+00:00",
+      "router_gps_time": "2026-08-16 13:58:35",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35940166666666,
+      "longitude": 24.923938333333332,
+      "altitude_m": -41.200001,
+      "speed_mps": 9.722999722222223,
+      "course_deg": null,
+      "satellites": 3,
+      "hdop": 2.67
+    }
+  },
+  {
+    "utc": "2026-08-16T13:58:47.830+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B214"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B171"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:58:47.366+00:00",
+      "router_gps_time": "2026-08-16 13:58:47",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35952,
+      "longitude": 24.922974999999997,
+      "altitude_m": -51.200001,
+      "speed_mps": 4.840922222222223,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 15.55
+    }
+  },
+  {
+    "utc": "2026-08-16T13:59:03.226+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B171"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B82"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:59:02.865+00:00",
+      "router_gps_time": "2026-08-16 13:59:02",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35916166666666,
+      "longitude": 24.918441666666663,
+      "altitude_m": -65.0,
+      "speed_mps": 13.94144472222222,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 2.02
+    }
+  },
+  {
+    "utc": "2026-08-16T13:59:21.854+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B82"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B66"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:59:21.467+00:00",
+      "router_gps_time": "2026-08-16 13:59:21",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.358738333333335,
+      "longitude": 24.9128,
+      "altitude_m": -78.599998,
+      "speed_mps": 14.440455277777778,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 1.99
+    }
+  },
+  {
+    "utc": "2026-08-16T13:59:54.680+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B66"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T13:59:54.861+00:00",
+      "router_gps_time": "2026-08-16 13:59:54",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.357600000000005,
+      "longitude": 24.90509666666667,
+      "altitude_m": -80.400002,
+      "speed_mps": 14.800566944444444,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.46
+    }
+  },
+  {
+    "utc": "2026-08-16T14:01:46.123+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B8"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:01:45.731+00:00",
+      "router_gps_time": "2026-08-16 14:01:45",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.349961666666665,
+      "longitude": 24.899516666666667,
+      "altitude_m": -51.700001,
+      "speed_mps": 14.723400555555555,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 6.32
+    }
+  },
+  {
+    "utc": "2026-08-16T14:02:13.494+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B8"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B379"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:02:13.916+00:00",
+      "router_gps_time": "2026-08-16 14:02:13",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.347031666666666,
+      "longitude": 24.904013333333335,
+      "altitude_m": -71.099998,
+      "speed_mps": 15.212121944444444,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 2.32
+    }
+  },
+  {
+    "utc": "2026-08-16T14:02:27.731+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B379"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B73"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:02:27.354+00:00",
+      "router_gps_time": "2026-08-16 14:02:27",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.34513833333334,
+      "longitude": 24.90523166666667,
+      "altitude_m": -81.599998,
+      "speed_mps": 16.096967222222222,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 1.99
+    }
+  },
+  {
+    "utc": "2026-08-16T14:02:39.766+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B73"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:02:39.749+00:00",
+      "router_gps_time": "2026-08-16 14:02:39",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.34394,
+      "longitude": 24.90710166666667,
+      "altitude_m": -91.5,
+      "speed_mps": 13.190355277777776,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.75
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:22.480+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B353"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:22.430+00:00",
+      "router_gps_time": "2026-08-16 14:03:22",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.340149999999994,
+      "longitude": 24.914566666666662,
+      "altitude_m": -98.300003,
+      "speed_mps": 15.57223361111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.37
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:25.749+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B353"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:25.524+00:00",
+      "router_gps_time": "2026-08-16 14:03:25",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.340001666666666,
+      "longitude": 24.91541666666667,
+      "altitude_m": -95.300003,
+      "speed_mps": 15.8551775,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.35
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:34.460+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:34.798+00:00",
+      "router_gps_time": "2026-08-16 14:03:34",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.339000000000006,
+      "longitude": 24.916985,
+      "altitude_m": -97.900002,
+      "speed_mps": 16.50337861111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.57
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:34.460+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6300
+    },
+    "after": {
+      "earfcn": 1344
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:34.798+00:00",
+      "router_gps_time": "2026-08-16 14:03:34",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.339000000000006,
+      "longitude": 24.916985,
+      "altitude_m": -97.900002,
+      "speed_mps": 16.50337861111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.57
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:34.460+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B353"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:34.798+00:00",
+      "router_gps_time": "2026-08-16 14:03:34",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.339000000000006,
+      "longitude": 24.916985,
+      "altitude_m": -97.900002,
+      "speed_mps": 16.50337861111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.57
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:37.708+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:37.887+00:00",
+      "router_gps_time": "2026-08-16 14:03:37",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33866,
+      "longitude": 24.91752166666667,
+      "altitude_m": -99.900002,
+      "speed_mps": 16.51881138888889,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.29
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:37.708+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1344
+    },
+    "after": {
+      "earfcn": 6300
+    },
+    "gps": {
+      "utc": "2026-08-16T14:03:37.887+00:00",
+      "router_gps_time": "2026-08-16 14:03:37",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33866,
+      "longitude": 24.91752166666667,
+      "altitude_m": -99.900002,
+      "speed_mps": 16.51881138888889,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.29
+    }
+  },
+  {
+    "utc": "2026-08-16T14:04:07.310+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B337"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:04:07.109+00:00",
+      "router_gps_time": "2026-08-16 14:04:06",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.335065,
+      "longitude": 24.915338333333338,
+      "altitude_m": -51.799999,
+      "speed_mps": 20.408010277777777,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 2.21
+    }
+  },
+  {
+    "utc": "2026-08-16T14:04:25.862+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B421"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:04:25.755+00:00",
+      "router_gps_time": "2026-08-16 14:04:25",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33163,
+      "longitude": 24.918860000000002,
+      "altitude_m": -52.0,
+      "speed_mps": 23.443233055555556,
+      "course_deg": null,
+      "satellites": 5,
+      "hdop": 1.43
+    }
+  },
+  {
+    "utc": "2026-08-16T14:04:41.137+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B421"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:04:41.244+00:00",
+      "router_gps_time": "2026-08-16 14:04:41",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.32879166666667,
+      "longitude": 24.922030000000003,
+      "altitude_m": -41.299999,
+      "speed_mps": 20.778410833333332,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 2.44
+    }
+  },
+  {
+    "utc": "2026-08-16T14:04:46.632+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B335"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B441"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:04:46.463+00:00",
+      "router_gps_time": "2026-08-16 14:04:46",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.32778666666666,
+      "longitude": 24.92250333333333,
+      "altitude_m": -43.400002,
+      "speed_mps": 22.17255472222222,
+      "course_deg": null,
+      "satellites": 4,
+      "hdop": 7.35
+    }
+  },
+  {
+    "utc": "2026-08-16T14:05:41.308+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B441"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B134"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:05:41.397+00:00",
+      "router_gps_time": "2026-08-16 14:05:41",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.323705000000004,
+      "longitude": 24.932001666666665,
+      "altitude_m": -48.599998,
+      "speed_mps": 16.60626611111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.94
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:04.894+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B134"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:05.279+00:00",
+      "router_gps_time": "2026-08-16 14:29:05",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.327623333333335,
+      "longitude": 24.94934,
+      "altitude_m": 91.199997,
+      "speed_mps": 10.4175,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.25
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:10.436+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B134"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:10.487+00:00",
+      "router_gps_time": "2026-08-16 14:29:10",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.327915,
+      "longitude": 24.949606666666668,
+      "altitude_m": 92.5,
+      "speed_mps": 7.119911111111111,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.57
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:15.945+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B134"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:15.695+00:00",
+      "router_gps_time": "2026-08-16 14:29:15",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.32822666666666,
+      "longitude": 24.950291666666665,
+      "altitude_m": 94.0,
+      "speed_mps": 9.599533333333333,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.25
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:43.263+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B332"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B20",
+        "B302"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:43.673+00:00",
+      "router_gps_time": "2026-08-16 14:29:43",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33045333333333,
+      "longitude": 24.95218333333333,
+      "altitude_m": 96.0,
+      "speed_mps": 8.688966388888888,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.6
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:46.571+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B20"
+    },
+    "after": {
+      "primary_band": "B3"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:46.763+00:00",
+      "router_gps_time": "2026-08-16 14:29:46",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33071333333334,
+      "longitude": 24.952275,
+      "altitude_m": 95.199997,
+      "speed_mps": 9.069655000000001,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.6
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:46.571+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 6300
+    },
+    "after": {
+      "earfcn": 1344
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:46.763+00:00",
+      "router_gps_time": "2026-08-16 14:29:46",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33071333333334,
+      "longitude": 24.952275,
+      "altitude_m": 95.199997,
+      "speed_mps": 9.069655000000001,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.6
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:52.080+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B20",
+        "B302"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B496"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:51.974+00:00",
+      "router_gps_time": "2026-08-16 14:29:51",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33109833333333,
+      "longitude": 24.952344999999998,
+      "altitude_m": 92.800003,
+      "speed_mps": 8.982199444444444,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.25
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:55.381+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "BAND_CHANGE",
+    "before": {
+      "primary_band": "B3"
+    },
+    "after": {
+      "primary_band": "B20"
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:55.071+00:00",
+      "router_gps_time": "2026-08-16 14:29:54",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33135666666667,
+      "longitude": 24.952356666666667,
+      "altitude_m": 91.599998,
+      "speed_mps": 9.558377777777777,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 1.07
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:55.381+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "EARFCN_CHANGE",
+    "before": {
+      "earfcn": 1344
+    },
+    "after": {
+      "earfcn": 6300
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:55.071+00:00",
+      "router_gps_time": "2026-08-16 14:29:54",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33135666666667,
+      "longitude": 24.952356666666667,
+      "altitude_m": 91.599998,
+      "speed_mps": 9.558377777777777,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 1.07
+    }
+  },
+  {
+    "utc": "2026-08-16T14:29:55.381+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B496"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:29:55.071+00:00",
+      "router_gps_time": "2026-08-16 14:29:54",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33135666666667,
+      "longitude": 24.952356666666667,
+      "altitude_m": 91.599998,
+      "speed_mps": 9.558377777777777,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 1.07
+    }
+  },
+  {
+    "utc": "2026-08-16T14:30:04.154+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:30:04.376+00:00",
+      "router_gps_time": "2026-08-16 14:30:04",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33224166666667,
+      "longitude": 24.953041666666664,
+      "altitude_m": 87.599998,
+      "speed_mps": 11.09656638888889,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.48
+    }
+  },
+  {
+    "utc": "2026-08-16T14:31:07.461+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:31:07.122+00:00",
+      "router_gps_time": "2026-08-16 14:31:06",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33672,
+      "longitude": 24.959500000000002,
+      "altitude_m": 43.400002,
+      "speed_mps": 12.459844166666665,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.38
+    }
+  },
+  {
+    "utc": "2026-08-16T14:31:19.654+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:31:19.617+00:00",
+      "router_gps_time": "2026-08-16 14:31:19",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.33761166666667,
+      "longitude": 24.961088333333336,
+      "altitude_m": 36.299999,
+      "speed_mps": 11.379511666666668,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.41
+    }
+  },
+  {
+    "utc": "2026-08-16T14:31:26.274+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B288"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:31:25.843+00:00",
+      "router_gps_time": "2026-08-16 14:31:25",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.338146666666674,
+      "longitude": 24.961389999999998,
+      "altitude_m": 33.900002,
+      "speed_mps": 11.48239972222222,
+      "course_deg": null,
+      "satellites": 7,
+      "hdop": 1.37
+    }
+  },
+  {
+    "utc": "2026-08-16T14:34:23.336+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B338"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B298"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:34:22.929+00:00",
+      "router_gps_time": "2026-08-16 14:34:22",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35584833333334,
+      "longitude": 24.964481666666664,
+      "altitude_m": 3.1,
+      "speed_mps": 17.424232777777778,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.27
+    }
+  },
+  {
+    "utc": "2026-08-16T14:36:18.661+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B298"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B258"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:36:19.039+00:00",
+      "router_gps_time": "2026-08-16 14:36:18",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36282666666666,
+      "longitude": 24.943245,
+      "altitude_m": 42.299999,
+      "speed_mps": 15.263566666666666,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 0.93
+    }
+  },
+  {
+    "utc": "2026-08-16T14:36:27.900+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B258"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B342"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:36:28.387+00:00",
+      "router_gps_time": "2026-08-16 14:36:28",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.362386666666666,
+      "longitude": 24.940696666666668,
+      "altitude_m": 43.900002,
+      "speed_mps": 15.685411111111112,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.09
+    }
+  },
+  {
+    "utc": "2026-08-16T14:36:54.150+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B342"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B365"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:36:53.807+00:00",
+      "router_gps_time": "2026-08-16 14:36:53",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36105666666667,
+      "longitude": 24.934534999999997,
+      "altitude_m": 45.5,
+      "speed_mps": 15.705989166666667,
+      "course_deg": null,
+      "satellites": 8,
+      "hdop": 1.15
+    }
+  },
+  {
+    "utc": "2026-08-16T14:37:21.678+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B365"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B214"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:37:21.814+00:00",
+      "router_gps_time": "2026-08-16 14:37:21",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35964166666666,
+      "longitude": 24.927500000000002,
+      "altitude_m": 43.099998,
+      "speed_mps": 15.721421944444444,
+      "course_deg": null,
+      "satellites": 6,
+      "hdop": 1.36
+    }
+  },
+  {
+    "utc": "2026-08-16T14:37:37.016+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B3",
+        "B214"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B7",
+        "B29"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:37:37.384+00:00",
+      "router_gps_time": "2026-08-16 14:37:37",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.35996,
+      "longitude": 24.923713333333332,
+      "altitude_m": 37.299999,
+      "speed_mps": 14.034044722222223,
+      "course_deg": null,
+      "satellites": 11,
+      "hdop": 0.93
+    }
+  },
+  {
+    "utc": "2026-08-16T14:38:01.191+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "CA_CHANGE",
+    "before": {
+      "ca_bands": [
+        "B7",
+        "B29"
+      ]
+    },
+    "after": {
+      "ca_bands": [
+        "B3",
+        "B66"
+      ]
+    },
+    "gps": {
+      "utc": "2026-08-16T14:38:01.269+00:00",
+      "router_gps_time": "2026-08-16 14:38:00",
+      "valid": true,
+      "gps_valid": true,
+      "gps_valid_reason": null,
+      "latitude": 59.36268666666667,
+      "longitude": 24.923601666666666,
+      "altitude_m": 29.1,
+      "speed_mps": 6.950144444444445,
+      "course_deg": null,
+      "satellites": 9,
+      "hdop": 1.07
+    }
+  },
+  {
+    "utc": "2026-08-16T14:03:27+00:00",
+    "end_utc": "2026-08-16T14:03:30+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.476396101040169,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.339924999999994,
+    "lon": 24.915673333333334
+  },
+  {
+    "utc": "2026-08-16T14:05:51+00:00",
+    "end_utc": "2026-08-16T14:05:53+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.683480817365192,
+    "band": "B3",
+    "cell": null,
+    "lat": 59.322179999999996,
+    "lon": 24.932171666666665
+  },
+  {
+    "utc": "2026-08-16T14:27:50+00:00",
+    "end_utc": "2026-08-16T14:27:54+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.802917642595473,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.32196999999999,
+    "lon": 24.950248333333334
+  },
+  {
+    "utc": "2026-08-16T14:29:00+00:00",
+    "end_utc": "2026-08-16T14:29:02+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.365117509592535,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.327070000000006,
+    "lon": 24.94889
+  },
+  {
+    "utc": "2026-08-16T14:29:07+00:00",
+    "end_utc": "2026-08-16T14:29:10+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.0747334342849117,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.32775166666667,
+    "lon": 24.949426666666668
+  },
+  {
+    "utc": "2026-08-16T14:29:15+00:00",
+    "end_utc": "2026-08-16T14:29:23+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 2.0747334342849117,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.328163333333336,
+    "lon": 24.950156666666665
+  },
+  {
+    "utc": "2026-08-16T14:29:25+00:00",
+    "end_utc": "2026-08-16T14:29:28+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.6162721783428,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.328863333333324,
+    "lon": 24.95156666666667
+  },
+  {
+    "utc": "2026-08-16T14:31:19+00:00",
+    "end_utc": "2026-08-16T14:31:21+00:00",
+    "path": "lte1",
+    "operator": "Elisa",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 4.617032855910532,
+    "band": "B3",
+    "cell": null,
+    "lat": 59.337540000000004,
+    "lon": 24.96096
+  },
+  {
+    "utc": "2026-08-16T14:03:25+00:00",
+    "end_utc": "2026-08-16T14:03:27+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "HIGH_LATENCY_UNDER_LOAD",
+    "offered_bitrate": "6M",
+    "measured_mbps": 3.724512197470845,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.34005666666667,
+    "lon": 24.915135000000003
+  },
+  {
+    "utc": "2026-08-16T14:03:31+00:00",
+    "end_utc": "2026-08-16T14:03:35+00:00",
+    "path": "lte2",
+    "operator": "Telia",
+    "type": "SEVERE_BUFFERING",
+    "offered_bitrate": "6M",
+    "measured_mbps": 3.724512197470845,
+    "band": "B20",
+    "cell": null,
+    "lat": 59.339484999999996,
+    "lon": 24.916286666666664
+  }
+]
