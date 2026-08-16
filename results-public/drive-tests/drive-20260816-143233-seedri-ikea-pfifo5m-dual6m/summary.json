@@ -1,0 +1,31 @@
+{
+  "skill": "elmo-lte-drive-test",
+  "skill_version": "2.0",
+  "resolution": "V2_CONTINUOUS_TIMELINE",
+  "session_id": "drive-20260816-143233-seedri-ikea-pfifo5m-dual6m",
+  "timeline_rows": 796,
+  "gps_valid_fixes": 764,
+  "lte1_samples": 720,
+  "lte2_samples": 720,
+  "ping_lte1_samples": 983,
+  "ping_lte2_samples": 982,
+  "traffic_loss_resolution_s": 10,
+  "diversity_normal": {
+    "both_good": 0,
+    "elisa_impaired_telia_good": 43,
+    "telia_impaired_elisa_good": 1,
+    "both_impaired": 752,
+    "longest_both_impaired_interval_s": 191,
+    "percentage_with_at_least_one_good_path": 5.53,
+    "criteria": "normal"
+  },
+  "diversity_strict": {
+    "both_good": 0,
+    "elisa_impaired_telia_good": 43,
+    "telia_impaired_elisa_good": 1,
+    "both_impaired": 752,
+    "longest_both_impaired_interval_s": 191,
+    "percentage_with_at_least_one_good_path": 5.53,
+    "criteria": "strict"
+  }
+}
