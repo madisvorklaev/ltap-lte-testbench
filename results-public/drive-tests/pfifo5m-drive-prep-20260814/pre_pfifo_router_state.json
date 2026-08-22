@@ -1,0 +1,73 @@
+{
+  "created_utc": "2026-08-14T20:19:22.615+00:00",
+  "matched_cake_session_id": "drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m",
+  "matched_cake_git_commit": "6fc17f1",
+  "commands": [
+    {
+      "command": "/system/resource/print",
+      "rc": 0,
+      "stdout": "                   uptime: 50m56s             \n                  version: 7.24rc3 (testing)  \n               build-time: 2026-07-28 13:55:55\n          minimum-version: 7.11               \n              free-memory: 71.3MiB            \n             total-memory: 128.0MiB           \n                      cpu: MIPS 1004Kc V2.15  \n                cpu-count: 4                  \n            cpu-frequency: 880MHz             \n                 cpu-load: 2%                 \n           free-hdd-space: 3616.0KiB          \n          total-hdd-space: 16.0MiB            \n  write-sect-since-reboot: 189                \n         write-sect-total: 163356             \n        architecture-name: mmips              \n               board-name: LtAP-2HnD          \n                 platform: MikroTik           ",
+      "stderr": ""
+    },
+    {
+      "command": "/system/routerboard/print",
+      "rc": 0,
+      "stdout": "       routerboard: yes        \n             model: LtAP-2HnD  \n          revision: r2         \n     firmware-type: mt7621L    \n  minimum-firmware: 7.16.2     \n  current-firmware: 7.24rc3    \n  upgrade-firmware: 7.24rc3    ",
+      "stderr": ""
+    },
+    {
+      "command": "/interface/lte/print detail without-paging",
+      "rc": 0,
+      "stdout": "Flags: R - RUNNING\n0 R default-name=\"lte1\" name=\"lte1\" mtu=1500 apn-profiles=ELMO-LTE1\n    allow-roaming=no sms-read=no sms-protocol=auto network-mode=lte band=\"\"\n \n1 R ;;; modem AT channel timeout occurred\n    default-name=\"lte2\" name=\"lte2\" mtu=1500 apn-profiles=ELMO-LTE2\n    allow-roaming=no sms-read=no sms-protocol=auto network-mode=lte band=\"\"",
+      "stderr": ""
+    },
+    {
+      "command": "/interface/lte/monitor lte1 once",
+      "rc": 0,
+      "stdout": "               status: registered                          \n           pin-status: ok                                  \n  registration-status: registered                          \n         manufacturer: MikroTik                            \n                model: R11l-LTE7                           \n             revision: R11l-LTE7_V005                      \n     current-operator: elisa                               \n                  lac: 2022                                \n       current-cellid: 257028629                           \n               enb-id: 1004018                             \n            sector-id: 21                                  \n           phy-cellid: 69                                  \n           data-class: LTE                                 \n       session-uptime: 4m54s                               \n         primary-band: B3@15Mhz earfcn: 1875 phy-cellid: 69\n                  cqi: 0                                   \n                 rssi: -68dBm                              \n                 rsrp: -101dBm                             \n                 rsrq: -13.5dB                             \n                 sinr: 0dB                                 ",
+      "stderr": ""
+    },
+    {
+      "command": "/interface/lte/monitor lte2 once",
+      "rc": 0,
+      "stdout": "                   ;;; modem AT channel timeout occurred   \n               status: registered                          \n           pin-status: ok                                  \n  registration-status: registered                          \n         manufacturer: MikroTik                            \n                model: R11l-LTE7                           \n             revision: R11l-LTE7_V005                      \n     current-operator: Telia                               \n                  lac: 10012                               \n       current-cellid: 84504341                            \n               enb-id: 330095                              \n            sector-id: 21                                  \n           phy-cellid: 66                                  \n           data-class: LTE                                 \n       session-uptime: 50m3s                               \n         primary-band: B3@20Mhz earfcn: 1344 phy-cellid: 66\n                  cqi: 0                                   \n                 rssi: -66dBm                              \n                 rsrp: -97dBm                              \n                 rsrq: -12dB                               \n                 sinr: 7dB                                 ",
+      "stderr": ""
+    },
+    {
+      "command": "/queue/tree/print stats detail",
+      "rc": 0,
+      "stdout": "0  name=\"ELMO-EXP2B-LTE1\" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0\n   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=588 packets=6 dropped=0\n \n1  name=\"ELMO-EXP2B-LTE2\" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0\n   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=882 packets=9 dropped=0",
+      "stderr": ""
+    },
+    {
+      "command": "/ip/firewall/mangle/print stats detail",
+      "rc": 0,
+      "stdout": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN       ACTION                BYTES    PACKETS\n;;; ELMO EXP2B: test packet mark lte1\n0 prerouting  mark-packet             672          8\n;;; ELMO TEST: source via lte1\n1 prerouting  mark-routing  1 297 303 411  1 062 932\n;;; ELMO EXP2B: test packet mark lte2\n2 prerouting  mark-packet             756          9\n;;; ELMO TEST: source via lte2\n3 prerouting  mark-routing  1 327 989 524  1 087 928\n;;; ELMO: video via lte1\n4 prerouting  mark-routing              0          0\n;;; ELMO: video via lte2\n5 prerouting  mark-routing              0          0",
+      "stderr": ""
+    },
+    {
+      "command": "/ip/firewall/filter/print detail where action=fasttrack-connection",
+      "rc": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "/queue/type/print detail where name~\"elmo-exp2b\"",
+      "rc": 0,
+      "stdout": "0  name=\"elmo-exp2b-pfifo\" kind=pfifo pfifo-limit=50",
+      "stderr": ""
+    },
+    {
+      "command": "/system/gps/print",
+      "rc": 0,
+      "stdout": "             enabled: yes     \n                port: gps     \n             channel: 0       \n         init-string:         \n     set-system-time: no      \n   coordinate-format: ddmm    \n  gps-antenna-select: external",
+      "stderr": ""
+    },
+    {
+      "command": "/system/gps/monitor once",
+      "rc": 0,
+      "stdout": "        date-and-time: 2026-08-14 20:19:23\n             latitude: 5921.7572          \n            longitude: 02455.4024         \n             altitude: 69.800003 m        \n                speed: 1.814960 km/h      \n  destination-bearing: none               \n         true-bearing: 48.320000 deg. True\n     magnetic-bearing: 0.000000 deg. Mag  \n                valid: yes                \n           satellites: 6                  \n          fix-quality: 1                  \n  horizontal-dilution: 1.37               \n             data-age: 1s                 ",
+      "stderr": ""
+    }
+  ]
+}

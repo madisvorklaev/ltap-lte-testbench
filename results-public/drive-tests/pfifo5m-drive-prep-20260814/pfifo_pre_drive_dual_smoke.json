@@ -1,0 +1,108 @@
+{
+  "label": "PFIFO_PRE_DRIVE_SMOKE_ONLY",
+  "created_utc": "2026-08-14T20:20:19.209+00:00",
+  "server": "217.18.95.142",
+  "ports": {
+    "lte1": 5201,
+    "lte2": 5202
+  },
+  "before": [
+    {
+      "command": "/queue/tree/print stats detail where name=\"ELMO-EXP2B-LTE1\"",
+      "rc": 0,
+      "stdout": "0  name=\"ELMO-EXP2B-LTE1\" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0\n   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=882 packets=9 dropped=0",
+      "stderr": ""
+    },
+    {
+      "command": "/queue/tree/print stats detail where name=\"ELMO-EXP2B-LTE2\"",
+      "rc": 0,
+      "stdout": "1  name=\"ELMO-EXP2B-LTE2\" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0\n   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=1176 packets=12\n   dropped=0",
+      "stderr": ""
+    },
+    {
+      "command": "/ip/firewall/mangle/print stats detail where comment~\"ELMO EXP2B:\"",
+      "rc": 0,
+      "stdout": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN       ACTION       BYTES  PACKETS\n;;; ELMO EXP2B: test packet mark lte1\n0 prerouting  mark-packet    924       11\n;;; ELMO EXP2B: test packet mark lte2\n1 prerouting  mark-packet  1 008       12",
+      "stderr": ""
+    },
+    {
+      "command": "/system/resource/print",
+      "rc": 0,
+      "stdout": "                   uptime: 51m36s             \n                  version: 7.24rc3 (testing)  \n               build-time: 2026-07-28 13:55:55\n          minimum-version: 7.11               \n              free-memory: 71.2MiB            \n             total-memory: 128.0MiB           \n                      cpu: MIPS 1004Kc V2.15  \n                cpu-count: 4                  \n            cpu-frequency: 880MHz             \n                 cpu-load: 10%                \n           free-hdd-space: 3616.0KiB          \n          total-hdd-space: 16.0MiB            \n  write-sect-since-reboot: 193                \n         write-sect-total: 163360             \n        architecture-name: mmips              \n               board-name: LtAP-2HnD          \n                 platform: MikroTik           ",
+      "stderr": ""
+    }
+  ],
+  "after": [
+    {
+      "command": "/queue/tree/print stats detail where name=\"ELMO-EXP2B-LTE1\"",
+      "rc": 0,
+      "stdout": "0  name=\"ELMO-EXP2B-LTE1\" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=5000288\n   packet-rate=503 queued-bytes=0 queued-packets=0 bytes=9502610 packets=7676\n   dropped=1727",
+      "stderr": ""
+    },
+    {
+      "command": "/queue/tree/print stats detail where name=\"ELMO-EXP2B-LTE2\"",
+      "rc": 0,
+      "stdout": "1  name=\"ELMO-EXP2B-LTE2\" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=5000288\n   packet-rate=503 queued-bytes=0 queued-packets=0 bytes=9502904 packets=7679\n   dropped=1727",
+      "stderr": ""
+    },
+    {
+      "command": "/ip/firewall/mangle/print stats detail where comment~\"ELMO EXP2B:\"",
+      "rc": 0,
+      "stdout": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN       ACTION            BYTES  PACKETS\n;;; ELMO EXP2B: test packet mark lte1\n0 prerouting  mark-packet  11 514 895    9 405\n;;; ELMO EXP2B: test packet mark lte2\n1 prerouting  mark-packet  11 514 979    9 406",
+      "stderr": ""
+    },
+    {
+      "command": "/system/resource/print",
+      "rc": 0,
+      "stdout": "                   uptime: 51m52s             \n                  version: 7.24rc3 (testing)  \n               build-time: 2026-07-28 13:55:55\n          minimum-version: 7.11               \n              free-memory: 71.0MiB            \n             total-memory: 128.0MiB           \n                      cpu: MIPS 1004Kc V2.15  \n                cpu-count: 4                  \n            cpu-frequency: 880MHz             \n                 cpu-load: 5%                 \n           free-hdd-space: 3616.0KiB          \n          total-hdd-space: 16.0MiB            \n  write-sect-since-reboot: 196                \n         write-sect-total: 163363             \n        architecture-name: mmips              \n               board-name: LtAP-2HnD          \n                 platform: MikroTik           ",
+      "stderr": ""
+    }
+  ],
+  "results": {
+    "lte1": {
+      "cmd": "iperf3 -c 217.18.95.142 -p 5201 -4 -B 192.168.101.201 -u -b 6M -l 1200 -t 15 -i 1 -J",
+      "started_utc": "2026-08-14T20:20:02.598+00:00",
+      "completed_utc": "2026-08-14T20:20:18.525+00:00",
+      "rc": 0,
+      "stderr": "",
+      "iperf_error": null,
+      "receiver_mbps": 4.728360912283427,
+      "sender_mbps": 5.999832404681495,
+      "udp_loss_percent": 18.410666666666668,
+      "jitter_ms": 2.2804051323006,
+      "lost_packets": 1726,
+      "packets": 9375
+    },
+    "lte2": {
+      "cmd": "iperf3 -c 217.18.95.142 -p 5202 -4 -B 192.168.101.202 -u -b 6M -l 1200 -t 15 -i 1 -J",
+      "started_utc": "2026-08-14T20:20:02.599+00:00",
+      "completed_utc": "2026-08-14T20:20:18.526+00:00",
+      "rc": 0,
+      "stderr": "",
+      "iperf_error": null,
+      "receiver_mbps": 4.739049405950517,
+      "sender_mbps": 5.999863603100756,
+      "udp_loss_percent": 18.410666666666668,
+      "jitter_ms": 2.33753760057874,
+      "lost_packets": 1726,
+      "packets": 9375
+    }
+  },
+  "counter_deltas": {
+    "LTE1": {
+      "dropped": 1727,
+      "packets": 7667,
+      "bytes": 9501728,
+      "queued-packets": 0,
+      "queued-bytes": 0
+    },
+    "LTE2": {
+      "dropped": 1727,
+      "packets": 7667,
+      "bytes": 9501728,
+      "queued-packets": 0,
+      "queued-bytes": 0
+    }
+  },
+  "ok": true
+}

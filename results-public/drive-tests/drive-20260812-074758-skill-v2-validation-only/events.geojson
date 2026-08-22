@@ -1,0 +1,49 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T04:48:17.131+00:00",
+        "path": "lte1",
+        "operator": "Elisa",
+        "type": "BAND_CHANGE",
+        "before": {
+          "primary_band": "B1"
+        },
+        "after": {
+          "primary_band": "B7"
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.920241666666666,
+          59.366791666666664
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "utc": "2026-08-12T04:48:17.131+00:00",
+        "path": "lte1",
+        "operator": "Elisa",
+        "type": "EARFCN_CHANGE",
+        "before": {
+          "earfcn": 523
+        },
+        "after": {
+          "earfcn": 2850
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.920241666666666,
+          59.366791666666664
+        ]
+      }
+    }
+  ]
+}

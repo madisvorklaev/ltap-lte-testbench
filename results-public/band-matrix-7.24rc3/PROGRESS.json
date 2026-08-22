@@ -3,7 +3,7 @@
   "campaign_id": "band-matrix-7.24rc3",
   "state": "COMPLETE",
   "started_at": "2026-08-08T05:34:02+00:00",
-  "updated_at": "2026-08-22T07:05:48+00:00",
+  "updated_at": "2026-08-22T07:05:51+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
@@ -1282,7 +1282,7 @@
       "last_error": "band did not register/verify"
     }
   },
-  "last_pushed_commit": "f89609b244baf1ecc372e8c431dbcf44ae735804",
+  "last_pushed_commit": "6acdf88c1cb953d6ec98ef32fca89fcea27fe23d",
   "routerboard_firmware": "7.24rc3",
   "reset_at": "2026-08-08T06:38:48+00:00",
   "reset_reason": "Parser/readback bug fixed; prior items invalidated and must be rerun with verified band readback and primary-band checks."
