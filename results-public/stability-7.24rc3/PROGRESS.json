@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "campaign_id": "stability-7.24rc3",
-  "state": "BLOCKED_VERSION_MISMATCH",
+  "state": "PHASE_A_REPEATABILITY",
   "started_at": "2026-08-08T11:13:15+00:00",
-  "updated_at": "2026-08-25T12:09:12+00:00",
-  "routeros": "MISMATCH",
+  "updated_at": "2026-08-29T07:12:49+00:00",
+  "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
   "server_hostname": "iperf-ams-nl.eranium.net",
@@ -1843,5 +1843,5 @@
     }
   },
   "last_pushed_commit": "6acdf88c1cb953d6ec98ef32fca89fcea27fe23d",
-  "routerboard_firmware": "MISMATCH"
+  "routerboard_firmware": "7.24rc3"
 }
