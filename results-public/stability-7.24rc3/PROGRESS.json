@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "campaign_id": "stability-7.24rc3",
-  "state": "PHASE_A_REPEATABILITY",
+  "state": "COMPLETE",
   "started_at": "2026-08-08T11:13:15+00:00",
-  "updated_at": "2026-08-29T07:12:49+00:00",
+  "updated_at": "2026-08-29T07:13:03+00:00",
   "routeros": "7.24rc3",
   "original_band_lte1": "",
   "original_band_lte2": "",
@@ -1842,6 +1842,6 @@
       "last_error": "FAIL_IPERF_OR_PATH"
     }
   },
-  "last_pushed_commit": "6acdf88c1cb953d6ec98ef32fca89fcea27fe23d",
+  "last_pushed_commit": "1fd5cb6126f4e62f4e83334d963d10bb7fe3e9f2",
   "routerboard_firmware": "7.24rc3"
 }
