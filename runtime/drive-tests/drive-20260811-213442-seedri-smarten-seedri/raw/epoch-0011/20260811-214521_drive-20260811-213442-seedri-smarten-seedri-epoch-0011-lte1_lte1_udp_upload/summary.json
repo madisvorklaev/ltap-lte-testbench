@@ -1,0 +1,165 @@
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-11T21:45:21+03:00",
+    "created_utc": "2026-08-11T18:45:21.970+00:00",
+    "tag": "drive-20260811-213442-seedri-smarten-seedri-epoch-0011-lte1",
+    "path": "lte1",
+    "lte_interface": "lte1",
+    "source_ip": "192.168.101.201",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5201,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5201,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 3947398.1905775643
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 60,
+    "warmup_s": 0,
+    "cooldown_s": 0,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte1",
+    "source_rule_comment": "ELMO TEST: source via lte1",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 5962320.029061975,
+    "mbps": 5.962320029061975,
+    "jitter_ms": 1.526071018628763,
+    "lost_packets": 159,
+    "packets": 37462,
+    "lost_percent": 0.424
+  },
+  "ping": {
+    "sent": 121,
+    "received": 121,
+    "loss_percent": 0.0,
+    "min_ms": 23.675,
+    "avg_ms": 133.639,
+    "max_ms": 865.673,
+    "mdev_ms": 141.733,
+    "p95_ms": 462.0,
+    "sample_count": 121
+  },
+  "radio_target": {
+    "rssi_median": -58.0,
+    "rssi_min": -65.0,
+    "rssi_max": -55.0,
+    "rsrp_median": -89.0,
+    "rsrp_min": -105.0,
+    "rsrp_max": -84.0,
+    "rsrq_median": -13.5,
+    "rsrq_min": -19.5,
+    "rsrq_max": -11.5,
+    "sinr_median": 2.0,
+    "sinr_min": -6.0,
+    "sinr_max": 6.0,
+    "cqi_median": 8.0,
+    "cqi_min": 6.0,
+    "cqi_max": 10.0,
+    "ri_median": 1.0,
+    "ri_min": 1.0,
+    "ri_max": 2.0,
+    "primary_bands_seen": [
+      "B1@15Mhz earfcn: 523 phy-cellid: 278",
+      "B20@10Mhz earfcn: 6200 phy-cellid: 278"
+    ],
+    "ca_bands_seen": [],
+    "ca_missing_samples": 61,
+    "samples": 61,
+    "statuses_seen": [
+      "registered"
+    ],
+    "cell_changes": 0,
+    "tx-byte_delta": 46085725,
+    "rx-byte_delta": 12182,
+    "tx-packet_delta": 37225,
+    "rx-packet_delta": 127,
+    "tx-queue-drop_delta": 0
+  },
+  "radio_other": {
+    "lte2": {
+      "rssi_median": -69.0,
+      "rssi_min": -76.0,
+      "rssi_max": -55.0,
+      "rsrp_median": -107.0,
+      "rsrp_min": -115.0,
+      "rsrp_max": -82.0,
+      "rsrq_median": -17.0,
+      "rsrq_min": -19.5,
+      "rsrq_max": -10.5,
+      "sinr_median": -6.0,
+      "sinr_min": -13.0,
+      "sinr_max": 1.0,
+      "cqi_median": 0.0,
+      "cqi_min": 0.0,
+      "cqi_max": 6.0,
+      "ri_median": 1.0,
+      "ri_min": 1.0,
+      "ri_max": 1.0,
+      "primary_bands_seen": [
+        "B20@10Mhz earfcn: 6300 phy-cellid: 113",
+        "B20@10Mhz earfcn: 6300 phy-cellid: 248",
+        "B20@10Mhz earfcn: 6300 phy-cellid: 369",
+        "B20@10Mhz earfcn: 6300 phy-cellid: 433",
+        "B3@20Mhz earfcn: 1344 phy-cellid: 184",
+        "B3@20Mhz earfcn: 1344 phy-cellid: 440",
+        "B3@20Mhz earfcn: 1344 phy-cellid: 477"
+      ],
+      "ca_bands_seen": [
+        "B20@10Mhz earfcn: 6300 phy-cellid: 211",
+        "B20@10Mhz earfcn: 6300 phy-cellid: 248",
+        "B20@10Mhz earfcn: 6300 phy-cellid: 369",
+        "B3@20Mhz earfcn: 1344 phy-cellid: 453",
+        "B3@20Mhz earfcn: 1344 phy-cellid: 84",
+        "B7@20Mhz earfcn: 3050 phy-cellid: 314",
+        "B7@20Mhz earfcn: 3050 phy-cellid: 495",
+        "B7@20Mhz earfcn: 3248 phy-cellid: 407"
+      ],
+      "ca_missing_samples": 9,
+      "samples": 61,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 7,
+      "tx-byte_delta": 46074812,
+      "rx-byte_delta": 11452,
+      "tx-packet_delta": 37220,
+      "rx-packet_delta": 118,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte1",
+    "before": {
+      "comment": "ELMO TEST: source via lte1",
+      "rc": 0,
+      "raw": "529656509\n429408\n",
+      "bytes": 529656509,
+      "packets": 429408
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte1",
+      "rc": 0,
+      "raw": "575718088\n467047\n",
+      "bytes": 575718088,
+      "packets": 467047
+    },
+    "bytes_delta": 46061579,
+    "packets_delta": 37639
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 7
+}

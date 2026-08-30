@@ -1,0 +1,7 @@
+{"utc":"2026-08-12T17:08:56.622+00:00","type":"START_REQUESTED","name":"seedri-smarten-seedri"}
+{"utc":"2026-08-12T17:08:57.992+00:00","type":"RUNNING","skill_version":"2.0"}
+{"utc":"2026-08-12T17:08:58.002+00:00","type":"PING_STARTED","path":"lte1","pid":3563,"command":["ping","-n","-D","-O","-I","192.168.101.201","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-12T17:08:58.003+00:00","type":"PING_STARTED","path":"lte2","pid":3564,"command":["ping","-n","-D","-O","-I","192.168.101.202","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-12T17:37:48.877+00:00","type":"STOP_REQUESTED"}
+{"utc":"2026-08-12T17:37:49.091+00:00","type":"PING_STOPPED","path":"lte2","rc":-15}
+{"utc":"2026-08-12T17:37:49.398+00:00","type":"PING_STOPPED","path":"lte1","rc":-15}

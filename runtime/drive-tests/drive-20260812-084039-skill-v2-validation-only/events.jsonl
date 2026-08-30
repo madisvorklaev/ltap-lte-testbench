@@ -1,0 +1,5 @@
+{"utc":"2026-08-12T05:40:39.492+00:00","type":"START_REQUESTED","name":"skill-v2-validation-only"}
+{"utc":"2026-08-12T05:40:40.774+00:00","type":"RUNNING","skill_version":"2.0"}
+{"utc":"2026-08-12T05:40:40.780+00:00","type":"PING_STARTED","path":"lte1","pid":19730,"command":["ping","-n","-D","-O","-I","192.168.101.201","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-12T05:40:40.783+00:00","type":"PING_STARTED","path":"lte2","pid":19732,"command":["ping","-n","-D","-O","-I","192.168.101.202","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-12T05:40:40.904+00:00","type":"PING_STOPPED","path":"lte1","rc":-15}

@@ -1,0 +1,7 @@
+{"utc":"2026-08-16T13:55:53.335+00:00","type":"START_REQUESTED","name":"seedri-golfi-seedri-pfifo5m-dual6m"}
+{"utc":"2026-08-16T13:55:54.692+00:00","type":"RUNNING","skill_version":"2.0"}
+{"utc":"2026-08-16T13:55:54.697+00:00","type":"PING_STARTED","path":"lte1","pid":2919,"command":["ping","-n","-D","-O","-I","192.168.101.201","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-16T13:55:54.697+00:00","type":"PING_STARTED","path":"lte2","pid":2920,"command":["ping","-n","-D","-O","-I","192.168.101.202","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-16T14:40:07.156+00:00","type":"STOP_REQUESTED"}
+{"utc":"2026-08-16T14:40:07.486+00:00","type":"PING_STOPPED","path":"lte2","rc":-15}
+{"utc":"2026-08-16T14:40:07.647+00:00","type":"PING_STOPPED","path":"lte1","rc":-15}

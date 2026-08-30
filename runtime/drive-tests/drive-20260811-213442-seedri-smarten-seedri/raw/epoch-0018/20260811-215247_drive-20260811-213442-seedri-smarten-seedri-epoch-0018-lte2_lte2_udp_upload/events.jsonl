@@ -1,0 +1,13 @@
+{"timestamp_utc": "2026-08-11T18:53:01.749+00:00", "type": "sinr_low_ended", "interface": "lte2", "sinr": 7.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-11T18:53:04.749+00:00", "type": "sinr_low_started", "interface": "lte2", "sinr": -4.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-11T18:53:13.749+00:00", "type": "sinr_low_ended", "interface": "lte2", "sinr": 8.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-11T18:53:17.749+00:00", "type": "sinr_low_started", "interface": "lte2", "sinr": -5.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-11T18:53:22.749+00:00", "type": "ca_band_changed", "interface": "lte2", "old": "B7@20Mhz earfcn: 3248 phy-cellid: 144", "new": "B7@20Mhz earfcn: 3050 phy-cellid: 251"}
+{"timestamp_utc": "2026-08-11T18:53:22.749+00:00", "type": "cell_changed", "interface": "lte2", "old": "81944464", "new": "53797397"}
+{"timestamp_utc": "2026-08-11T18:53:25.749+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B3@20Mhz earfcn: 1344 phy-cellid: 453", "new": "B3@20Mhz earfcn: 1344 phy-cellid: 219"}
+{"timestamp_utc": "2026-08-11T18:53:38.749+00:00", "type": "ca_band_changed", "interface": "lte2", "old": "B7@20Mhz earfcn: 3050 phy-cellid: 251", "new": "B7@20Mhz earfcn: 3248 phy-cellid: 110"}
+{"timestamp_utc": "2026-08-11T18:53:40.754+00:00", "type": "cell_changed", "interface": "lte2", "old": "53797397", "new": "51843094"}
+{"timestamp_utc": "2026-08-11T18:53:41.749+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B3@20Mhz earfcn: 1344 phy-cellid: 219", "new": "B20@10Mhz earfcn: 6300 phy-cellid: 108"}
+{"timestamp_utc": "2026-08-11T18:53:41.749+00:00", "type": "ca_disappeared", "interface": "lte2", "old": "B7@20Mhz earfcn: 3248 phy-cellid: 110"}
+{"timestamp_utc": "2026-08-11T18:53:44.754+00:00", "type": "ca_appeared", "interface": "lte2", "ca_band": "B7@20Mhz earfcn: 3050 phy-cellid: 437"}
+{"timestamp_utc": "2026-08-11T18:53:47.749+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B20@10Mhz earfcn: 6300 phy-cellid: 108", "new": "B20@10Mhz earfcn: 6300 phy-cellid: 97"}

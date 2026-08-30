@@ -1,0 +1,8 @@
+Flags: R - RUNNING
+0 R default-name="lte1" name="lte1" mtu=1500 apn-profiles=ELMO-LTE1
+    allow-roaming=no sms-read=no sms-protocol=auto network-mode=lte band=""
+ 
+1 R ;;; modem AT channel timeout occurred
+    default-name="lte2" name="lte2" mtu=1500 apn-profiles=ELMO-LTE2
+    allow-roaming=no sms-read=no sms-protocol=auto network-mode=lte band=""
+

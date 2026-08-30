@@ -1,0 +1,157 @@
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-11T21:49:35+03:00",
+    "created_utc": "2026-08-11T18:49:35.701+00:00",
+    "tag": "drive-20260811-213442-seedri-smarten-seedri-epoch-0015-lte2",
+    "path": "lte2",
+    "lte_interface": "lte2",
+    "source_ip": "192.168.101.202",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5201,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5201,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 10956199.276573757
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 60,
+    "warmup_s": 0,
+    "cooldown_s": 0,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte2",
+    "source_rule_comment": "ELMO TEST: source via lte2",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 5993537.95719762,
+    "mbps": 5.99353795719762,
+    "jitter_ms": 1.692544926872241,
+    "lost_packets": 0,
+    "packets": 37499,
+    "lost_percent": 0
+  },
+  "ping": {
+    "sent": 121,
+    "received": 121,
+    "loss_percent": 0.0,
+    "min_ms": 12.427,
+    "avg_ms": 44.166,
+    "max_ms": 597.777,
+    "mdev_ms": 84.093,
+    "p95_ms": 72.4,
+    "sample_count": 121
+  },
+  "radio_target": {
+    "rssi_median": -69.0,
+    "rssi_min": -78.0,
+    "rssi_max": -57.0,
+    "rsrp_median": -106.0,
+    "rsrp_min": -114.0,
+    "rsrp_max": -85.0,
+    "rsrq_median": -13.0,
+    "rsrq_min": -18.5,
+    "rsrq_max": -8.0,
+    "sinr_median": 0.0,
+    "sinr_min": -7.0,
+    "sinr_max": 21.0,
+    "cqi_median": 0.0,
+    "cqi_min": 0.0,
+    "cqi_max": 0.0,
+    "ri_median": 1.0,
+    "ri_min": 1.0,
+    "ri_max": 1.0,
+    "primary_bands_seen": [
+      "B7@20Mhz earfcn: 3248 phy-cellid: 373",
+      "B7@20Mhz earfcn: 3248 phy-cellid: 407",
+      "B7@20Mhz earfcn: 3248 phy-cellid: 412"
+    ],
+    "ca_bands_seen": [
+      "B20@10Mhz earfcn: 6300 phy-cellid: 248",
+      "B20@10Mhz earfcn: 6300 phy-cellid: 369",
+      "B3@20Mhz earfcn: 1344 phy-cellid: 56"
+    ],
+    "ca_missing_samples": 0,
+    "samples": 61,
+    "statuses_seen": [
+      "registered"
+    ],
+    "cell_changes": 3,
+    "tx-byte_delta": 46504934,
+    "rx-byte_delta": 11975,
+    "tx-packet_delta": 37557,
+    "rx-packet_delta": 124,
+    "tx-queue-drop_delta": 0
+  },
+  "radio_other": {
+    "lte1": {
+      "rssi_median": -52.0,
+      "rssi_min": -57.0,
+      "rssi_max": -47.0,
+      "rsrp_median": -84.0,
+      "rsrp_min": -95.0,
+      "rsrp_max": -58.0,
+      "rsrq_median": -12.5,
+      "rsrq_min": -19.5,
+      "rsrq_max": -6.0,
+      "sinr_median": 3.0,
+      "sinr_min": -9.0,
+      "sinr_max": 19.0,
+      "cqi_median": 10.0,
+      "cqi_min": 0.0,
+      "cqi_max": 14.0,
+      "ri_median": 2.0,
+      "ri_min": 1.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B1@15Mhz earfcn: 523 phy-cellid: 277",
+        "B1@15Mhz earfcn: 523 phy-cellid: 278",
+        "B7@20Mhz earfcn: 2850 phy-cellid: 70"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 61,
+      "samples": 61,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 2,
+      "tx-byte_delta": 46670052,
+      "rx-byte_delta": 26349,
+      "tx-packet_delta": 37645,
+      "rx-packet_delta": 345,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte2",
+    "before": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "741099355\n589233\n",
+      "bytes": 741099355,
+      "packets": 589233
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "787159709\n626871\n",
+      "bytes": 787159709,
+      "packets": 626871
+    },
+    "bytes_delta": 46060354,
+    "packets_delta": 37638
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 10
+}

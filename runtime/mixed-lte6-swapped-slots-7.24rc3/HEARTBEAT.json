@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-08-09T23:36:44+00:00",
+  "pid": 679528,
+  "campaign_state": "COMPLETE",
+  "current_item": "B3",
+  "item_state": "COMPLETE",
+  "item_elapsed_s": 1326,
+  "worker_progress_counter": 141,
+  "worker_last_progress_at": "2026-08-09T23:23:34+00:00",
+  "elapsed_seconds": 10951,
+  "last_successful_telemetry_timestamp": "2026-08-09T23:36:13+00:00",
+  "router_reachable": true,
+  "server_reachable": true,
+  "lte1_status": "registered",
+  "lte2_status": "running",
+  "lte1_band_config": "",
+  "lte2_band_config": "",
+  "completed": 11,
+  "mandatory_total": 11,
+  "retry_queue_length": 0,
+  "push_pending": false,
+  "last_error": "FAIL_IPERF_OR_PATH",
+  "last_local_commit": "05d2696",
+  "last_pushed_commit": "05d2696c49eddc378232e0332bb6e69558b7a8cf",
+  "modem_lte1": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "modem_lte2": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.04"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "bands_restored": true,
+  "bands_currently_configured": {
+    "lte1": "",
+    "lte2": ""
+  },
+  "lte1_primary_band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+  "lte2_primary_band": "B3@15Mhz earfcn: 1875 phy-cellid: 69"
+}

@@ -1,0 +1,2714 @@
+{
+  "schema_version": 2,
+  "campaign_id": "mixed-lte6-matrix-7.24rc3",
+  "state": "COMPLETE",
+  "started_at": "2026-08-09T09:56:19+00:00",
+  "updated_at": "2026-08-09T17:01:35+00:00",
+  "routeros": "7.24rc3",
+  "modem_lte1": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.04"
+  },
+  "modem_lte2": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_epoch": 1,
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "completed_count": 42,
+  "mandatory_total": 42,
+  "current_item": "L2-R3",
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": true,
+  "items": {
+    "R1-M0": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T10:04:42+00:00",
+          "state": "RESET_AFTER_VERIFIER_FIX"
+        },
+        {
+          "at": "2026-08-09T10:07:04+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T10:07:09+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "",
+            "lte2": ""
+          }
+        },
+        {
+          "at": "2026-08-09T10:07:50+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T10:07:50+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:13:13+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T10:13:13+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:13:13+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T10:14:13+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T10:19:37+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T10:19:37+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T10:19:37+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "",
+        "lte2": ""
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R1-M1": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T10:04:42+00:00",
+          "state": "RESET_AFTER_VERIFIER_FIX"
+        },
+        {
+          "at": "2026-08-09T10:19:41+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T10:19:46+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "1,3,7,8,20",
+            "lte2": "1,3,7,8,20"
+          }
+        },
+        {
+          "at": "2026-08-09T10:20:27+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T10:20:27+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:25:50+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T10:25:50+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:25:50+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T10:26:50+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T10:32:14+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T10:32:14+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T10:32:14+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "1,3,7,8,20",
+        "lte2": "1,3,7,8,20"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R1-M2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T10:32:18+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T10:32:23+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T10:33:04+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T10:33:04+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:38:27+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T10:38:27+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:38:27+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "R1-M3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T10:38:31+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T10:38:36+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T10:39:17+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T10:39:17+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:44:41+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T10:44:41+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:44:41+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "R1-M4": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T10:44:45+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T10:44:50+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T10:46:57+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T10:48:23+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T10:48:23+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:53:47+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T10:53:47+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T10:53:47+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T10:54:47+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:00:10+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T11:00:10+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:00:11+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R1-M5": {
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T11:00:15+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T11:00:20+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "38",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T11:00:51+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T11:00:51+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:06:14+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:06:14+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:06:14+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:07:14+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:12:41+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:12:41+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:12:42+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:13:42+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T11:14:05+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:14:05+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T11:14:05+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 3,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        }
+      ],
+      "bands": {
+        "lte1": "38",
+        "lte2": "3"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R1-M6": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T11:14:09+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T11:14:14+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "38"
+          }
+        },
+        {
+          "at": "2026-08-09T11:15:00+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T11:15:00+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:20:29+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T11:20:29+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:20:30+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "38"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "R2-M6": {
+      "state": "COMPLETE",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T11:20:33+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T11:20:38+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "38"
+          }
+        },
+        {
+          "at": "2026-08-09T11:21:09+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T11:21:09+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:26:33+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:26:33+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:26:33+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:27:33+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:32:58+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:32:58+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:32:59+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:33:59+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T11:39:24+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T11:39:24+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T11:39:24+00:00",
+          "state": "COMPLETE",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "38"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R2-M5": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T11:39:28+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T11:39:33+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "38",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T11:40:14+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T11:40:14+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:45:37+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:45:37+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:45:37+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T11:46:37+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:52:03+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T11:52:03+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T11:52:03+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "38",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R2-M4": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T11:52:07+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T11:52:13+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T11:52:43+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T11:52:43+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:58:07+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T11:58:07+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T11:58:07+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "R2-M3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T11:58:11+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T11:58:16+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T11:59:02+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T11:59:02+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:04:27+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T12:04:27+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:04:27+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "R2-M2": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T12:04:31+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T12:04:36+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T12:05:17+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T12:05:17+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:10:40+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:10:40+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:10:40+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:11:40+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T12:17:04+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T12:17:04+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T12:17:04+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R2-M1": {
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T12:17:08+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T12:17:13+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "1,3,7,8,20",
+            "lte2": "1,3,7,8,20"
+          }
+        },
+        {
+          "at": "2026-08-09T12:17:54+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T12:17:54+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:23:18+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:23:18+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:23:18+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:24:18+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T12:29:42+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:29:42+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T12:29:42+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:30:42+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T12:36:05+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:36:05+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T12:36:05+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 3,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        }
+      ],
+      "bands": {
+        "lte1": "1,3,7,8,20",
+        "lte2": "1,3,7,8,20"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "R2-M0": {
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T12:36:08+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T12:36:14+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "",
+            "lte2": ""
+          }
+        },
+        {
+          "at": "2026-08-09T12:36:54+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T12:36:54+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:42:17+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:42:17+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T12:42:18+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:43:18+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T12:48:41+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:48:41+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T12:48:41+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:49:41+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T12:55:04+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T12:55:04+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T12:55:04+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 3,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        }
+      ],
+      "bands": {
+        "lte1": "",
+        "lte2": ""
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "C1": {
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T12:55:08+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T12:55:13+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "20",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T12:55:54+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T12:55:54+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:01:17+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T13:01:17+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:01:17+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T13:02:17+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T13:07:41+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T13:07:41+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T13:07:41+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T13:08:41+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T13:14:04+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T13:14:04+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T13:14:05+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 3,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        }
+      ],
+      "bands": {
+        "lte1": "20",
+        "lte2": "3"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "C2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:14:08+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:14:14+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "20"
+          }
+        },
+        {
+          "at": "2026-08-09T13:14:59+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:15:00+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:20:23+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T13:20:23+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:20:23+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "20"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "C3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:20:27+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:20:32+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "1",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T13:21:18+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:21:18+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:26:42+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T13:26:42+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:26:42+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "1",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "C4": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:26:46+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:26:51+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "1"
+          }
+        },
+        {
+          "at": "2026-08-09T13:27:37+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:27:37+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:33:00+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T13:33:00+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:33:01+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "1"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "C5": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:33:05+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:33:10+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "8",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T13:33:56+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:33:56+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:39:19+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T13:39:19+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:39:20+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "8",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "C6": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:39:23+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:39:29+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          }
+        },
+        {
+          "at": "2026-08-09T13:40:15+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:40:15+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:45:38+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T13:45:38+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:45:39+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "8"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "S1": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:45:43+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:45:48+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "8"
+          }
+        },
+        {
+          "at": "2026-08-09T13:46:18+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:46:18+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:51:41+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T13:51:41+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:51:42+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "8"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "S2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T13:51:45+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:51:50+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T13:52:31+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:52:31+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:57:54+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T13:57:54+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:57:54+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "S3": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T13:57:58+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T13:58:03+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T13:58:34+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T13:58:34+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:58:52+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T13:58:52+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T13:58:52+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T13:59:52+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:05:16+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:05:16+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:05:17+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE",
+      "last_error": "FAIL_SINGLE_PATH"
+    },
+    "S4": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:05:20+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:05:25+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T14:06:06+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:06:06+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:11:29+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:11:29+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:11:29+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "S5": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:11:33+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:11:38+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "38",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T14:12:09+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:12:09+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:17:33+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:17:33+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:17:33+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "38",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "S6": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T14:17:37+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:17:42+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "38",
+            "lte2": "38"
+          }
+        },
+        {
+          "at": "2026-08-09T14:18:23+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:18:23+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:18:48+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:18:48+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:18:48+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:19:48+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:25:12+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:25:12+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:25:13+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "38",
+        "lte2": "38"
+      },
+      "dual_status": "PASS_SINGLE",
+      "last_error": "FAIL_SINGLE_PATH"
+    },
+    "H-LTE1-4M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:25:17+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:25:22+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:26:03+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:26:03+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:27:26+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:27:26+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:27:26+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "H-LTE1-6M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:27:30+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:27:35+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:28:05+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:28:05+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:29:28+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:29:28+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:29:28+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "H-LTE1-8M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:29:32+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:29:37+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:30:07+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:30:07+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:31:30+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:31:30+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:31:30+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "H-LTE1-10M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:31:34+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:31:39+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:32:10+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:32:10+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:33:33+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:33:33+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:33:33+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "H-LTE1-12M": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T14:33:37+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:33:43+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:34:13+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:34:13+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:34:36+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:34:36+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:34:36+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:35:36+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:36:59+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:36:59+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:37:00+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE",
+      "last_error": "FAIL_SINGLE_PATH"
+    },
+    "H-LTE2-4M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:37:03+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:37:08+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:37:39+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:37:39+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:39:01+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:39:01+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:39:02+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "H-LTE2-6M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:39:05+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:39:10+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:39:41+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:39:41+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:41:04+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:41:04+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:41:04+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "H-LTE2-8M": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T14:41:07+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:41:12+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:41:43+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:41:43+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:42:06+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:42:06+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:42:06+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:43:06+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:44:29+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:44:29+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:44:29+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE",
+      "last_error": "FAIL_SINGLE_PATH"
+    },
+    "H-LTE2-10M": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T14:44:32+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:44:38+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:45:08+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:45:08+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:45:31+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:45:31+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:45:31+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_SINGLE_PATH"
+        },
+        {
+          "at": "2026-08-09T14:46:31+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:47:54+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:47:54+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T14:47:54+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE",
+      "last_error": "FAIL_SINGLE_PATH"
+    },
+    "H-LTE2-12M": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T14:47:57+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:48:02+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T14:48:33+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:48:33+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:49:56+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        },
+        {
+          "at": "2026-08-09T14:49:56+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T14:49:56+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_SINGLE"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_SINGLE"
+    },
+    "L1-R1": {
+      "state": "COMPLETE",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T14:50:00+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T14:50:05+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T14:50:46+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T14:50:46+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:01:11+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T15:01:11+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:01:12+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T15:02:12+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T15:12:35+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T15:12:35+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T15:12:35+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T15:13:35+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T15:24:00+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T15:24:00+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T15:24:01+00:00",
+          "state": "COMPLETE",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "L1-R2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T15:24:05+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T15:24:11+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T15:24:41+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T15:24:41+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:35:05+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T15:35:05+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:35:06+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "L1-R3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T15:35:11+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T15:35:16+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-09T15:35:47+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T15:35:47+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:46:11+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T15:46:11+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:46:12+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "7"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "L2-R1": {
+      "state": "COMPLETE",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T15:46:16+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T15:46:21+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T15:47:01+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T15:47:02+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:57:25+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T15:57:25+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T15:57:25+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T15:58:25+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T16:06:12+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T16:06:12+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T16:06:12+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T16:07:12+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T16:17:36+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T16:17:36+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T16:17:37+00:00",
+          "state": "COMPLETE",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "L2-R2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T16:17:41+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T16:17:46+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T16:18:17+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T16:18:17+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T16:28:40+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T16:28:40+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T16:28:41+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "L2-R3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T16:28:46+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T16:28:51+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T16:29:21+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T16:29:21+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T16:39:45+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T16:39:45+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T16:39:46+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    }
+  },
+  "last_pushed_commit": "77ddae67b616db9d3ae35d953b294668fb415f81",
+  "worker_progress_counter": 516,
+  "worker_last_progress_at": "2026-08-09T16:39:46+00:00",
+  "routerboard_firmware": "7.24rc3",
+  "smoke_tests_completed": true,
+  "smoke_tests": {
+    "SMOKE-LTE1": {
+      "ok": true,
+      "status": "PASS_SINGLE",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-matrix-7.24rc3/raw/SMOKE-LTE1/attempt-1"
+    },
+    "SMOKE-LTE2": {
+      "ok": true,
+      "status": "PASS_SINGLE",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-matrix-7.24rc3/raw/SMOKE-LTE2/attempt-1"
+    },
+    "SMOKE-DUAL": {
+      "ok": true,
+      "status": "PASS_DUAL",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-matrix-7.24rc3/raw/SMOKE-DUAL/attempt-1"
+    }
+  }
+}

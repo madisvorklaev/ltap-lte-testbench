@@ -1,0 +1,158 @@
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-11T21:48:32+03:00",
+    "created_utc": "2026-08-11T18:48:32.442+00:00",
+    "tag": "drive-20260811-213442-seedri-smarten-seedri-epoch-0014-lte1",
+    "path": "lte1",
+    "lte_interface": "lte1",
+    "source_ip": "192.168.101.201",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5202,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5201,
+          "rc": 1,
+          "stderr": "",
+          "iperf_error": "the server is busy running a test. try again later"
+        },
+        {
+          "port": 5202,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 2946425.8618525686
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 60,
+    "warmup_s": 0,
+    "cooldown_s": 0,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte1",
+    "source_rule_comment": "ELMO TEST: source via lte1",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 5909223.22011557,
+    "mbps": 5.90922322011557,
+    "jitter_ms": 1.6621086151172275,
+    "lost_packets": 110,
+    "packets": 37125,
+    "lost_percent": 0.29333333333333333
+  },
+  "ping": {
+    "sent": 122,
+    "received": 122,
+    "loss_percent": 0.0,
+    "min_ms": 27.849,
+    "avg_ms": 85.752,
+    "max_ms": 521.787,
+    "mdev_ms": 61.835,
+    "p95_ms": 143.0,
+    "sample_count": 122
+  },
+  "radio_target": {
+    "rssi_median": -53.0,
+    "rssi_min": -69.0,
+    "rssi_max": -47.0,
+    "rsrp_median": -84.0,
+    "rsrp_min": -103.0,
+    "rsrp_max": -79.0,
+    "rsrq_median": -12.5,
+    "rsrq_min": -13.5,
+    "rsrq_max": -11.0,
+    "sinr_median": 4.0,
+    "sinr_min": -2.0,
+    "sinr_max": 7.0,
+    "cqi_median": 8.0,
+    "cqi_min": 6.0,
+    "cqi_max": 12.0,
+    "ri_median": 2.0,
+    "ri_min": 1.0,
+    "ri_max": 2.0,
+    "primary_bands_seen": [
+      "B1@15Mhz earfcn: 523 phy-cellid: 70",
+      "B3@15Mhz earfcn: 1875 phy-cellid: 70"
+    ],
+    "ca_bands_seen": [],
+    "ca_missing_samples": 61,
+    "samples": 61,
+    "statuses_seen": [
+      "registered"
+    ],
+    "cell_changes": 0,
+    "tx-byte_delta": 46024086,
+    "rx-byte_delta": 19555,
+    "tx-packet_delta": 37161,
+    "rx-packet_delta": 242,
+    "tx-queue-drop_delta": 0
+  },
+  "radio_other": {
+    "lte2": {
+      "rssi_median": -65.0,
+      "rssi_min": -71.0,
+      "rssi_max": -58.0,
+      "rsrp_median": -101.0,
+      "rsrp_min": -107.0,
+      "rsrp_max": -95.0,
+      "rsrq_median": -15.0,
+      "rsrq_min": -17.5,
+      "rsrq_max": -10.0,
+      "sinr_median": -2.0,
+      "sinr_min": -12.0,
+      "sinr_max": 5.0,
+      "cqi_median": 0.0,
+      "cqi_min": 0.0,
+      "cqi_max": 0.0,
+      "ri_median": null,
+      "ri_min": null,
+      "ri_max": null,
+      "primary_bands_seen": [
+        "B3@20Mhz earfcn: 1344 phy-cellid: 477"
+      ],
+      "ca_bands_seen": [
+        "B7@20Mhz earfcn: 3248 phy-cellid: 407"
+      ],
+      "ca_missing_samples": 0,
+      "samples": 61,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 46379537,
+      "rx-byte_delta": 18192,
+      "tx-packet_delta": 37439,
+      "rx-packet_delta": 213,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte1",
+    "before": {
+      "comment": "ELMO TEST: source via lte1",
+      "rc": 0,
+      "raw": "669984250\n543625\n",
+      "bytes": 669984250,
+      "packets": 543625
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte1",
+      "rc": 0,
+      "raw": "716045860\n581265\n",
+      "bytes": 716045860,
+      "packets": 581265
+    },
+    "bytes_delta": 46061610,
+    "packets_delta": 37640
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 8
+}

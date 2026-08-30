@@ -1,0 +1,13 @@
+Flags: I - INACTIVE
+0    name="serial0" used-by="Serial Console(#0)" device="" channels=1
+     baud-rate=auto data-bits=8 parity=none stop-bits=1 flow-control=none
+ 
+1    name="gps" used-by="GPS(#0)" device="" channels=1 baud-rate=115200
+     data-bits=8 parity=none stop-bits=1 flow-control=none
+ 
+2  I name="usb3" used-by="" device="1-2" channels=0 baud-rate=auto data-bits=8
+     parity=none stop-bits=1 flow-control=none
+ 
+3  I name="usb4" used-by="" device="1-1" channels=0 baud-rate=auto data-bits=8
+     parity=none stop-bits=1 flow-control=none
+

@@ -1,0 +1,170 @@
+Warm-up 0s...
+Running: iperf3 -c 217.18.95.142 -p 5202 -4 -B 192.168.101.202 -t 60 -i 1 -J -u -b 6M -l 1200
+Cool-down 0s...
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-11T21:46:25+03:00",
+    "created_utc": "2026-08-11T18:46:25.513+00:00",
+    "tag": "drive-20260811-213442-seedri-smarten-seedri-epoch-0012-lte2",
+    "path": "lte2",
+    "lte_interface": "lte2",
+    "source_ip": "192.168.101.202",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5202,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5201,
+          "rc": 1,
+          "stderr": "",
+          "iperf_error": "the server is busy running a test. try again later"
+        },
+        {
+          "port": 5202,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 3892950.687296387
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 60,
+    "warmup_s": 0,
+    "cooldown_s": 0,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte2",
+    "source_rule_comment": "ELMO TEST: source via lte2",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 5999376.113955858,
+    "mbps": 5.999376113955858,
+    "jitter_ms": 1.5711434455922746,
+    "lost_packets": 0,
+    "packets": 37496,
+    "lost_percent": 0
+  },
+  "ping": {
+    "sent": 121,
+    "received": 120,
+    "loss_percent": 0.826446,
+    "min_ms": 15.277,
+    "avg_ms": 32.428,
+    "max_ms": 460.83,
+    "mdev_ms": 52.861,
+    "p95_ms": 33.9,
+    "sample_count": 120
+  },
+  "radio_target": {
+    "rssi_median": -63.0,
+    "rssi_min": -72.0,
+    "rssi_max": -58.0,
+    "rsrp_median": -93.0,
+    "rsrp_min": -110.0,
+    "rsrp_max": -88.0,
+    "rsrq_median": -8.5,
+    "rsrq_min": -19.0,
+    "rsrq_max": -7.0,
+    "sinr_median": 7.0,
+    "sinr_min": -10.0,
+    "sinr_max": 19.0,
+    "cqi_median": 0.0,
+    "cqi_min": 0.0,
+    "cqi_max": 0.0,
+    "ri_median": 1.0,
+    "ri_min": 1.0,
+    "ri_max": 1.0,
+    "primary_bands_seen": [
+      "B20@10Mhz earfcn: 6300 phy-cellid: 248",
+      "B20@10Mhz earfcn: 6300 phy-cellid: 433",
+      "B20@10Mhz earfcn: 6300 phy-cellid: 58",
+      "B7@20Mhz earfcn: 3050 phy-cellid: 314"
+    ],
+    "ca_bands_seen": [
+      "B3@20Mhz earfcn: 1344 phy-cellid: 217",
+      "B3@20Mhz earfcn: 1344 phy-cellid: 440",
+      "B3@20Mhz earfcn: 1344 phy-cellid: 84",
+      "B7@20Mhz earfcn: 3050 phy-cellid: 314"
+    ],
+    "ca_missing_samples": 0,
+    "samples": 61,
+    "statuses_seen": [
+      "registered"
+    ],
+    "cell_changes": 4,
+    "tx-byte_delta": 46489132,
+    "rx-byte_delta": 12010,
+    "tx-packet_delta": 37547,
+    "rx-packet_delta": 125,
+    "tx-queue-drop_delta": 0
+  },
+  "radio_other": {
+    "lte1": {
+      "rssi_median": -58.0,
+      "rssi_min": -62.0,
+      "rssi_max": -56.0,
+      "rsrp_median": -88.0,
+      "rsrp_min": -98.0,
+      "rsrp_max": -87.0,
+      "rsrq_median": -11.5,
+      "rsrq_min": -17.5,
+      "rsrq_max": -10.0,
+      "sinr_median": 6.0,
+      "sinr_min": -13.0,
+      "sinr_max": 12.0,
+      "cqi_median": 9.0,
+      "cqi_min": 5.0,
+      "cqi_max": 13.0,
+      "ri_median": 2.0,
+      "ri_min": 1.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B20@10Mhz earfcn: 6200 phy-cellid: 278",
+        "B3@15Mhz earfcn: 1875 phy-cellid: 278",
+        "B3@15Mhz earfcn: 1875 phy-cellid: 435"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 61,
+      "samples": 61,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 1,
+      "tx-byte_delta": 46676558,
+      "rx-byte_delta": 21616,
+      "tx-packet_delta": 37706,
+      "rx-packet_delta": 219,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte2",
+    "before": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "598796655\n474202\n",
+      "bytes": 598796655,
+      "packets": 474202
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "644854500\n511837\n",
+      "bytes": 644854500,
+      "packets": 511837
+    },
+    "bytes_delta": 46057845,
+    "packets_delta": 37635
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 12
+}
+
+Saved: /home/madis/projects/ltap-lte-testbench/runtime/drive-tests/drive-20260811-213442-seedri-smarten-seedri/raw/epoch-0012/20260811-214625_drive-20260811-213442-seedri-smarten-seedri-epoch-0012-lte2_lte2_udp_upload

@@ -1,0 +1,36 @@
+{
+  "session_id": "drive-20260812-075719-skill-v2-validation-only",
+  "name": "skill-v2-validation-only",
+  "state": "RUNNING",
+  "profile": "AUTO_DUAL_6M",
+  "created_utc": "2026-08-12T04:57:19.725+00:00",
+  "runtime_dir": "/home/madis/projects/ltap-lte-testbench/runtime/drive-tests/drive-20260812-075719-skill-v2-validation-only",
+  "public_dir": "/home/madis/projects/ltap-lte-testbench/results-public/drive-tests/drive-20260812-075719-skill-v2-validation-only",
+  "epoch_duration_s": 10,
+  "current_epoch": 0,
+  "validation_only": true,
+  "worker_pid": 16711,
+  "skill": "elmo-lte-drive-test",
+  "skill_version": "2.0",
+  "session_map": {
+    "lte1": {
+      "interface": "lte1",
+      "modem_id": "LTE7-A",
+      "sim_id": "SIM-ELISA",
+      "operator": "Elisa"
+    },
+    "lte2": {
+      "interface": "lte2",
+      "modem_id": "LTE7-B",
+      "sim_id": "SIM-TELIA",
+      "operator": "Telia"
+    }
+  },
+  "iperf3": {
+    "available": true,
+    "version": "iperf 3.16 (cJSON 1.7.15)",
+    "json_stream_supported": false,
+    "forceflush_supported": true
+  },
+  "traffic_loss_resolution_s": 10
+}

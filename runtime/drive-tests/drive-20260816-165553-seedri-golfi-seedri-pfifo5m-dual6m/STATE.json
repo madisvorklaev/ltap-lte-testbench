@@ -1,0 +1,70 @@
+{
+  "session_id": "drive-20260816-165553-seedri-golfi-seedri-pfifo5m-dual6m",
+  "name": "seedri-golfi-seedri-pfifo5m-dual6m",
+  "state": "COMPLETE",
+  "profile": "AUTO_DUAL_6M",
+  "created_utc": "2026-08-16T13:55:53.334+00:00",
+  "runtime_dir": "/home/madis/projects/ltap-lte-testbench/runtime/drive-tests/drive-20260816-165553-seedri-golfi-seedri-pfifo5m-dual6m",
+  "public_dir": "/home/madis/projects/ltap-lte-testbench/results-public/drive-tests/drive-20260816-165553-seedri-golfi-seedri-pfifo5m-dual6m",
+  "epoch_duration_s": 10,
+  "current_epoch": 245,
+  "validation_only": false,
+  "worker_pid": 2883,
+  "skill": "elmo-lte-drive-test",
+  "skill_version": "2.0",
+  "session_map": {
+    "lte1": {
+      "interface": "lte1",
+      "modem_id": "LTE7-A",
+      "sim_id": "SIM-ELISA",
+      "operator": "Elisa"
+    },
+    "lte2": {
+      "interface": "lte2",
+      "modem_id": "LTE7-B",
+      "sim_id": "SIM-TELIA",
+      "operator": "Telia"
+    }
+  },
+  "iperf3": {
+    "available": true,
+    "version": "iperf 3.16 (cJSON 1.7.15)",
+    "json_stream_supported": false,
+    "forceflush_supported": true
+  },
+  "traffic_loss_resolution_s": 10,
+  "last_heartbeat_utc": "2026-08-16T14:40:02.305+00:00",
+  "traffic_stopped_utc": "2026-08-16T14:40:07.183+00:00",
+  "completed_utc": "2026-08-16T14:40:07.647+00:00",
+  "summary": {
+    "skill": "elmo-lte-drive-test",
+    "skill_version": "2.0",
+    "resolution": "V2_CONTINUOUS_TIMELINE",
+    "session_id": "drive-20260816-165553-seedri-golfi-seedri-pfifo5m-dual6m",
+    "timeline_rows": 2654,
+    "gps_valid_fixes": 2525,
+    "lte1_samples": 2397,
+    "lte2_samples": 2394,
+    "ping_lte1_samples": 3195,
+    "ping_lte2_samples": 3178,
+    "traffic_loss_resolution_s": 10,
+    "diversity_normal": {
+      "both_good": 20,
+      "elisa_impaired_telia_good": 26,
+      "telia_impaired_elisa_good": 38,
+      "both_impaired": 2570,
+      "longest_both_impaired_interval_s": 500,
+      "percentage_with_at_least_one_good_path": 3.17,
+      "criteria": "normal"
+    },
+    "diversity_strict": {
+      "both_good": 20,
+      "elisa_impaired_telia_good": 23,
+      "telia_impaired_elisa_good": 31,
+      "both_impaired": 2580,
+      "longest_both_impaired_interval_s": 522,
+      "percentage_with_at_least_one_good_path": 2.79,
+      "criteria": "strict"
+    }
+  }
+}

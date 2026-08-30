@@ -1,0 +1,7 @@
+{"utc":"2026-08-12T13:26:04.613+00:00","type":"START_REQUESTED","name":"ylemiste-seedri"}
+{"utc":"2026-08-12T13:26:05.960+00:00","type":"RUNNING","skill_version":"2.0"}
+{"utc":"2026-08-12T13:26:05.968+00:00","type":"PING_STARTED","path":"lte2","pid":2802,"command":["ping","-n","-D","-O","-I","192.168.101.202","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-12T13:26:05.967+00:00","type":"PING_STARTED","path":"lte1","pid":2803,"command":["ping","-n","-D","-O","-I","192.168.101.201","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-12T13:45:04.795+00:00","type":"STOP_REQUESTED"}
+{"utc":"2026-08-12T13:45:05.216+00:00","type":"PING_STOPPED","path":"lte2","rc":-15}
+{"utc":"2026-08-12T13:45:05.325+00:00","type":"PING_STOPPED","path":"lte1","rc":-15}

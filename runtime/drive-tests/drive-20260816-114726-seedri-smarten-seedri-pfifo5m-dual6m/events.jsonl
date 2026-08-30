@@ -1,0 +1,7 @@
+{"utc":"2026-08-16T08:47:26.622+00:00","type":"START_REQUESTED","name":"seedri-smarten-seedri-pfifo5m-dual6m"}
+{"utc":"2026-08-16T08:47:27.811+00:00","type":"RUNNING","skill_version":"2.0"}
+{"utc":"2026-08-16T08:47:27.816+00:00","type":"PING_STARTED","path":"lte2","pid":4976,"command":["ping","-n","-D","-O","-I","192.168.101.202","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-16T08:47:27.818+00:00","type":"PING_STARTED","path":"lte1","pid":4977,"command":["ping","-n","-D","-O","-I","192.168.101.201","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-16T08:49:44.549+00:00","type":"STOP_REQUESTED"}
+{"utc":"2026-08-16T08:49:44.621+00:00","type":"PING_STOPPED","path":"lte1","rc":-15}
+{"utc":"2026-08-16T08:49:44.814+00:00","type":"PING_STOPPED","path":"lte2","rc":-15}

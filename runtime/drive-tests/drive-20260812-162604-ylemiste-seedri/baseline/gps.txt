@@ -1,0 +1,8 @@
+             enabled: yes     
+                port: gps     
+             channel: 0       
+         init-string:         
+     set-system-time: no      
+   coordinate-format: ddmm    
+  gps-antenna-select: external
+

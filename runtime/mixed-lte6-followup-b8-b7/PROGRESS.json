@@ -1,0 +1,421 @@
+{
+  "schema_version": 2,
+  "campaign_id": "mixed-lte6-followup-b8-b7",
+  "state": "COMPLETE",
+  "started_at": "2026-08-09T18:08:35+00:00",
+  "updated_at": "2026-08-09T20:09:44+00:00",
+  "routeros": "7.24rc3",
+  "modem_lte1": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.04"
+  },
+  "modem_lte2": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_epoch": 1,
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "completed_count": 6,
+  "mandatory_total": 6,
+  "current_item": "B3",
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": true,
+  "items": {
+    "A1": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-09T18:10:31+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T18:10:36+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "8",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T18:11:22+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T18:11:22+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T18:18:11+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T18:18:11+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T18:18:12+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T18:19:12+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T18:29:35+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T18:29:35+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T18:29:36+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "8",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "A2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T18:29:40+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T18:29:45+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "8",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T18:30:16+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T18:30:16+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T18:40:39+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T18:40:39+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T18:40:40+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "8",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "A3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T18:40:44+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T18:40:49+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "8",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T18:41:19+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T18:41:19+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T18:51:42+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T18:51:42+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T18:51:43+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "8",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "B1": {
+      "state": "COMPLETE",
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-08-09T18:51:48+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T18:51:53+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T18:52:23+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T18:52:23+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T19:02:46+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T19:02:46+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T19:02:47+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T19:03:47+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T19:14:10+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T19:14:10+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-09T19:14:11+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-09T19:15:11+00:00",
+          "state": "RUNNING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T19:25:34+00:00",
+          "state": "ANALYZING",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T19:25:34+00:00",
+          "state": "SANITIZING",
+          "attempts": 3
+        },
+        {
+          "at": "2026-08-09T19:25:35+00:00",
+          "state": "COMPLETE",
+          "attempts": 3,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "B2": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T19:25:39+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T19:25:44+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T19:26:15+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T19:26:15+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T19:36:38+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T19:36:38+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T19:36:39+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "B3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-09T19:36:43+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-09T19:36:48+00:00",
+          "state": "WAITING_REGISTRATION",
+          "bands": {
+            "lte1": "7",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-09T19:37:19+00:00",
+          "state": "READY"
+        },
+        {
+          "at": "2026-08-09T19:37:19+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T19:47:42+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-09T19:47:42+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-09T19:47:43+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "3"
+      },
+      "dual_status": "PASS_DUAL"
+    }
+  },
+  "last_pushed_commit": "99f4b5bc750de631dc6be9ed2847141b7cfd5723",
+  "worker_progress_counter": 79,
+  "worker_last_progress_at": "2026-08-09T19:47:43+00:00",
+  "routerboard_firmware": "7.24rc3",
+  "smoke_tests_completed": true,
+  "smoke_tests": {
+    "SMOKE-LTE1": {
+      "ok": true,
+      "status": "PASS_SINGLE",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-followup-b8-b7/raw/SMOKE-LTE1/attempt-1"
+    },
+    "SMOKE-LTE2": {
+      "ok": true,
+      "status": "PASS_SINGLE",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-followup-b8-b7/raw/SMOKE-LTE2/attempt-1"
+    },
+    "SMOKE-DUAL": {
+      "ok": true,
+      "status": "PASS_DUAL",
+      "raw_root": "/home/madis/projects/ltap-lte-testbench/runtime/mixed-lte6-followup-b8-b7/raw/SMOKE-DUAL/attempt-1"
+    }
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-08T12:07:14+03:00",
+    "created_utc": "2026-08-08T09:07:14.582+00:00",
+    "tag": "band-matrix-7.24rc3_R2-M1_a3_20260808-120712_lte1",
+    "path": "lte1",
+    "lte_interface": "lte1",
+    "source_ip": "192.168.101.201",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5205,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5201,
+          "rc": 1,
+          "stderr": "",
+          "iperf_error": "the server is busy running a test. try again later"
+        },
+        {
+          "port": 5203,
+          "rc": 1,
+          "stderr": "",
+          "iperf_error": "the server is busy running a test. try again later"
+        },
+        {
+          "port": 5205,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 5982837.319700565
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 300,
+    "warmup_s": 10,
+    "cooldown_s": 10,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte1",
+    "source_rule_comment": "ELMO TEST: source via lte1",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 5723156.988539296,
+    "mbps": 5.723156988539296,
+    "jitter_ms": 3.5012047244970477,
+    "lost_packets": 8574,
+    "packets": 187473,
+    "lost_percent": 4.5728
+  },
+  "ping": {
+    "sent": 1592,
+    "received": 1592,
+    "loss_percent": 0.0,
+    "min_ms": 12.597,
+    "avg_ms": 36.12,
+    "max_ms": 348.795,
+    "mdev_ms": 29.136,
+    "p95_ms": 83.5,
+    "sample_count": 1592
+  },
+  "radio_target": {
+    "rssi_median": -59.0,
+    "rssi_min": -62.0,
+    "rssi_max": -57.0,
+    "rsrp_median": -90.0,
+    "rsrp_min": -91.0,
+    "rsrp_max": -90.0,
+    "rsrq_median": -11.0,
+    "rsrq_min": -14.5,
+    "rsrq_max": -9.5,
+    "sinr_median": 11.0,
+    "sinr_min": 0.0,
+    "sinr_max": 19.0,
+    "cqi_median": 12.0,
+    "cqi_min": 0.0,
+    "cqi_max": 14.0,
+    "ri_median": 2.0,
+    "ri_min": 1.0,
+    "ri_max": 2.0,
+    "primary_bands_seen": [
+      "B1@15Mhz earfcn: 523 phy-cellid: 69",
+      "B3@15Mhz earfcn: 1875 phy-cellid: 69"
+    ],
+    "ca_bands_seen": [],
+    "ca_missing_samples": 321,
+    "samples": 321,
+    "statuses_seen": [
+      "registered"
+    ],
+    "cell_changes": 0,
+    "tx-byte_delta": 233943628,
+    "rx-byte_delta": 185164,
+    "tx-packet_delta": 189760,
+    "rx-packet_delta": 1985,
+    "tx-queue-drop_delta": 0
+  },
+  "radio_other": {
+    "lte2": {
+      "rssi_median": -62.0,
+      "rssi_min": -66.0,
+      "rssi_max": -60.0,
+      "rsrp_median": -95.0,
+      "rsrp_min": -96.0,
+      "rsrp_max": -93.0,
+      "rsrq_median": -12.5,
+      "rsrq_min": -14.0,
+      "rsrq_max": -10.0,
+      "sinr_median": 8.0,
+      "sinr_min": 3.0,
+      "sinr_max": 15.0,
+      "cqi_median": 11.0,
+      "cqi_min": 0.0,
+      "cqi_max": 14.0,
+      "ri_median": 2.0,
+      "ri_min": 1.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B1@15Mhz earfcn: 523 phy-cellid: 69",
+        "B3@15Mhz earfcn: 1875 phy-cellid: 69"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 321,
+      "samples": 321,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 233847227,
+      "rx-byte_delta": 179428,
+      "tx-packet_delta": 189688,
+      "rx-packet_delta": 1929,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte1",
+    "before": {
+      "comment": "ELMO TEST: source via lte1",
+      "rc": 0,
+      "raw": "6942019154\n5675863\n",
+      "bytes": 6942019154,
+      "packets": 5675863
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte1",
+      "rc": 0,
+      "raw": "7172404301\n5864973\n",
+      "bytes": 7172404301,
+      "packets": 5864973
+    },
+    "bytes_delta": 230385147,
+    "packets_delta": 189110
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 10
+}

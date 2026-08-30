@@ -1,0 +1,1232 @@
+{
+  "schema_version": 1,
+  "campaign_id": "elisa-telia-crossover-fg621-lte6",
+  "state": "COMPLETE",
+  "started_at": "2026-08-10T19:38:01+00:00",
+  "updated_at": "2026-08-11T06:02:47+00:00",
+  "routeros": "7.24rc3",
+  "routerboard_firmware": "7.24rc3",
+  "modem_lte1": {
+    "expected": "R11e-LTE6",
+    "detected": "\"R11e-LTE6\"",
+    "firmware": "R11e-LTE6_V034"
+  },
+  "modem_lte2": {
+    "expected": "FG621-EA",
+    "detected": "FG621-EA",
+    "firmware": "16121.1034.00.01.01.10"
+  },
+  "original_band_lte1": "",
+  "original_band_lte2": "",
+  "server_hostname": "iperf-ams-nl.eranium.net",
+  "server_ipv4": "217.18.95.142",
+  "selected_bands": [
+    "3",
+    "7",
+    "20"
+  ],
+  "auto_fallback_selected": false,
+  "phase": "COMPLETE",
+  "phase_a_sim_map": {
+    "phase": "PHASE_A",
+    "collected_at": "2026-08-10T19:38:04+00:00",
+    "interfaces": {
+      "lte1": {
+        "interface": "lte1",
+        "modem": "\"R11e-LTE6\"",
+        "operator": "elisa",
+        "operator_raw": "Elisa EE",
+        "sim_id": "SIM-0464aca4a8",
+        "registration_state": "registered",
+        "apn_present": false
+      },
+      "lte2": {
+        "interface": "lte2",
+        "modem": "FG621-EA",
+        "operator": "telia",
+        "operator_raw": "Telia EE",
+        "sim_id": "SIM-b536bd05e0",
+        "registration_state": "running",
+        "apn_present": false
+      }
+    }
+  },
+  "phase_b_sim_map": {
+    "phase": "PHASE_B",
+    "collected_at": "2026-08-11T04:35:32+00:00",
+    "interfaces": {
+      "lte1": {
+        "interface": "lte1",
+        "modem": "\"R11e-LTE6\"",
+        "operator": "telia",
+        "operator_raw": "Telia",
+        "sim_id": "SIM-b536bd05e0",
+        "registration_state": "registered",
+        "apn_present": false
+      },
+      "lte2": {
+        "interface": "lte2",
+        "modem": "FG621-EA",
+        "operator": "elisa",
+        "operator_raw": "elisa",
+        "sim_id": "SIM-0464aca4a8",
+        "registration_state": "running",
+        "apn_present": false
+      }
+    }
+  },
+  "sim_swap_verified": true,
+  "completed_count": 6,
+  "mandatory_total": 6,
+  "current_item": "B-B20",
+  "retry_queue": [],
+  "push_pending": false,
+  "bands_restored": true,
+  "items": {
+    "A-B3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-10T19:42:53+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-10T19:42:58+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-10T19:43:49+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "elisa",
+              "lac": "2022",
+              "current-cellid": "257028629",
+              "enb-id": "1004018",
+              "sector-id": "21",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "19s",
+              "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+              "cqi": "0",
+              "rssi": "-65dBm",
+              "rsrp": "-96dBm",
+              "rsrq": "-11dB",
+              "sinr": "4dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "Telia EE",
+              "current-cellid": "84504341",
+              "enb-id": "330095",
+              "sector-id": "21",
+              "phy-cellid": "66",
+              "data-class": "LTE",
+              "session-uptime": "46s",
+              "primary-band": "B3@20Mhz earfcn: 1344 phy-cellid: 66",
+              "rssi": "-74dBm",
+              "rsrp": "-99dBm",
+              "rsrq": "-10.5dB",
+              "sinr": "5dB"
+            },
+            "registration_verified_at": "2026-08-10T19:43:19+00:00"
+          }
+        },
+        {
+          "at": "2026-08-10T19:43:49+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T19:49:12+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-10T19:49:12+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T19:49:13+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "elisa",
+          "lac": "2022",
+          "current-cellid": "257028629",
+          "enb-id": "1004018",
+          "sector-id": "21",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "19s",
+          "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+          "cqi": "0",
+          "rssi": "-65dBm",
+          "rsrp": "-96dBm",
+          "rsrq": "-11dB",
+          "sinr": "4dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "Telia EE",
+          "current-cellid": "84504341",
+          "enb-id": "330095",
+          "sector-id": "21",
+          "phy-cellid": "66",
+          "data-class": "LTE",
+          "session-uptime": "46s",
+          "primary-band": "B3@20Mhz earfcn: 1344 phy-cellid: 66",
+          "rssi": "-74dBm",
+          "rsrp": "-99dBm",
+          "rsrq": "-10.5dB",
+          "sinr": "5dB"
+        },
+        "registration_verified_at": "2026-08-10T19:43:19+00:00"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "A-B7": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-10T19:49:16+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-10T19:49:22+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "7",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-10T19:50:02+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "elisa",
+              "lac": "2022",
+              "current-cellid": "257028639",
+              "enb-id": "1004018",
+              "sector-id": "31",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "19s",
+              "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+              "cqi": "0",
+              "rssi": "-75dBm",
+              "rsrp": "-106dBm",
+              "rsrq": "-10.5dB",
+              "sinr": "9dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "Telia EE",
+              "current-cellid": "81944340",
+              "enb-id": "320095",
+              "sector-id": "20",
+              "phy-cellid": "156",
+              "data-class": "LTE",
+              "session-uptime": "36s",
+              "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+              "ca-band": "B7@20Mhz earfcn: 3248 phy-cellid: 171",
+              "rssi": "-79dBm",
+              "rsrp": "-105dBm",
+              "rsrq": "-10dB",
+              "sinr": "11dB"
+            },
+            "registration_verified_at": "2026-08-10T19:49:32+00:00"
+          }
+        },
+        {
+          "at": "2026-08-10T19:50:02+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T19:55:27+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-10T19:55:27+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T19:55:28+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "7"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "elisa",
+          "lac": "2022",
+          "current-cellid": "257028639",
+          "enb-id": "1004018",
+          "sector-id": "31",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "19s",
+          "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+          "cqi": "0",
+          "rssi": "-75dBm",
+          "rsrp": "-106dBm",
+          "rsrq": "-10.5dB",
+          "sinr": "9dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "Telia EE",
+          "current-cellid": "81944340",
+          "enb-id": "320095",
+          "sector-id": "20",
+          "phy-cellid": "156",
+          "data-class": "LTE",
+          "session-uptime": "36s",
+          "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+          "ca-band": "B7@20Mhz earfcn: 3248 phy-cellid: 171",
+          "rssi": "-79dBm",
+          "rsrp": "-105dBm",
+          "rsrq": "-10dB",
+          "sinr": "11dB"
+        },
+        "registration_verified_at": "2026-08-10T19:49:32+00:00"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "A-B20": {
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-10T19:55:31+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-10T19:55:36+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "20",
+            "lte2": "20"
+          }
+        },
+        {
+          "at": "2026-08-10T19:56:17+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "elisa",
+              "lac": "2022",
+              "current-cellid": "257028619",
+              "enb-id": "1004018",
+              "sector-id": "11",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "19s",
+              "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+              "cqi": "0",
+              "rssi": "-51dBm",
+              "rsrp": "-84dBm",
+              "rsrq": "-15dB",
+              "sinr": "0dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "Telia EE",
+              "current-cellid": "81944342",
+              "enb-id": "320095",
+              "sector-id": "22",
+              "phy-cellid": "364",
+              "data-class": "LTE",
+              "session-uptime": "36s",
+              "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 364",
+              "ri": "2",
+              "rssi": "-59dBm",
+              "rsrp": "-86dBm",
+              "rsrq": "-11.5dB",
+              "sinr": "8dB"
+            },
+            "registration_verified_at": "2026-08-10T19:55:47+00:00"
+          }
+        },
+        {
+          "at": "2026-08-10T19:56:17+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T20:01:40+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T20:01:40+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-10T20:01:41+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T20:02:41+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-10T20:08:04+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-10T20:08:04+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-10T20:08:04+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "20",
+        "lte2": "20"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "elisa",
+          "lac": "2022",
+          "current-cellid": "257028619",
+          "enb-id": "1004018",
+          "sector-id": "11",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "19s",
+          "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+          "cqi": "0",
+          "rssi": "-51dBm",
+          "rsrp": "-84dBm",
+          "rsrq": "-15dB",
+          "sinr": "0dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "Telia EE",
+          "current-cellid": "81944342",
+          "enb-id": "320095",
+          "sector-id": "22",
+          "phy-cellid": "364",
+          "data-class": "LTE",
+          "session-uptime": "36s",
+          "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 364",
+          "ri": "2",
+          "rssi": "-59dBm",
+          "rsrp": "-86dBm",
+          "rsrq": "-11.5dB",
+          "sinr": "8dB"
+        },
+        "registration_verified_at": "2026-08-10T19:55:47+00:00"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "B-B3": {
+      "state": "COMPLETE",
+      "attempts": 1,
+      "history": [
+        {
+          "at": "2026-08-11T04:35:35+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-11T04:35:41+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "3",
+            "lte2": "3"
+          }
+        },
+        {
+          "at": "2026-08-11T04:36:21+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "Telia",
+              "lac": "10012",
+              "current-cellid": "84504341",
+              "enb-id": "330095",
+              "sector-id": "21",
+              "phy-cellid": "66",
+              "data-class": "LTE",
+              "session-uptime": "19s",
+              "primary-band": "B3@20Mhz earfcn: 1344 phy-cellid: 66",
+              "cqi": "0",
+              "rssi": "-57dBm",
+              "rsrp": "-89dBm",
+              "rsrq": "-11dB",
+              "sinr": "14dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "elisa",
+              "current-cellid": "257028629",
+              "enb-id": "1004018",
+              "sector-id": "21",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "35s",
+              "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+              "rssi": "-69dBm",
+              "rsrp": "-95dBm",
+              "rsrq": "-11dB",
+              "sinr": "5dB"
+            },
+            "registration_verified_at": "2026-08-11T04:35:51+00:00"
+          }
+        },
+        {
+          "at": "2026-08-11T04:36:21+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T04:41:44+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-11T04:41:45+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T04:41:45+00:00",
+          "state": "COMPLETE",
+          "attempts": 1,
+          "dual_status": "PASS_DUAL",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "3",
+        "lte2": "3"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "Telia",
+          "lac": "10012",
+          "current-cellid": "84504341",
+          "enb-id": "330095",
+          "sector-id": "21",
+          "phy-cellid": "66",
+          "data-class": "LTE",
+          "session-uptime": "19s",
+          "primary-band": "B3@20Mhz earfcn: 1344 phy-cellid: 66",
+          "cqi": "0",
+          "rssi": "-57dBm",
+          "rsrp": "-89dBm",
+          "rsrq": "-11dB",
+          "sinr": "14dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "elisa",
+          "current-cellid": "257028629",
+          "enb-id": "1004018",
+          "sector-id": "21",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "35s",
+          "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+          "rssi": "-69dBm",
+          "rsrp": "-95dBm",
+          "rsrq": "-11dB",
+          "sinr": "5dB"
+        },
+        "registration_verified_at": "2026-08-11T04:35:51+00:00"
+      },
+      "dual_status": "PASS_DUAL"
+    },
+    "B-B7": {
+      "state": "COMPLETE",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-11T04:41:49+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-11T04:41:55+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "7",
+            "lte2": "7"
+          }
+        },
+        {
+          "at": "2026-08-11T04:42:35+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "Telia",
+              "lac": "10012",
+              "current-cellid": "81944340",
+              "enb-id": "320095",
+              "sector-id": "20",
+              "phy-cellid": "156",
+              "data-class": "LTE",
+              "session-uptime": "19s",
+              "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+              "cqi": "0",
+              "rssi": "-69dBm",
+              "rsrp": "-101dBm",
+              "rsrq": "-10dB",
+              "sinr": "8dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "elisa",
+              "current-cellid": "257028639",
+              "enb-id": "1004018",
+              "sector-id": "31",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "35s",
+              "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+              "ri": "2",
+              "rssi": "-82dBm",
+              "rsrp": "-105dBm",
+              "rsrq": "-8dB",
+              "sinr": "9dB"
+            },
+            "registration_verified_at": "2026-08-11T04:42:05+00:00"
+          }
+        },
+        {
+          "at": "2026-08-11T04:42:35+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T04:47:59+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T04:47:59+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T04:47:59+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T04:48:59+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-11T04:54:22+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL"
+        },
+        {
+          "at": "2026-08-11T04:54:22+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-11T04:54:23+00:00",
+          "state": "COMPLETE",
+          "attempts": 2,
+          "dual_status": "PASS_DUAL",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "7",
+        "lte2": "7"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "Telia",
+          "lac": "10012",
+          "current-cellid": "81944340",
+          "enb-id": "320095",
+          "sector-id": "20",
+          "phy-cellid": "156",
+          "data-class": "LTE",
+          "session-uptime": "19s",
+          "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+          "cqi": "0",
+          "rssi": "-69dBm",
+          "rsrp": "-101dBm",
+          "rsrq": "-10dB",
+          "sinr": "8dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "elisa",
+          "current-cellid": "257028639",
+          "enb-id": "1004018",
+          "sector-id": "31",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "35s",
+          "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+          "ri": "2",
+          "rssi": "-82dBm",
+          "rsrp": "-105dBm",
+          "rsrq": "-8dB",
+          "sinr": "9dB"
+        },
+        "registration_verified_at": "2026-08-11T04:42:05+00:00"
+      },
+      "dual_status": "PASS_DUAL",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    },
+    "B-B20": {
+      "state": "FAILED_AFTER_RETRIES",
+      "attempts": 2,
+      "history": [
+        {
+          "at": "2026-08-11T04:54:27+00:00",
+          "state": "APPLYING_BANDS",
+          "attempts": 0
+        },
+        {
+          "at": "2026-08-11T04:54:32+00:00",
+          "state": "WAITING_REGISTRATION",
+          "attempts": 0,
+          "bands": {
+            "lte1": "20",
+            "lte2": "20"
+          }
+        },
+        {
+          "at": "2026-08-11T04:55:13+00:00",
+          "state": "READY",
+          "attempts": 0,
+          "registration": "REGISTERED",
+          "monitor": {
+            "lte1": {
+              "status": "registered",
+              "pin-status": "ok",
+              "registration-status": "registered",
+              "manufacturer": "\"MikroTik\"",
+              "model": "\"R11e-LTE6\"",
+              "revision": "R11e-LTE6_V034",
+              "current-operator": "Telia",
+              "lac": "10012",
+              "current-cellid": "51224332",
+              "enb-id": "200095",
+              "sector-id": "12",
+              "phy-cellid": "329",
+              "data-class": "LTE",
+              "session-uptime": "21s",
+              "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 329",
+              "cqi": "0",
+              "rssi": "-53dBm",
+              "rsrp": "-84dBm",
+              "rsrq": "-11.5dB",
+              "sinr": "11dB"
+            },
+            "lte2": {
+              "status": "running",
+              "model": "FG621-EA",
+              "revision": "16121.1034.00.01.01.10",
+              "current-operator": "elisa",
+              "current-cellid": "257028619",
+              "enb-id": "1004018",
+              "sector-id": "11",
+              "phy-cellid": "69",
+              "data-class": "LTE",
+              "session-uptime": "35s",
+              "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+              "ri": "2",
+              "rssi": "-61dBm",
+              "rsrp": "-85dBm",
+              "rsrq": "-9dB",
+              "sinr": "7dB"
+            },
+            "registration_verified_at": "2026-08-11T04:54:42+00:00"
+          }
+        },
+        {
+          "at": "2026-08-11T04:55:13+00:00",
+          "state": "RUNNING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T05:00:36+00:00",
+          "state": "ANALYZING",
+          "attempts": 1,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T05:00:36+00:00",
+          "state": "SANITIZING",
+          "attempts": 1
+        },
+        {
+          "at": "2026-08-11T05:00:37+00:00",
+          "state": "RETRY_PENDING",
+          "attempts": 1,
+          "last_error": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T05:01:37+00:00",
+          "state": "RUNNING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-11T05:07:00+00:00",
+          "state": "ANALYZING",
+          "attempts": 2,
+          "dual_status": "FAIL_IPERF_OR_PATH"
+        },
+        {
+          "at": "2026-08-11T05:07:00+00:00",
+          "state": "SANITIZING",
+          "attempts": 2
+        },
+        {
+          "at": "2026-08-11T05:07:01+00:00",
+          "state": "FAILED_AFTER_RETRIES",
+          "attempts": 2,
+          "last_error": "FAIL_IPERF_OR_PATH",
+          "registration": "REGISTERED"
+        }
+      ],
+      "bands": {
+        "lte1": "20",
+        "lte2": "20"
+      },
+      "registration": "REGISTERED",
+      "monitor": {
+        "lte1": {
+          "status": "registered",
+          "pin-status": "ok",
+          "registration-status": "registered",
+          "manufacturer": "\"MikroTik\"",
+          "model": "\"R11e-LTE6\"",
+          "revision": "R11e-LTE6_V034",
+          "current-operator": "Telia",
+          "lac": "10012",
+          "current-cellid": "51224332",
+          "enb-id": "200095",
+          "sector-id": "12",
+          "phy-cellid": "329",
+          "data-class": "LTE",
+          "session-uptime": "21s",
+          "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 329",
+          "cqi": "0",
+          "rssi": "-53dBm",
+          "rsrp": "-84dBm",
+          "rsrq": "-11.5dB",
+          "sinr": "11dB"
+        },
+        "lte2": {
+          "status": "running",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10",
+          "current-operator": "elisa",
+          "current-cellid": "257028619",
+          "enb-id": "1004018",
+          "sector-id": "11",
+          "phy-cellid": "69",
+          "data-class": "LTE",
+          "session-uptime": "35s",
+          "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 69",
+          "ri": "2",
+          "rssi": "-61dBm",
+          "rsrp": "-85dBm",
+          "rsrq": "-9dB",
+          "sinr": "7dB"
+        },
+        "registration_verified_at": "2026-08-11T04:54:42+00:00"
+      },
+      "dual_status": "FAIL_IPERF_OR_PATH",
+      "last_error": "FAIL_IPERF_OR_PATH"
+    }
+  },
+  "last_pushed_commit": "1f0c7835c52a6fc60eac799e0fc8b35169b0a961",
+  "worker_progress_counter": 82,
+  "worker_last_progress_at": "2026-08-11T05:07:01+00:00",
+  "baseline_verified_at": "2026-08-11T06:02:32+00:00",
+  "telia_band_discovery": {
+    "telia_interface": "lte2",
+    "operator": "telia",
+    "started_at": "2026-08-10T19:38:07+00:00",
+    "bands": {
+      "B1": {
+        "interface": "lte2",
+        "band": "B1",
+        "started_at": "2026-08-10T19:38:07+00:00",
+        "status": "REGISTRATION_TIMEOUT",
+        "last_monitor": {
+          "status": "deregistered",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10"
+        },
+        "finished_at": "2026-08-10T19:39:07+00:00"
+      },
+      "B3": {
+        "interface": "lte2",
+        "band": "B3",
+        "started_at": "2026-08-10T19:39:07+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "running",
+          "current-operator": "Telia EE",
+          "primary-band": "B3@20Mhz earfcn: 1344 phy-cellid: 310",
+          "enb-id": "200095",
+          "sector-id": "11",
+          "phy-cellid": "310",
+          "rsrp": "-97dBm",
+          "rsrq": "-16dB",
+          "sinr": "-2dB",
+          "ri": "1"
+        },
+        "finished_at": "2026-08-10T19:39:18+00:00"
+      },
+      "B7": {
+        "interface": "lte2",
+        "band": "B7",
+        "started_at": "2026-08-10T19:39:18+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "running",
+          "current-operator": "Telia EE",
+          "primary-band": "B7@20Mhz earfcn: 3050 phy-cellid: 156",
+          "enb-id": "320095",
+          "sector-id": "20",
+          "phy-cellid": "156",
+          "rsrp": "-105dBm",
+          "rsrq": "-10dB",
+          "sinr": "12dB",
+          "ri": "2",
+          "ca-band": "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+        },
+        "finished_at": "2026-08-10T19:39:23+00:00"
+      },
+      "B8": {
+        "interface": "lte2",
+        "band": "B8",
+        "started_at": "2026-08-10T19:39:23+00:00",
+        "status": "REGISTRATION_TIMEOUT",
+        "last_monitor": {
+          "status": "deregistered",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10"
+        },
+        "finished_at": "2026-08-10T19:40:24+00:00"
+      },
+      "B20": {
+        "interface": "lte2",
+        "band": "B20",
+        "started_at": "2026-08-10T19:40:24+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "running",
+          "current-operator": "Telia EE",
+          "primary-band": "B20@10Mhz earfcn: 6300 phy-cellid: 329",
+          "enb-id": "200095",
+          "sector-id": "12",
+          "phy-cellid": "329",
+          "rsrp": "-88dBm",
+          "rsrq": "-12dB",
+          "sinr": "9dB",
+          "ri": "2"
+        },
+        "finished_at": "2026-08-10T19:40:34+00:00"
+      },
+      "B38": {
+        "interface": "lte2",
+        "band": "B38",
+        "started_at": "2026-08-10T19:40:34+00:00",
+        "status": "REGISTRATION_TIMEOUT",
+        "last_monitor": {
+          "status": "deregistered",
+          "model": "FG621-EA",
+          "revision": "16121.1034.00.01.01.10"
+        },
+        "finished_at": "2026-08-10T19:41:34+00:00"
+      },
+      "B28": {
+        "interface": "lte2",
+        "band": "B28",
+        "started_at": "2026-08-10T19:41:34+00:00",
+        "status": "AVAILABLE",
+        "snapshot": {
+          "status": "running",
+          "current-operator": "Telia EE",
+          "primary-band": "B28@10Mhz earfcn: 9460 phy-cellid: 202",
+          "enb-id": "330095",
+          "sector-id": "25",
+          "phy-cellid": "202",
+          "rsrp": "-81dBm",
+          "rsrq": "-10dB",
+          "sinr": "4dB"
+        },
+        "finished_at": "2026-08-10T19:41:44+00:00"
+      }
+    },
+    "finished_at": "2026-08-10T19:41:45+00:00"
+  },
+  "common_bands": {
+    "elisa_interface": "lte1",
+    "telia_interface": "lte2",
+    "bands": {
+      "B1": {
+        "telia": false,
+        "elisa": false,
+        "selected": false,
+        "reason": "Telia unavailable or informational-only band"
+      },
+      "B3": {
+        "telia": true,
+        "elisa": true,
+        "selected": true,
+        "reason": "selected by priority algorithm",
+        "elisa_result": {
+          "interface": "lte1",
+          "band": "B3",
+          "started_at": "2026-08-10T19:41:45+00:00",
+          "status": "AVAILABLE",
+          "snapshot": {
+            "status": "registered",
+            "current-operator": "elisa",
+            "primary-band": "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+            "enb-id": "1004018",
+            "sector-id": "21",
+            "phy-cellid": "69",
+            "rsrp": "-97dBm",
+            "rsrq": "-12dB",
+            "sinr": "4dB",
+            "cqi": "0",
+            "ri": "1"
+          },
+          "finished_at": "2026-08-10T19:42:00+00:00"
+        }
+      },
+      "B7": {
+        "telia": true,
+        "elisa": true,
+        "selected": true,
+        "reason": "selected by priority algorithm",
+        "elisa_result": {
+          "interface": "lte1",
+          "band": "B7",
+          "started_at": "2026-08-10T19:42:00+00:00",
+          "status": "AVAILABLE",
+          "snapshot": {
+            "status": "registered",
+            "current-operator": "elisa",
+            "primary-band": "B7@20Mhz earfcn: 2850 phy-cellid: 69",
+            "enb-id": "1004018",
+            "sector-id": "31",
+            "phy-cellid": "69",
+            "rsrp": "-103dBm",
+            "rsrq": "-12dB",
+            "sinr": "15dB",
+            "cqi": "0",
+            "ri": "2"
+          },
+          "finished_at": "2026-08-10T19:42:25+00:00"
+        }
+      },
+      "B8": {
+        "telia": false,
+        "elisa": false,
+        "selected": false,
+        "reason": "Telia unavailable or informational-only band"
+      },
+      "B20": {
+        "telia": true,
+        "elisa": true,
+        "selected": true,
+        "reason": "selected by priority algorithm",
+        "elisa_result": {
+          "interface": "lte1",
+          "band": "B20",
+          "started_at": "2026-08-10T19:42:25+00:00",
+          "status": "AVAILABLE",
+          "snapshot": {
+            "status": "registered",
+            "current-operator": "elisa",
+            "primary-band": "B20@10Mhz earfcn: 6200 phy-cellid: 71",
+            "enb-id": "1004018",
+            "sector-id": "13",
+            "phy-cellid": "71",
+            "rsrp": "-85dBm",
+            "rsrq": "-16.5dB",
+            "sinr": "0dB",
+            "cqi": "0",
+            "ri": "1"
+          },
+          "finished_at": "2026-08-10T19:42:50+00:00"
+        }
+      },
+      "B38": {
+        "telia": false,
+        "elisa": false,
+        "selected": false,
+        "reason": "Telia unavailable or informational-only band"
+      },
+      "B28": {
+        "telia": true,
+        "elisa": false,
+        "selected": false,
+        "reason": "Telia unavailable or informational-only band"
+      }
+    },
+    "updated_at": "2026-08-10T19:41:45+00:00"
+  },
+  "final_monitor_snapshots_recorded_at": "2026-08-11T06:02:44+00:00"
+}

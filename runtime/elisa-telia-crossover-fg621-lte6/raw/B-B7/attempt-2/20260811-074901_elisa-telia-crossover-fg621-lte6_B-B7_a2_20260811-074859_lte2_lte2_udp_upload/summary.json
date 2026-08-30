@@ -1,0 +1,151 @@
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-11T07:49:01+03:00",
+    "created_utc": "2026-08-11T04:49:01.634+00:00",
+    "tag": "elisa-telia-crossover-fg621-lte6_B-B7_a2_20260811-074859_lte2",
+    "path": "lte2",
+    "lte_interface": "lte2",
+    "source_ip": "192.168.101.202",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5202,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5202,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 1864842.9226026232
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 300,
+    "warmup_s": 10,
+    "cooldown_s": 10,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte2",
+    "source_rule_comment": "ELMO TEST: source via lte2",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 5654924.601011984,
+    "mbps": 5.6549246010119845,
+    "jitter_ms": 1.4814844236561067,
+    "lost_packets": 10736,
+    "packets": 187500,
+    "lost_percent": 5.725866666666667
+  },
+  "ping": {
+    "sent": 1586,
+    "received": 1586,
+    "loss_percent": 0.0,
+    "min_ms": 13.52,
+    "avg_ms": 47.086,
+    "max_ms": 335.679,
+    "mdev_ms": 30.822,
+    "p95_ms": 102.0,
+    "sample_count": 1586
+  },
+  "radio_target": {
+    "rssi_median": -82.0,
+    "rssi_min": -85.0,
+    "rssi_max": -78.0,
+    "rsrp_median": -106.0,
+    "rsrp_min": -108.0,
+    "rsrp_max": -103.0,
+    "rsrq_median": -7.5,
+    "rsrq_min": -12.5,
+    "rsrq_max": -7.0,
+    "sinr_median": 10.0,
+    "sinr_min": 2.0,
+    "sinr_max": 15.0,
+    "cqi_median": null,
+    "cqi_min": null,
+    "cqi_max": null,
+    "ri_median": 2.0,
+    "ri_min": 1.0,
+    "ri_max": 2.0,
+    "primary_bands_seen": [
+      "B7@20Mhz earfcn: 2850 phy-cellid: 69"
+    ],
+    "ca_bands_seen": [],
+    "ca_missing_samples": 321,
+    "samples": 321,
+    "statuses_seen": [
+      "running"
+    ],
+    "cell_changes": 0,
+    "tx-byte_delta": 233502271,
+    "rx-byte_delta": 170185,
+    "tx-packet_delta": 189449,
+    "rx-packet_delta": 1806,
+    "tx-queue-drop_delta": 0
+  },
+  "radio_other": {
+    "lte1": {
+      "rssi_median": -70.0,
+      "rssi_min": -71.0,
+      "rssi_max": -68.0,
+      "rsrp_median": -101.0,
+      "rsrp_min": -104.0,
+      "rsrp_max": -101.0,
+      "rsrq_median": -11.0,
+      "rsrq_min": -12.0,
+      "rsrq_max": -9.5,
+      "sinr_median": 9.0,
+      "sinr_min": 2.0,
+      "sinr_max": 15.0,
+      "cqi_median": 0.0,
+      "cqi_min": 0.0,
+      "cqi_max": 0.0,
+      "ri_median": 2.0,
+      "ri_min": 2.0,
+      "ri_max": 2.0,
+      "primary_bands_seen": [
+        "B7@20Mhz earfcn: 3050 phy-cellid: 156"
+      ],
+      "ca_bands_seen": [
+        "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+      ],
+      "ca_missing_samples": 0,
+      "samples": 321,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 234115600,
+      "rx-byte_delta": 179845,
+      "tx-packet_delta": 189860,
+      "rx-packet_delta": 1949,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte2",
+    "before": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "232429664\n190430\n",
+      "bytes": 232429664,
+      "packets": 190430
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "462814362\n379535\n",
+      "bytes": 462814362,
+      "packets": 379535
+    },
+    "bytes_delta": 230384698,
+    "packets_delta": 189105
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 4
+}

@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-08-10T18:34:58+00:00",
+  "pid": 801779,
+  "campaign_state": "CONDITIONAL_FG621_B3_STAIRCASE",
+  "current_item": "STAIR-8M",
+  "item_state": "SKIPPED_NOT_TRIGGERED",
+  "item_elapsed_s": 648,
+  "worker_progress_counter": 69,
+  "worker_last_progress_at": "2026-08-10T18:34:58+00:00",
+  "elapsed_seconds": 4170,
+  "last_successful_telemetry_timestamp": "2026-08-10T18:24:04+00:00",
+  "router_reachable": true,
+  "server_reachable": false,
+  "lte1_status": null,
+  "lte2_status": null,
+  "lte1_band_config": "3",
+  "lte2_band_config": "3",
+  "completed": 12,
+  "mandatory_total": 14,
+  "retry_queue_length": 0,
+  "push_pending": false,
+  "last_error": "FAIL_IPERF_OR_PATH",
+  "last_local_commit": "e51ee9a",
+  "last_pushed_commit": "4e9cd59c0ff01211cb7b6206c0c794854f732aac",
+  "bands_currently_configured": {
+    "lte1": "3",
+    "lte2": "3"
+  }
+}

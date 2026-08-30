@@ -1,0 +1,156 @@
+Warm-up 5s...
+Running: iperf3 -c 217.18.95.142 -p 5201 -4 -B 192.168.101.202 -t 120 -i 1 -J -u -b 6M -l 1200
+Cool-down 10s...
+{
+  "test": {
+    "collector_version": "0.4.2",
+    "created_local": "2026-08-14T08:14:22+03:00",
+    "created_utc": "2026-08-14T05:14:22.552+00:00",
+    "tag": "B_lte2_6M_r2_retry1",
+    "path": "lte2",
+    "lte_interface": "lte2",
+    "source_ip": "192.168.101.202",
+    "linux_interface": "eno1",
+    "server_hostname": "iperf-ams-nl.eranium.net",
+    "server_ipv4": "217.18.95.142",
+    "server_port": 5201,
+    "port_probe": {
+      "attempts": [
+        {
+          "port": 5201,
+          "rc": 0,
+          "stderr": "",
+          "iperf_error": null,
+          "bps": 4127165.62794495
+        }
+      ]
+    },
+    "protocol": "udp",
+    "direction": "upload",
+    "duration_s": 120,
+    "warmup_s": 5,
+    "cooldown_s": 10,
+    "target_bitrate": "6M",
+    "packet_length": 1200,
+    "routing_mode": "source_ip_lab_mode",
+    "routing_table": "to-lte2",
+    "source_rule_comment": "ELMO TEST: source via lte2",
+    "allow_concurrent_other_lte": true
+  },
+  "iperf": {
+    "bits_per_second": 4832368.254626648,
+    "mbps": 4.8323682546266475,
+    "jitter_ms": 2.342063455534835,
+    "lost_packets": 14516,
+    "packets": 75000,
+    "lost_percent": 19.354666666666667
+  },
+  "ping": {
+    "sent": 656,
+    "received": 116,
+    "loss_percent": 82.3171,
+    "min_ms": 13.375,
+    "avg_ms": 54.011,
+    "max_ms": 123.765,
+    "mdev_ms": 44.09,
+    "p95_ms": 122.0,
+    "sample_count": 116
+  },
+  "radio_target": {
+    "rssi_median": -70.0,
+    "rssi_min": -70.0,
+    "rssi_max": -61.0,
+    "rsrp_median": -102.0,
+    "rsrp_min": -103.0,
+    "rsrp_max": -95.0,
+    "rsrq_median": -12.0,
+    "rsrq_min": -13.0,
+    "rsrq_max": -12.0,
+    "sinr_median": 8.0,
+    "sinr_min": 0.0,
+    "sinr_max": 10.0,
+    "cqi_median": 0.0,
+    "cqi_min": 0.0,
+    "cqi_max": 0.0,
+    "ri_median": null,
+    "ri_min": null,
+    "ri_max": null,
+    "primary_bands_seen": [
+      "B3@20Mhz earfcn: 1344 phy-cellid: 66"
+    ],
+    "ca_bands_seen": [
+      "B7@20Mhz earfcn: 3248 phy-cellid: 171"
+    ],
+    "ca_missing_samples": 1,
+    "samples": 136,
+    "statuses_seen": [
+      "registered"
+    ],
+    "cell_changes": 0,
+    "tx-byte_delta": 76272986,
+    "rx-byte_delta": 46216,
+    "tx-packet_delta": 61420,
+    "rx-packet_delta": 559,
+    "tx-queue-drop_delta": 15114
+  },
+  "radio_other": {
+    "lte1": {
+      "rssi_median": -60.0,
+      "rssi_min": -60.0,
+      "rssi_max": -59.0,
+      "rsrp_median": -93.0,
+      "rsrp_min": -139.0,
+      "rsrp_max": -93.0,
+      "rsrq_median": -12.0,
+      "rsrq_min": -14.0,
+      "rsrq_max": -12.0,
+      "sinr_median": 4.0,
+      "sinr_min": 3.0,
+      "sinr_max": 5.0,
+      "cqi_median": 0.0,
+      "cqi_min": 0.0,
+      "cqi_max": 0.0,
+      "ri_median": null,
+      "ri_min": null,
+      "ri_max": null,
+      "primary_bands_seen": [
+        "B1@15Mhz earfcn: 523 phy-cellid: 69"
+      ],
+      "ca_bands_seen": [],
+      "ca_missing_samples": 136,
+      "samples": 136,
+      "statuses_seen": [
+        "registered"
+      ],
+      "cell_changes": 0,
+      "tx-byte_delta": 0,
+      "rx-byte_delta": 0,
+      "tx-packet_delta": 0,
+      "rx-packet_delta": 0,
+      "tx-queue-drop_delta": 0
+    }
+  },
+  "source_rule": {
+    "comment": "ELMO TEST: source via lte2",
+    "before": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "95389687\n77528\n",
+      "bytes": 95389687,
+      "packets": 77528
+    },
+    "after": {
+      "comment": "ELMO TEST: source via lte2",
+      "rc": 0,
+      "raw": "187546213\n153202\n",
+      "bytes": 187546213,
+      "packets": 153202
+    },
+    "bytes_delta": 92156526,
+    "packets_delta": 75674
+  },
+  "path_verification": "PASS_CONCURRENT_OTHER_LTE",
+  "events_count": 7
+}
+
+Saved: /home/madis/projects/ltap-lte-testbench/results-public/exp2b-stationary-20260814/runs/20260814-081422_B_lte2_6M_r2_retry1_lte2_udp_upload

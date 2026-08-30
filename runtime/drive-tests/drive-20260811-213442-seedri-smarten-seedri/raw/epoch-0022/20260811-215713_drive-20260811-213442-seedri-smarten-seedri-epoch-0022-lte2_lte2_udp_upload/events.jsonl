@@ -1,0 +1,12 @@
+{"timestamp_utc": "2026-08-11T18:57:28.476+00:00", "type": "cell_changed", "interface": "lte2", "old": "51843094", "new": "51780876"}
+{"timestamp_utc": "2026-08-11T18:57:30.477+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B20@10Mhz earfcn: 6300 phy-cellid: 329", "new": "B20@10Mhz earfcn: 6300 phy-cellid: 342"}
+{"timestamp_utc": "2026-08-11T18:57:30.477+00:00", "type": "ca_disappeared", "interface": "lte2", "old": "B7@20Mhz earfcn: 3248 phy-cellid: 430"}
+{"timestamp_utc": "2026-08-11T18:57:30.477+00:00", "type": "sinr_low_ended", "interface": "lte2", "sinr": 4.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-11T18:57:36.476+00:00", "type": "ca_appeared", "interface": "lte2", "ca_band": "B7@20Mhz earfcn: 3248 phy-cellid: 430"}
+{"timestamp_utc": "2026-08-11T18:57:36.476+00:00", "type": "sinr_low_started", "interface": "lte2", "sinr": 0.0, "threshold": 3.0}
+{"timestamp_utc": "2026-08-11T18:57:39.476+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B20@10Mhz earfcn: 6300 phy-cellid: 342", "new": "B20@10Mhz earfcn: 6300 phy-cellid: 329"}
+{"timestamp_utc": "2026-08-11T18:57:45.476+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B20@10Mhz earfcn: 6300 phy-cellid: 329", "new": "B3@20Mhz earfcn: 1344 phy-cellid: 253"}
+{"timestamp_utc": "2026-08-11T18:57:45.476+00:00", "type": "ca_band_changed", "interface": "lte2", "old": "B7@20Mhz earfcn: 3248 phy-cellid: 430", "new": "B20@10Mhz earfcn: 6300 phy-cellid: 103"}
+{"timestamp_utc": "2026-08-11T18:57:46.476+00:00", "type": "cell_changed", "interface": "lte2", "old": "51780876", "new": "84504341"}
+{"timestamp_utc": "2026-08-11T18:57:48.476+00:00", "type": "primary_band_changed", "interface": "lte2", "old": "B3@20Mhz earfcn: 1344 phy-cellid: 253", "new": "B3@20Mhz earfcn: 1344 phy-cellid: 66"}
+{"timestamp_utc": "2026-08-11T18:57:48.476+00:00", "type": "ca_band_changed", "interface": "lte2", "old": "B20@10Mhz earfcn: 6300 phy-cellid: 103", "new": "B7@20Mhz earfcn: 3050 phy-cellid: 156"}

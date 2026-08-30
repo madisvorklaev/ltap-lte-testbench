@@ -1,0 +1,7 @@
+{"utc":"2026-08-16T11:32:33.019+00:00","type":"START_REQUESTED","name":"seedri-ikea-pfifo5m-dual6m"}
+{"utc":"2026-08-16T11:32:34.201+00:00","type":"RUNNING","skill_version":"2.0"}
+{"utc":"2026-08-16T11:32:34.206+00:00","type":"PING_STARTED","path":"lte2","pid":14030,"command":["ping","-n","-D","-O","-I","192.168.101.202","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-16T11:32:34.209+00:00","type":"PING_STARTED","path":"lte1","pid":14031,"command":["ping","-n","-D","-O","-I","192.168.101.201","-i","0.5","1.1.1.1"]}
+{"utc":"2026-08-16T11:45:48.719+00:00","type":"STOP_REQUESTED"}
+{"utc":"2026-08-16T11:45:49.138+00:00","type":"PING_STOPPED","path":"lte1","rc":-15}
+{"utc":"2026-08-16T11:45:49.141+00:00","type":"PING_STOPPED","path":"lte2","rc":-15}
