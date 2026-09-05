@@ -1,0 +1,164 @@
+{
+  "batch": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T163733Z-elisa-b38-dual5m-batch",
+  "runs": [
+    {
+      "run": "1",
+      "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T163733Z-elisa-b38-dual5m-batch/run-1",
+      "iperf_a": {
+        "rc": "0",
+        "error": null,
+        "receiver_summary_present": true,
+        "receiver_mbps": 4.9983817739007,
+        "lost_percent": 0,
+        "jitter_ms": 2.3545783722319826,
+        "lost_packets": 0,
+        "packets": 93750,
+        "sender_mbps": 4.999989944464668,
+        "intervals": 180
+      },
+      "iperf_b": {
+        "rc": "0",
+        "error": null,
+        "receiver_summary_present": true,
+        "receiver_mbps": 1.3732930368878289,
+        "lost_percent": 72.06933333333333,
+        "jitter_ms": 5.71345355945621,
+        "lost_packets": 67565,
+        "packets": 93654,
+        "sender_mbps": 4.999988944468891,
+        "intervals": 180
+      },
+      "ping_a": {
+        "samples": 912,
+        "sent": 912,
+        "received": 912,
+        "loss_percent": 0.0,
+        "p50_ms": 24.9,
+        "p95_ms": 30.9,
+        "p99_ms": 36.8,
+        "max_ms": 164.0
+      },
+      "ping_b": {
+        "samples": 249,
+        "sent": 889,
+        "received": 249,
+        "loss_percent": 71.991,
+        "p50_ms": 2346.0,
+        "p95_ms": 2750.0,
+        "p99_ms": 2893.0,
+        "max_ms": 2968.0
+      },
+      "elisa_bands_seen": [
+        "LTE_B38"
+      ],
+      "elisa_disconnected_samples": 0,
+      "rb_cross_counter_nonzero": false
+    },
+    {
+      "run": "2",
+      "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T163733Z-elisa-b38-dual5m-batch/run-2",
+      "iperf_a": {
+        "rc": "0",
+        "error": null,
+        "receiver_summary_present": true,
+        "receiver_mbps": 4.998164368600472,
+        "lost_percent": 0,
+        "jitter_ms": 2.816743671750358,
+        "lost_packets": 0,
+        "packets": 93750,
+        "sender_mbps": 4.999990750017112,
+        "intervals": 180
+      },
+      "iperf_b": {
+        "rc": "0",
+        "error": null,
+        "receiver_summary_present": true,
+        "receiver_mbps": 1.3020815607122072,
+        "lost_percent": 73.43893333333334,
+        "jitter_ms": 6.830298068699898,
+        "lost_packets": 68849,
+        "packets": 93617,
+        "sender_mbps": 4.999987555586528,
+        "intervals": 180
+      },
+      "ping_a": {
+        "samples": 913,
+        "sent": 913,
+        "received": 913,
+        "loss_percent": 0.0,
+        "p50_ms": 24.9,
+        "p95_ms": 30.7,
+        "p99_ms": 36.6,
+        "max_ms": 158.0
+      },
+      "ping_b": {
+        "samples": 250,
+        "sent": 890,
+        "received": 250,
+        "loss_percent": 71.9101,
+        "p50_ms": 2460.0,
+        "p95_ms": 2771.0,
+        "p99_ms": 2846.0,
+        "max_ms": 3016.0
+      },
+      "elisa_bands_seen": [
+        "LTE_B38"
+      ],
+      "elisa_disconnected_samples": 0,
+      "rb_cross_counter_nonzero": false
+    },
+    {
+      "run": "3",
+      "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T163733Z-elisa-b38-dual5m-batch/run-3",
+      "iperf_a": {
+        "rc": "0",
+        "error": null,
+        "receiver_summary_present": true,
+        "receiver_mbps": 4.99831291255439,
+        "lost_percent": 0,
+        "jitter_ms": 1.8875285564095325,
+        "lost_packets": 0,
+        "packets": 93749,
+        "sender_mbps": 4.9999920000128,
+        "intervals": 180
+      },
+      "iperf_b": {
+        "rc": "0",
+        "error": null,
+        "receiver_summary_present": true,
+        "receiver_mbps": 1.3948972487008657,
+        "lost_percent": 71.70453333333333,
+        "jitter_ms": 7.369319578422246,
+        "lost_packets": 67223,
+        "packets": 93750,
+        "sender_mbps": 4.999989388911408,
+        "intervals": 180
+      },
+      "ping_a": {
+        "samples": 911,
+        "sent": 912,
+        "received": 911,
+        "loss_percent": 0.109649,
+        "p50_ms": 24.9,
+        "p95_ms": 32.8,
+        "p99_ms": 42.7,
+        "max_ms": 151.0
+      },
+      "ping_b": {
+        "samples": 257,
+        "sent": 889,
+        "received": 257,
+        "loss_percent": 71.0911,
+        "p50_ms": 2296.0,
+        "p95_ms": 2676.0,
+        "p99_ms": 2795.0,
+        "max_ms": 2856.0
+      },
+      "elisa_bands_seen": [
+        "LTE_B38"
+      ],
+      "elisa_disconnected_samples": 0,
+      "rb_cross_counter_nonzero": false
+    }
+  ]
+}

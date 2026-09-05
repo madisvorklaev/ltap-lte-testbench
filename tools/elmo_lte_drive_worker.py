@@ -264,7 +264,18 @@ def parse_iperf_summary(path: Path) -> dict[str, Any]:
     intervals = data.get("intervals") or []
     end = data.get("end") or {}
     sender = (end.get("sum_sent") or end.get("sum") or {})
-    receiver = end.get("sum_received") or end.get("sum") or {}
+    receiver = end.get("sum_received")
+    if not isinstance(receiver, dict):
+        return {
+            "error": "missing receiver UDP summary",
+            "sender_mbps": (sender.get("bits_per_second") or 0) / 1e6 if sender else None,
+            "receiver_mbps": None,
+            "lost_packets": None,
+            "total_packets": None,
+            "loss_percent": None,
+            "jitter_ms": None,
+            "interval_count": len(intervals),
+        }
     return {
         "sender_mbps": (sender.get("bits_per_second") or 0) / 1e6 if sender else None,
         "receiver_mbps": (receiver.get("bits_per_second") or 0) / 1e6 if receiver else None,

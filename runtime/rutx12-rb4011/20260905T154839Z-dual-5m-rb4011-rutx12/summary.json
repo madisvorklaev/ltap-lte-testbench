@@ -1,0 +1,49 @@
+{
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T154839Z-dual-5m-rb4011-rutx12",
+  "finished_utc": "2026-09-05T15:55:45.500569+00:00",
+  "iperf_a": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.998205819347597,
+    "lost_percent": 0,
+    "jitter_ms": 1.685662138064616,
+    "lost_packets": 0,
+    "packets": 93749,
+    "sender_mbps": 4.999989527799712,
+    "intervals": 180
+  },
+  "iperf_b": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.862465846289317,
+    "lost_percent": 2.718933333333333,
+    "jitter_ms": 2.0913093845939352,
+    "lost_packets": 2549,
+    "packets": 93750,
+    "sender_mbps": 4.9999885278041,
+    "intervals": 180
+  },
+  "ping_a": {
+    "samples": 2094,
+    "sent": 2095,
+    "received": 2094,
+    "loss_percent": 0.0477327,
+    "p50_ms": 25.8,
+    "p95_ms": 32.1,
+    "p99_ms": 37.7,
+    "max_ms": 152.0
+  },
+  "ping_b": {
+    "samples": 2094,
+    "sent": 2095,
+    "received": 2094,
+    "loss_percent": 0.0477327,
+    "p50_ms": 25.9,
+    "p95_ms": 52.4,
+    "p99_ms": 102.0,
+    "max_ms": 190.0
+  },
+  "rb_cross_counter_nonzero": false
+}

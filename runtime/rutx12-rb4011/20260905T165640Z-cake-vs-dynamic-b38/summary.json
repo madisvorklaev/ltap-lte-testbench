@@ -1,0 +1,31 @@
+{
+  "batch": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T165640Z-cake-vs-dynamic-b38",
+  "runs": {
+    "static_cake": {
+      "a_mbps": 4.828282066596772,
+      "a_loss": 3.3973333333333335,
+      "a_ping_p95": 36.7,
+      "b_mbps": 1.2930905977523206,
+      "b_loss": 73.80266666666667,
+      "b_ping_p95": 2751.0,
+      "b_ping_loss": 74.5496,
+      "elisa_bands_seen": [
+        "LTE_B38"
+      ],
+      "controller_min_b_cap": null
+    },
+    "dynamic": {
+      "a_mbps": 4.828195789043938,
+      "a_loss": 3.400605879592098,
+      "a_ping_p95": 37.6,
+      "b_mbps": 1.162960169045094,
+      "b_loss": 76.72746666666667,
+      "b_ping_p95": 4099.0,
+      "b_ping_loss": 78.7671,
+      "elisa_bands_seen": [
+        "LTE_B38"
+      ],
+      "controller_min_b_cap": 1000000
+    }
+  }
+}

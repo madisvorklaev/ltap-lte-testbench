@@ -1,0 +1,294 @@
+$ post_rollback_snapshot
+sample_utc=2026-08-30T11:16:37Z
+rc=0
+routeros_error=
+--- stdout ---
+                   uptime: 4d15h6m7s          
+                  version: 7.24rc3 (testing)  
+               build-time: 2026-07-28 13:55:55
+          minimum-version: 7.11               
+              free-memory: 54.8MiB            
+             total-memory: 128.0MiB           
+                      cpu: MIPS 1004Kc V2.15  
+                cpu-count: 4                  
+            cpu-frequency: 880MHz             
+                 cpu-load: 19%                
+           free-hdd-space: 3616.0KiB          
+          total-hdd-space: 16.0MiB            
+  write-sect-since-reboot: 372725             
+         write-sect-total: 566637             
+        architecture-name: mmips              
+               board-name: LtAP-2HnD          
+                 platform: MikroTik           
+
+                   ;;; A newer version of modem firmware is available!
+               status: registered                                     
+           pin-status: ok                                             
+  registration-status: registered                                     
+         manufacturer: "MikroTik"                                     
+                model: "R11e-LTE6"                                    
+             revision: R11e-LTE6_V034                                 
+     current-operator: Telia                                          
+                  lac: 10012                                          
+       current-cellid: 51224331                                       
+               enb-id: 200095                                         
+            sector-id: 11                                             
+           phy-cellid: 310                                            
+           data-class: LTE CA                                         
+       session-uptime: 1d10h52m33s                                    
+                 imei: <redacted>                                
+                 imsi: <redacted>                                
+                iccid: <redacted>                            
+         primary-band: B3@20Mhz earfcn: 1344 phy-cellid: 310          
+              ca-band: B7@20Mhz earfcn: 3248 phy-cellid: 430          
+                  cqi: 0                                              
+                 rssi: -74dBm                                         
+                 rsrp: -106dBm                                        
+                 rsrq: -11dB                                          
+                 sinr: 4dB                                            
+
+               status: registered                           
+           pin-status: ok                                   
+  registration-status: registered                           
+         manufacturer: MikroTik                             
+                model: R11l-LTE7                            
+             revision: R11l-LTE7_V005                       
+     current-operator: Elisa EE                             
+                  lac: 2022                                 
+       current-cellid: 257028719                            
+               enb-id: 1004018                              
+            sector-id: 111                                  
+           phy-cellid: 3                                    
+           data-class: LTE                                  
+       session-uptime: 4h18m59s                             
+                 imei: <redacted>                      
+                 imsi: <redacted>                      
+                iccid: <redacted>                 
+    subscriber-number: <redacted>                       
+         primary-band: B38@20Mhz earfcn: 37900 phy-cellid: 3
+                  cqi: 14                                   
+                   ri: 2                                    
+                 rssi: -73dBm                               
+                 rsrp: -103dBm                              
+                 rsrq: -8dB                                 
+                 sinr: 18dB                                 
+
+Flags: D - DYNAMIC
+0   ;;; ELMO: LAN address
+    address=192.168.101.254/24 network=192.168.101.0 interface=bridge1
+    actual-interface=bridge1 vrf=main
+ 
+1 D address=10.52.223.126/32 network=10.52.223.126 interface=lte1
+    actual-interface=lte1 vrf=main
+ 
+2 D address=10.66.132.161/32 network=10.66.132.161 interface=lte2
+    actual-interface=lte2 vrf=main
+
+Flags: A - ACTIVE; s - STATIC
+0 As ;;; ELMO:BASE: default to LTE1
+     dst-address=0.0.0.0/0 routing-table=to-lte1 gateway=lte1 immediate-gw=lte1
+     distance=1 scope=30 target-scope=10
+ 
+1  s ;;; ELMO:BASE: blackhole LTE1 fallback
+     dst-address=0.0.0.0/0 routing-table=to-lte1 blackhole immediate-gw=""
+     distance=254
+ 
+2 As ;;; ELMO:BASE: default to LTE2
+     dst-address=0.0.0.0/0 routing-table=to-lte2 gateway=lte2 immediate-gw=lte2
+     distance=1 scope=30 target-scope=10
+ 
+3  s ;;; ELMO:BASE: blackhole LTE2 fallback
+     dst-address=0.0.0.0/0 routing-table=to-lte2 blackhole immediate-gw=""
+     distance=254
+
+0  name="elmo-exp2b-cake" kind=cake cake-bandwidth=0bps cake-overhead=0
+   cake-overhead-scheme="" cake-rtt=100ms cake-diffserv=besteffort
+   cake-flowmode=flowblind cake-nat=no cake-wash=no cake-ack-filter=none
+
+0  name="ELMO-EXP2B-LTE1" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=112666234 packets=91530
+   dropped=0
+ 
+1  name="ELMO-EXP2B-LTE2" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=112668957 packets=91543
+   dropped=0
+
+
+
+
+2026-08-30 14:07:43 system,info device added by ssh-cmd:admin@192.168.101.200 (*8 = /interface bridge add comment="ELMO ADAPTIVE: probe loopback" name=ELMO-ADAPTIVE-LO protocol-mode=none)
+2026-08-30 14:07:43 system,info address added by ssh-cmd:admin@192.168.101.200 (*34 = /ip address add address=192.0.2.1/32 comment="ELMO ADAPTIVE: LTE1 probe source" interface=ELMO-ADAPTIVE-LO)
+2026-08-30 14:07:43 system,info address added by ssh-cmd:admin@192.168.101.200 (*35 = /ip address add address=192.0.2.2/32 comment="ELMO ADAPTIVE: LTE2 probe source" interface=ELMO-ADAPTIVE-LO)
+2026-08-30 14:07:43 system,info mangle rule added by ssh-cmd:admin@192.168.101.200 (*DB = /ip firewall mangle add action=mark-routing chain=output comment="ELMO ADAPTIVE: probe via LTE1" dst-address=1.1.1.1 new-routing-mark=to-lte1 passthrough=no protocol=icmp src-address=192.0.2.1)
+2026-08-30 14:07:43 system,info mangle rule added by ssh-cmd:admin@192.168.101.200 (*DC = /ip firewall mangle add action=mark-routing chain=output comment="ELMO ADAPTIVE: probe via LTE2" dst-address=1.1.1.1 new-routing-mark=to-lte2 passthrough=no protocol=icmp src-address=192.0.2.2)
+2026-08-30 14:07:43 system,info nat rule added by ssh-cmd:admin@192.168.101.200 (*D = /ip firewall nat add action=masquerade chain=srcnat comment="ELMO ADAPTIVE: probe NAT LTE1" out-interface=lte1 src-address=192.0.2.1)
+2026-08-30 14:07:43 system,info nat rule added by ssh-cmd:admin@192.168.101.200 (*E = /ip firewall nat add action=masquerade chain=srcnat comment="ELMO ADAPTIVE: probe NAT LTE2" out-interface=lte2 src-address=192.0.2.2)
+2026-08-30 14:07:43 system,info Netwatch config added by ssh-cmd:admin@192.168.101.200 (*1 = /tool netwatch add comment="ELMO ADAPTIVE: LTE1 probe only" disabled=yes host=1.1.1.1 interval=1s name=ELMO-ADAPTIVE-LTE1 packet-count=3 packet-interval=100ms packet-size=64 src-address=192.0.2.1 start-delay=1s startup-delay=1s thr-avg=5s thr-jitter=5s thr-loss-percent=100% thr-max=5s thr-stdev=5s timeout=800ms type=icmp)
+2026-08-30 14:07:43 system,info Netwatch config added by ssh-cmd:admin@192.168.101.200 (*2 = /tool netwatch add comment="ELMO ADAPTIVE: LTE2 probe only" disabled=yes host=1.1.1.1 interval=1s name=ELMO-ADAPTIVE-LTE2 packet-count=3 packet-interval=100ms packet-size=64 src-address=192.0.2.2 start-delay=1s startup-delay=1s thr-avg=5s thr-jitter=5s thr-loss-percent=100% thr-max=5s thr-stdev=5s timeout=800ms type=icmp)
+2026-08-30 14:07:43 system,info new script added by ssh-cmd:admin@192.168.101.200 (*1 = /system script add comment="ELMO ADAPTIVE: scheduler controller v0.3.2" name=ELMO-ADAPTIVE-v032-CONTROLLER policy=read,write,policy,test source="\;     \n    :global elmoAdaptiveHeartbeatv032\;     \n    :global elmoAdaptiveCap1v032\;     \n    :global elmoAdaptiveBaseNs1v032\;     \n    :global elmoAdaptiveBaseCount1v032\;     \n    :global elmoAdaptiveSeen1v032\;     \n    :global elmoAdaptiveLastDone1v032\;     \n    :global elmoAdaptiveState1v032\;     \n    :global elmoAdaptiveLastBytes1v032\;     \n    :global elmoAdaptiveProbeLossSamples1v032\;     \n    :global elmoAdaptiveConsecutiveLoss1v032\;     \n    :global elmoAdaptiveCap2v032\;     \n    :global elmoAdaptiveBaseNs2v032\;     \n    :global elmoAdaptiveBaseCount2v032\;     \n    :global elmoAdaptiveSeen2v032\;     \n    :global elmoAdaptiveLastDone2v032\;     \n    :global elmoAdaptiveState2v032\;     \n    :global elmoAdaptiveLastBytes2v032\;     \n    :global elmoAdaptiveProbeLossSamples2
+2026-08-30 14:07:43 system,info es2v032] != \"num\") do={ :set elmoAdaptiveLastBytes2v032 0 }\;     \n    :if ([:typeof \$elmoAdaptiveProbeLossSamples2v032] != \"num\") do={ :set elmoAdaptiveProbeLossSamples2v032 0 }\;     \n    :if ([:typeof \$elmoAdaptiveConsecutiveLoss2v032] != \"num\") do={ :set elmoAdaptiveConsecutiveLoss2v032 0 }\;     \n\;     \n    :local n [/tool netwatch find where name=\"ELMO-ADAPTIVE-LTE1\"]\;     \n    :local q [/queue tree find where name=\"ELMO-EXP2B-LTE1\"]\;     \n    :if (([:len \$n] != 1) || ([:len \$q] != 1)) do={\;     \n        :log error \"ELMO ADAPTIVE LTE1: probe or queue missing; scheduler cannot run\"\;     \n    } else={\;     \n        :local currentBytes [/queue tree get \$q bytes]\;     \n        :if ([:typeof \$currentBytes] != \"num\") do={\;     \n            :log error (\"ELMO ADAPTIVE LTE1: queue byte counter not numeric type=\" . [:typeof \$currentBytes] . \"; stopping controller decision\")\;     \n        } else={\;     \n            :local deltaBytes (\$currentBytes - \$elmoAdaptiveLa
+2026-08-30 14:07:43 system,info v032) + \$rttNs) / (\$elmoAdaptiveBaseCount1v032 + 1))\;     \n                        }\;     \n                        :set elmoAdaptiveBaseCount1v032 (\$elmoAdaptiveBaseCount1v032 + 1)\;     \n                    }\;     \n                    :if (\$elmoAdaptiveSeen1v032 >= 10) do={\;     \n                        :if (\$elmoAdaptiveBaseCount1v032 >= 7) do={\;     \n                            :set elmoAdaptiveState1v032 \"armed\"\;     \n                            :log info (\"ELMO ADAPTIVE LTE1: calibration OK samples=\" . \$elmoAdaptiveBaseCount1v032 . \" baseline_ms=\" . (\$elmoAdaptiveBaseNs1v032 / 1000000))\;     \n                        } else={\;     \n                            :set elmoAdaptiveState1v032 \"disarmed\"\;     \n                            :log warning (\"ELMO ADAPTIVE LTE1: calibration INVALID samples=\" . \$elmoAdaptiveBaseCount1v032 . \" seen=\" . \$elmoAdaptiveSeen1v032 . \"; holding 5M; re-import and recalibrate before measured test\")\;     \n                        }\;
+2026-08-30 14:07:43 system,info {\;     \n                                                :set newRate (\$cap + 100000)\;     \n                                                :set reason \"healthy-recover\"\;     \n                                            }\;     \n                                        }\;     \n                                    }\;     \n                                }\;     \n                            }\;     \n                        }\;     \n                        :if (\$newRate < \$minRate) do={ :set newRate \$minRate }\;     \n                        :if (\$newRate > \$maxRate) do={ :set newRate \$maxRate }\;     \n                        :if (\$newRate != \$cap) do={\;     \n                            /queue tree set \$q max-limit=\$newRate\;     \n                            :set elmoAdaptiveCap1v032 \$newRate\;     \n                            :log info (\"ELMO ADAPTIVE LTE1: reason=\" . \$reason . \" demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" rtt=\" . [/tool netwatch get \$
+2026-08-30 14:07:43 system,info n rtt-avg] . \" excess_ms=\" . \$excessMs . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples1v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss1v032 . \" cap=\" . \$cap . \"->\" . \$newRate)\;     \n                        } else={\;     \n                            :if ((\$active) && (\$replies < 3)) do={\;     \n                                :log info (\"ELMO ADAPTIVE LTE1: reason=probe-loss-hold demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples1v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss1v032 . \" cap=\" . \$cap)\;     \n                            }\;     \n                        }\;     \n                    } else={\;     \n                        /queue tree set \$q max-limit=5M\;     \n                        :set elmoAdaptiveCap1v032 \$maxRate\;     \n                    }\;     \n                }\;     \n            }\;     \n        }\;     \n
+2026-08-30 14:07:43 system,info   }\;     \n\;     \n    :local n [/tool netwatch find where name=\"ELMO-ADAPTIVE-LTE2\"]\;     \n    :local q [/queue tree find where name=\"ELMO-EXP2B-LTE2\"]\;     \n    :if (([:len \$n] != 1) || ([:len \$q] != 1)) do={\;     \n        :log error \"ELMO ADAPTIVE LTE2: probe or queue missing; scheduler cannot run\"\;     \n    } else={\;     \n        :local currentBytes [/queue tree get \$q bytes]\;     \n        :if ([:typeof \$currentBytes] != \"num\") do={\;     \n            :log error (\"ELMO ADAPTIVE LTE2: queue byte counter not numeric type=\" . [:typeof \$currentBytes] . \"; stopping controller decision\")\;     \n        } else={\;     \n            :local deltaBytes (\$currentBytes - \$elmoAdaptiveLastBytes2v032)\;     \n            :if (\$deltaBytes < 0) do={ :set deltaBytes 0 }\;     \n            :set elmoAdaptiveLastBytes2v032 \$currentBytes\;     \n            :local demandBps (\$deltaBytes * 8)\;     \n            :local active false\;     \n            :if (\$demandBps >= \$activeDemandBps
+2026-08-30 14:07:43 system,info                  :if (\$elmoAdaptiveBaseCount2v032 >= 7) do={\;     \n                            :set elmoAdaptiveState2v032 \"armed\"\;     \n                            :log info (\"ELMO ADAPTIVE LTE2: calibration OK samples=\" . \$elmoAdaptiveBaseCount2v032 . \" baseline_ms=\" . (\$elmoAdaptiveBaseNs2v032 / 1000000))\;     \n                        } else={\;     \n                            :set elmoAdaptiveState2v032 \"disarmed\"\;     \n                            :log warning (\"ELMO ADAPTIVE LTE2: calibration INVALID samples=\" . \$elmoAdaptiveBaseCount2v032 . \" seen=\" . \$elmoAdaptiveSeen2v032 . \"; holding 5M; re-import and recalibrate before measured test\")\;     \n                        }\;     \n                    }\;     \n                } else={\;     \n                    :if (\$elmoAdaptiveState2v032 = \"armed\") do={\;     \n                        :local cap \$elmoAdaptiveCap2v032\;     \n                        :local newRate \$cap\;     \n                        :local excessMs -1
+2026-08-30 14:07:43 system,info                       }\;     \n                                }\;     \n                            }\;     \n                        }\;     \n                        :if (\$newRate < \$minRate) do={ :set newRate \$minRate }\;     \n                        :if (\$newRate > \$maxRate) do={ :set newRate \$maxRate }\;     \n                        :if (\$newRate != \$cap) do={\;     \n                            /queue tree set \$q max-limit=\$newRate\;     \n                            :set elmoAdaptiveCap2v032 \$newRate\;     \n                            :log info (\"ELMO ADAPTIVE LTE2: reason=\" . \$reason . \" demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" rtt=\" . [/tool netwatch get \$n rtt-avg] . \" excess_ms=\" . \$excessMs . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples2v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss2v032 . \" cap=\" . \$cap . \"->\" . \$newRate)\;     \n                        } else={\;     \n
+2026-08-30 14:07:43 system,info       :if ((\$active) && (\$replies < 3)) do={\;     \n                                :log info (\"ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples2v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss2v032 . \" cap=\" . \$cap)\;     \n                            }\;     \n                        }\;     \n                    } else={\;     \n                        /queue tree set \$q max-limit=5M\;     \n                        :set elmoAdaptiveCap2v032 \$maxRate\;     \n                    }\;     \n                }\;     \n            }\;     \n        }\;     \n    }\;     \n")
+2026-08-30 14:07:43 system,info new script scheduled by ssh-cmd:admin@192.168.101.200 (*0 = /system scheduler add comment="ELMO ADAPTIVE: scheduler tick v0.3.2" disabled=yes interval=1s name=ELMO-ADAPTIVE-v032-SCHEDULER on-event=ELMO-ADAPTIVE-v032-CONTROLLER policy=read,write,policy,test start-time=startup)
+2026-08-30 14:07:57 script,info ELMO ADAPTIVE LTE1: calibration OK samples=10 baseline_ms=29
+2026-08-30 14:07:57 script,info ELMO ADAPTIVE LTE2: calibration OK samples=10 baseline_ms=44
+2026-08-30 14:13:16 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4701296 bytes_delta=587662 replies=1 loss_total=6 loss_consecutive=1 cap=5000000
+2026-08-30 14:13:17 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=6579984 bytes_delta=822498 replies=0 loss_total=7 loss_consecutive=2 cap=5000000
+2026-08-30 14:13:19 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=8785776 bytes_delta=1098222 replies=0 loss_total=9 loss_consecutive=4 cap=5000000
+2026-08-30 14:13:20 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4880144 bytes_delta=610018 replies=0 loss_total=10 loss_consecutive=5 cap=5000000
+2026-08-30 14:13:21 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5029184 bytes_delta=628648 replies=0 loss_total=11 loss_consecutive=6 cap=5000000
+2026-08-30 14:13:22 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4999376 bytes_delta=624922 replies=0 loss_total=12 loss_consecutive=7 cap=5000000
+2026-08-30 14:13:23 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5008528 bytes_delta=626066 replies=0 loss_total=13 loss_consecutive=8 cap=5000000
+2026-08-30 14:13:24 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5645216 bytes_delta=705652 replies=0 loss_total=14 loss_consecutive=9 cap=5000000
+2026-08-30 14:13:26 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=7702752 bytes_delta=962844 replies=0 loss_total=16 loss_consecutive=11 cap=5000000
+2026-08-30 14:13:27 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=6669408 bytes_delta=833676 replies=0 loss_total=17 loss_consecutive=12 cap=5000000
+2026-08-30 14:13:28 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5217968 bytes_delta=652246 replies=0 loss_total=18 loss_consecutive=13 cap=5000000
+2026-08-30 14:13:29 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4721168 bytes_delta=590146 replies=0 loss_total=19 loss_consecutive=14 cap=5000000
+2026-08-30 14:13:30 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5217184 bytes_delta=652148 replies=0 loss_total=20 loss_consecutive=15 cap=5000000
+2026-08-30 14:13:31 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4810592 bytes_delta=601324 replies=0 loss_total=21 loss_consecutive=16 cap=5000000
+2026-08-30 14:13:32 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5019248 bytes_delta=627406 replies=0 loss_total=22 loss_consecutive=17 cap=5000000
+2026-08-30 14:13:33 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4979504 bytes_delta=622438 replies=0 loss_total=23 loss_consecutive=18 cap=5000000
+2026-08-30 14:13:34 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5039120 bytes_delta=629890 replies=0 loss_total=24 loss_consecutive=19 cap=5000000
+2026-08-30 14:13:35 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5078864 bytes_delta=634858 replies=0 loss_total=25 loss_consecutive=20 cap=5000000
+2026-08-30 14:13:36 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4889296 bytes_delta=611162 replies=0 loss_total=26 loss_consecutive=21 cap=5000000
+2026-08-30 14:13:37 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5883680 bytes_delta=735460 replies=0 loss_total=27 loss_consecutive=22 cap=5000000
+2026-08-30 14:13:39 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=7971024 bytes_delta=996378 replies=0 loss_total=29 loss_consecutive=24 cap=5000000
+2026-08-30 14:13:40 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=6122928 bytes_delta=765366 replies=0 loss_total=30 loss_consecutive=25 cap=5000000
+2026-08-30 14:13:41 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4790720 bytes_delta=598840 replies=0 loss_total=31 loss_consecutive=26 cap=5000000
+2026-08-30 14:13:42 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5227904 bytes_delta=653488 replies=0 loss_total=32 loss_consecutive=27 cap=5000000
+2026-08-30 14:13:43 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5158352 bytes_delta=644794 replies=0 loss_total=33 loss_consecutive=28 cap=5000000
+2026-08-30 14:13:44 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4870208 bytes_delta=608776 replies=0 loss_total=34 loss_consecutive=29 cap=5000000
+2026-08-30 14:13:45 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4958848 bytes_delta=619856 replies=0 loss_total=35 loss_consecutive=30 cap=5000000
+2026-08-30 14:13:46 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4998592 bytes_delta=624824 replies=0 loss_total=36 loss_consecutive=31 cap=5000000
+2026-08-30 14:13:47 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5009312 bytes_delta=626164 replies=0 loss_total=37 loss_consecutive=32 cap=5000000
+2026-08-30 14:13:48 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5525200 bytes_delta=690650 replies=0 loss_total=38 loss_consecutive=33 cap=5000000
+2026-08-30 14:13:49 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4452896 bytes_delta=556612 replies=0 loss_total=39 loss_consecutive=34 cap=5000000
+2026-08-30 14:13:50 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5376944 bytes_delta=672118 replies=0 loss_total=40 loss_consecutive=35 cap=5000000
+2026-08-30 14:13:51 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4651616 bytes_delta=581452 replies=0 loss_total=41 loss_consecutive=36 cap=5000000
+2026-08-30 14:13:52 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4630960 bytes_delta=578870 replies=0 loss_total=42 loss_consecutive=37 cap=5000000
+2026-08-30 14:13:53 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5357856 bytes_delta=669732 replies=0 loss_total=43 loss_consecutive=38 cap=5000000
+2026-08-30 14:13:54 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5158352 bytes_delta=644794 replies=0 loss_total=44 loss_consecutive=39 cap=5000000
+2026-08-30 14:13:55 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4840400 bytes_delta=605050 replies=0 loss_total=45 loss_consecutive=40 cap=5000000
+2026-08-30 14:13:56 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5118608 bytes_delta=639826 replies=0 loss_total=46 loss_consecutive=41 cap=5000000
+2026-08-30 14:13:57 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4870208 bytes_delta=608776 replies=0 loss_total=47 loss_consecutive=42 cap=5000000
+2026-08-30 14:13:58 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4999376 bytes_delta=624922 replies=0 loss_total=48 loss_consecutive=43 cap=5000000
+2026-08-30 14:13:59 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5694896 bytes_delta=711862 replies=0 loss_total=49 loss_consecutive=44 cap=5000000
+2026-08-30 14:14:01 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=8537376 bytes_delta=1067172 replies=0 loss_total=51 loss_consecutive=46 cap=5000000
+2026-08-30 14:14:02 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5785104 bytes_delta=723138 replies=0 loss_total=52 loss_consecutive=47 cap=5000000
+2026-08-30 14:14:03 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5108672 bytes_delta=638584 replies=0 loss_total=53 loss_consecutive=48 cap=5000000
+2026-08-30 14:14:04 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4899232 bytes_delta=612404 replies=0 loss_total=54 loss_consecutive=49 cap=5000000
+2026-08-30 14:14:05 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5068928 bytes_delta=633616 replies=0 loss_total=55 loss_consecutive=50 cap=5000000
+2026-08-30 14:14:06 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5029184 bytes_delta=628648 replies=0 loss_total=56 loss_consecutive=51 cap=5000000
+2026-08-30 14:14:07 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4948912 bytes_delta=618614 replies=0 loss_total=57 loss_consecutive=52 cap=5000000
+2026-08-30 14:14:08 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5566512 bytes_delta=695814 replies=0 loss_total=58 loss_consecutive=53 cap=5000000
+2026-08-30 14:14:09 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4491856 bytes_delta=561482 replies=0 loss_total=59 loss_consecutive=54 cap=5000000
+2026-08-30 14:14:10 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4472768 bytes_delta=559096 replies=0 loss_total=60 loss_consecutive=55 cap=5000000
+2026-08-30 14:14:11 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5416688 bytes_delta=677086 replies=0 loss_total=61 loss_consecutive=56 cap=5000000
+2026-08-30 14:14:12 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4979504 bytes_delta=622438 replies=0 loss_total=62 loss_consecutive=57 cap=5000000
+2026-08-30 14:14:13 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5029184 bytes_delta=628648 replies=0 loss_total=63 loss_consecutive=58 cap=5000000
+2026-08-30 14:14:14 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4988656 bytes_delta=623582 replies=0 loss_total=64 loss_consecutive=59 cap=5000000
+2026-08-30 14:14:15 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5128544 bytes_delta=641068 replies=0 loss_total=65 loss_consecutive=60 cap=5000000
+2026-08-30 14:14:16 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4890080 bytes_delta=611260 replies=0 loss_total=66 loss_consecutive=61 cap=5000000
+2026-08-30 14:14:17 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5436560 bytes_delta=679570 replies=0 loss_total=67 loss_consecutive=62 cap=5000000
+2026-08-30 14:14:18 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4512512 bytes_delta=564064 replies=0 loss_total=68 loss_consecutive=63 cap=5000000
+2026-08-30 14:14:19 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5695680 bytes_delta=711960 replies=0 loss_total=69 loss_consecutive=64 cap=5000000
+2026-08-30 14:14:21 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=9420896 bytes_delta=1177612 replies=0 loss_total=71 loss_consecutive=66 cap=5000000
+2026-08-30 14:14:22 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4890080 bytes_delta=611260 replies=0 loss_total=72 loss_consecutive=67 cap=5000000
+2026-08-30 14:14:23 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4999376 bytes_delta=624922 replies=0 loss_total=73 loss_consecutive=68 cap=5000000
+2026-08-30 14:14:24 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5665088 bytes_delta=708136 replies=0 loss_total=74 loss_consecutive=69 cap=5000000
+2026-08-30 14:14:26 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=8389120 bytes_delta=1048640 replies=0 loss_total=76 loss_consecutive=71 cap=5000000
+2026-08-30 14:14:27 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5992976 bytes_delta=749122 replies=0 loss_total=77 loss_consecutive=72 cap=5000000
+2026-08-30 14:14:28 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5317328 bytes_delta=664666 replies=0 loss_total=78 loss_consecutive=73 cap=5000000
+2026-08-30 14:14:29 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4650832 bytes_delta=581354 replies=0 loss_total=79 loss_consecutive=74 cap=5000000
+2026-08-30 14:14:30 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5039120 bytes_delta=629890 replies=0 loss_total=80 loss_consecutive=75 cap=5000000
+2026-08-30 14:14:31 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5168288 bytes_delta=646036 replies=0 loss_total=81 loss_consecutive=76 cap=5000000
+2026-08-30 14:14:32 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4820528 bytes_delta=602566 replies=0 loss_total=82 loss_consecutive=77 cap=5000000
+2026-08-30 14:14:33 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5466368 bytes_delta=683296 replies=0 loss_total=83 loss_consecutive=78 cap=5000000
+2026-08-30 14:14:34 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4512512 bytes_delta=564064 replies=0 loss_total=84 loss_consecutive=79 cap=5000000
+2026-08-30 14:14:35 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5406752 bytes_delta=675844 replies=0 loss_total=85 loss_consecutive=80 cap=5000000
+2026-08-30 14:14:36 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4572128 bytes_delta=571516 replies=0 loss_total=86 loss_consecutive=81 cap=5000000
+2026-08-30 14:14:37 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5098736 bytes_delta=637342 replies=0 loss_total=87 loss_consecutive=82 cap=5000000
+2026-08-30 14:14:38 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4900016 bytes_delta=612502 replies=0 loss_total=88 loss_consecutive=83 cap=5000000
+2026-08-30 14:14:39 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5078864 bytes_delta=634858 replies=0 loss_total=89 loss_consecutive=84 cap=5000000
+2026-08-30 14:14:40 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5009312 bytes_delta=626164 replies=0 loss_total=90 loss_consecutive=85 cap=5000000
+2026-08-30 14:14:41 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4939760 bytes_delta=617470 replies=0 loss_total=91 loss_consecutive=86 cap=5000000
+2026-08-30 14:14:42 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5535920 bytes_delta=691990 replies=0 loss_total=92 loss_consecutive=87 cap=5000000
+2026-08-30 14:14:43 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4542320 bytes_delta=567790 replies=0 loss_total=93 loss_consecutive=88 cap=5000000
+2026-08-30 14:14:44 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5625344 bytes_delta=703168 replies=0 loss_total=94 loss_consecutive=89 cap=5000000
+2026-08-30 14:14:46 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=9303232 bytes_delta=1162904 replies=0 loss_total=96 loss_consecutive=91 cap=5000000
+2026-08-30 14:14:47 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4999376 bytes_delta=624922 replies=0 loss_total=97 loss_consecutive=92 cap=5000000
+2026-08-30 14:14:48 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4989440 bytes_delta=623680 replies=0 loss_total=98 loss_consecutive=93 cap=5000000
+2026-08-30 14:14:49 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5396816 bytes_delta=674602 replies=0 loss_total=99 loss_consecutive=94 cap=5000000
+2026-08-30 14:14:50 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4582064 bytes_delta=572758 replies=0 loss_total=100 loss_consecutive=95 cap=5000000
+2026-08-30 14:14:51 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5148416 bytes_delta=643552 replies=0 loss_total=101 loss_consecutive=96 cap=5000000
+2026-08-30 14:14:52 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4870208 bytes_delta=608776 replies=0 loss_total=102 loss_consecutive=97 cap=5000000
+2026-08-30 14:14:53 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5128544 bytes_delta=641068 replies=0 loss_total=103 loss_consecutive=98 cap=5000000
+2026-08-30 14:14:54 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4860272 bytes_delta=607534 replies=0 loss_total=104 loss_consecutive=99 cap=5000000
+2026-08-30 14:14:55 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5019248 bytes_delta=627406 replies=0 loss_total=105 loss_consecutive=100 cap=5000000
+2026-08-30 14:14:56 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5247776 bytes_delta=655972 replies=0 loss_total=106 loss_consecutive=101 cap=5000000
+2026-08-30 14:14:57 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4730320 bytes_delta=591290 replies=0 loss_total=107 loss_consecutive=102 cap=5000000
+2026-08-30 14:14:58 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5168288 bytes_delta=646036 replies=0 loss_total=108 loss_consecutive=103 cap=5000000
+2026-08-30 14:14:59 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4860272 bytes_delta=607534 replies=0 loss_total=109 loss_consecutive=104 cap=5000000
+2026-08-30 14:15:00 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5168288 bytes_delta=646036 replies=0 loss_total=110 loss_consecutive=105 cap=5000000
+2026-08-30 14:15:01 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4790720 bytes_delta=598840 replies=0 loss_total=111 loss_consecutive=106 cap=5000000
+2026-08-30 14:15:02 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5019248 bytes_delta=627406 replies=0 loss_total=112 loss_consecutive=107 cap=5000000
+2026-08-30 14:15:03 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5466368 bytes_delta=683296 replies=0 loss_total=113 loss_consecutive=108 cap=5000000
+2026-08-30 14:15:04 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4532384 bytes_delta=566548 replies=0 loss_total=114 loss_consecutive=109 cap=5000000
+2026-08-30 14:15:05 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5426624 bytes_delta=678328 replies=0 loss_total=115 loss_consecutive=110 cap=5000000
+2026-08-30 14:15:06 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4601936 bytes_delta=575242 replies=0 loss_total=116 loss_consecutive=111 cap=5000000
+2026-08-30 14:15:07 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5088800 bytes_delta=636100 replies=0 loss_total=117 loss_consecutive=112 cap=5000000
+2026-08-30 14:15:08 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4869424 bytes_delta=608678 replies=0 loss_total=118 loss_consecutive=113 cap=5000000
+2026-08-30 14:15:09 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5038336 bytes_delta=629792 replies=0 loss_total=119 loss_consecutive=114 cap=5000000
+2026-08-30 14:15:10 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5277584 bytes_delta=659698 replies=0 loss_total=120 loss_consecutive=115 cap=5000000
+2026-08-30 14:15:11 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4701296 bytes_delta=587662 replies=0 loss_total=121 loss_consecutive=116 cap=5000000
+2026-08-30 14:15:12 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5217968 bytes_delta=652246 replies=0 loss_total=122 loss_consecutive=117 cap=5000000
+2026-08-30 14:15:13 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4810592 bytes_delta=601324 replies=0 loss_total=123 loss_consecutive=118 cap=5000000
+2026-08-30 14:15:14 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5128544 bytes_delta=641068 replies=0 loss_total=124 loss_consecutive=119 cap=5000000
+2026-08-30 14:15:16 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5039120 bytes_delta=629890 replies=0 loss_total=125 loss_consecutive=120 cap=5000000
+2026-08-30 14:15:17 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5128544 bytes_delta=641068 replies=0 loss_total=126 loss_consecutive=121 cap=5000000
+2026-08-30 14:15:18 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4850336 bytes_delta=606292 replies=0 loss_total=127 loss_consecutive=122 cap=5000000
+2026-08-30 14:15:19 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5247776 bytes_delta=655972 replies=0 loss_total=128 loss_consecutive=123 cap=5000000
+2026-08-30 14:15:20 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4760912 bytes_delta=595114 replies=0 loss_total=129 loss_consecutive=124 cap=5000000
+2026-08-30 14:15:21 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4979504 bytes_delta=622438 replies=0 loss_total=130 loss_consecutive=125 cap=5000000
+2026-08-30 14:15:23 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5019248 bytes_delta=627406 replies=0 loss_total=131 loss_consecutive=126 cap=5000000
+2026-08-30 14:15:24 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5128544 bytes_delta=641068 replies=0 loss_total=132 loss_consecutive=127 cap=5000000
+2026-08-30 14:15:26 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5357072 bytes_delta=669634 replies=0 loss_total=133 loss_consecutive=128 cap=5000000
+2026-08-30 14:15:28 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5157568 bytes_delta=644696 replies=0 loss_total=134 loss_consecutive=129 cap=5000000
+2026-08-30 14:15:29 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4880144 bytes_delta=610018 replies=0 loss_total=135 loss_consecutive=130 cap=5000000
+2026-08-30 14:15:31 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5585600 bytes_delta=698200 replies=0 loss_total=136 loss_consecutive=131 cap=5000000
+2026-08-30 14:15:33 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5417472 bytes_delta=677184 replies=0 loss_total=137 loss_consecutive=132 cap=5000000
+2026-08-30 14:15:35 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4989440 bytes_delta=623680 replies=0 loss_total=138 loss_consecutive=133 cap=5000000
+2026-08-30 14:15:36 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5039120 bytes_delta=629890 replies=0 loss_total=139 loss_consecutive=134 cap=5000000
+2026-08-30 14:15:37 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4999376 bytes_delta=624922 replies=0 loss_total=140 loss_consecutive=135 cap=5000000
+2026-08-30 14:15:38 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5247776 bytes_delta=655972 replies=0 loss_total=141 loss_consecutive=136 cap=5000000
+2026-08-30 14:15:40 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4840400 bytes_delta=605050 replies=0 loss_total=142 loss_consecutive=137 cap=5000000
+ 2026-08-30 14:15:42 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4979504 bytes_delta=622438 replies=0 loss_total=143 loss_consecutive=138 cap=5000000
+ 2026-08-30 14:15:43 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5098736 bytes_delta=637342 replies=0 loss_total=144 loss_consecutive=139 cap=5000000
+ 2026-08-30 14:15:45 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5934144 bytes_delta=741768 replies=0 loss_total=145 loss_consecutive=140 cap=5000000
+ 2026-08-30 14:15:47 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=9332256 bytes_delta=1166532 replies=0 loss_total=146 loss_consecutive=141 cap=5000000
+ 2026-08-30 14:15:49 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4999376 bytes_delta=624922 replies=0 loss_total=147 loss_consecutive=142 cap=5000000
+ 2026-08-30 14:15:50 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5088800 bytes_delta=636100 replies=0 loss_total=148 loss_consecutive=143 cap=5000000
+ 2026-08-30 14:15:52 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5605472 bytes_delta=700684 replies=0 loss_total=149 loss_consecutive=144 cap=5000000
+ 2026-08-30 14:15:54 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4890080 bytes_delta=611260 replies=0 loss_total=150 loss_consecutive=145 cap=5000000
+ 2026-08-30 14:15:55 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5048272 bytes_delta=631034 replies=0 loss_total=151 loss_consecutive=146 cap=5000000
+ 2026-08-30 14:15:56 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4949696 bytes_delta=618712 replies=0 loss_total=152 loss_consecutive=147 cap=5000000
+ 2026-08-30 14:15:57 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5158352 bytes_delta=644794 replies=0 loss_total=153 loss_consecutive=148 cap=5000000
+ 2026-08-30 14:15:59 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4929824 bytes_delta=616228 replies=0 loss_total=154 loss_consecutive=149 cap=5000000
+ 2026-08-30 14:16:01 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=4979504 bytes_delta=622438 replies=0 loss_total=155 loss_consecutive=150 cap=5000000
+ 2026-08-30 14:16:02 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5118608 bytes_delta=639826 replies=0 loss_total=156 loss_consecutive=151 cap=5000000
+ 2026-08-30 14:16:04 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5843936 bytes_delta=730492 replies=0 loss_total=157 loss_consecutive=152 cap=5000000
+ 2026-08-30 14:16:06 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=9184000 bytes_delta=1148000 replies=0 loss_total=158 loss_consecutive=153 cap=5000000
+ 2026-08-30 14:16:07 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5128544 bytes_delta=641068 replies=0 loss_total=159 loss_consecutive=154 cap=5000000
+ 2026-08-30 14:16:09 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5327264 bytes_delta=665908 replies=0 loss_total=160 loss_consecutive=155 cap=5000000
+ 2026-08-30 14:16:11 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5198096 bytes_delta=649762 replies=0 loss_total=161 loss_consecutive=156 cap=5000000
+ 2026-08-30 14:16:13 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5039120 bytes_delta=629890 replies=0 loss_total=162 loss_consecutive=157 cap=5000000
+ 2026-08-30 14:16:14 script,info ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=5347136 bytes_delta=668392 replies=0 loss_total=163 loss_consecutive=158 cap=5000000
+
+
+--- stderr ---
+

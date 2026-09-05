@@ -1,0 +1,5 @@
+CMD: ['ssh', '-i', '/home/madis/.ssh/elmo_openclaw_ed25519', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=8', 'admin@192.168.88.1', '/queue tree remove [find where name~"ELMO-RUTX12-CAKE"]; /queue type remove [find where name="elmo-rutx12-cake"]; /ip firewall mangle remove [find where comment~"ELMO-RUTX12-CAKE"]']
+RC: 0
+STDOUT:
+
+STDERR:

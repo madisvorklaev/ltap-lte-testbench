@@ -1,0 +1,16 @@
+$ set both ELMO-EXP2B caps to 5M
+sample_utc=2026-08-30T11:07:54Z
+rc=0
+routeros_error=
+--- stdout ---
+0  name="ELMO-EXP2B-LTE1" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=46916 packets=49
+   dropped=0
+ 
+1  name="ELMO-EXP2B-LTE2" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=43057 packets=44
+   dropped=0
+
+
+--- stderr ---
+

@@ -1,0 +1,9 @@
+PING 1.1.1.1 (1.1.1.1) from 192.168.101.201 : 56(84) bytes of data.
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=59 time=45.8 ms
+From 192.168.101.254 icmp_seq=2 Destination Net Unreachable
+From 192.168.101.254 icmp_seq=3 Destination Net Unreachable
+From 192.168.101.254 icmp_seq=4 Destination Net Unreachable
+
+--- 1.1.1.1 ping statistics ---
+4 packets transmitted, 1 received, +3 errors, 75% packet loss, time 3030ms
+rtt min/avg/max/mdev = 45.849/45.849/45.849/0.000 ms

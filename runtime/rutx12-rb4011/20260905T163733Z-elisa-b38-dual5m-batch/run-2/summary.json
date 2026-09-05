@@ -1,0 +1,53 @@
+{
+  "run": "2",
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T163733Z-elisa-b38-dual5m-batch/run-2",
+  "iperf_a": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.998164368600472,
+    "lost_percent": 0,
+    "jitter_ms": 2.816743671750358,
+    "lost_packets": 0,
+    "packets": 93750,
+    "sender_mbps": 4.999990750017112,
+    "intervals": 180
+  },
+  "iperf_b": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 1.3020815607122072,
+    "lost_percent": 73.43893333333334,
+    "jitter_ms": 6.830298068699898,
+    "lost_packets": 68849,
+    "packets": 93617,
+    "sender_mbps": 4.999987555586528,
+    "intervals": 180
+  },
+  "ping_a": {
+    "samples": 913,
+    "sent": 913,
+    "received": 913,
+    "loss_percent": 0.0,
+    "p50_ms": 24.9,
+    "p95_ms": 30.7,
+    "p99_ms": 36.6,
+    "max_ms": 158.0
+  },
+  "ping_b": {
+    "samples": 250,
+    "sent": 890,
+    "received": 250,
+    "loss_percent": 71.9101,
+    "p50_ms": 2460.0,
+    "p95_ms": 2771.0,
+    "p99_ms": 2846.0,
+    "max_ms": 3016.0
+  },
+  "elisa_bands_seen": [
+    "LTE_B38"
+  ],
+  "elisa_disconnected_samples": 0,
+  "cross_counter_text": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN    ACTION             BYTES  PACKETS\n;;; ELMO-TEST-A-CORRECT\n0 forward  passthrough  115 203 344   94 685\n;;; ELMO-TEST-A-CROSS\n1 forward  passthrough            0        0\n;;; ELMO-TEST-B-CORRECT\n2 forward  passthrough  115 201 622   94 666\n;;; ELMO-TEST-B-CROSS\n3 forward  passthrough            0        0\n\nFlags: R - RUNNING\n1 R name=\"ether2\" last-link-up-time=2026-09-02 09:57:56 link-downs=0\n    rx-byte=479 408 tx-byte=350 529 722 rx-packet=4 285 tx-packet=287 989\n    tx-queue-drop=0 fp-rx-byte=462 464 fp-tx-byte=0 fp-rx-packet=4 287\n    fp-tx-packet=0 fp-rps-drop=0\n \n2 R name=\"ether3\" last-link-up-time=2026-09-02 09:58:19 link-downs=0\n    rx-byte=1 180 256 tx-byte=351 738 159 rx-packet=9 250 tx-packet=294 646\n    tx-queue-drop=0 fp-rx-byte=1 143 354 fp-tx-byte=0 fp-rx-packet=9 251\n    fp-tx-packet=0 fp-rps-drop=0\n\n"
+}

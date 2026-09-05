@@ -1,0 +1,27 @@
+CMD: ['ssh', '-i', '/home/madis/.ssh/elmo_openclaw_ed25519', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=8', 'admin@192.168.88.1', '/queue type print detail where name="elmo-rutx12-cake"; /queue tree print stats detail where name~"ELMO-RUTX12-CAKE"; /ip firewall mangle print stats detail where comment~"ELMO-RUTX12-CAKE"']
+RC: 0
+STDOUT:
+11  name="elmo-rutx12-cake" kind=cake cake-bandwidth=0bps cake-overhead=0
+    cake-overhead-scheme="" cake-rtt=100ms cake-diffserv=besteffort
+    cake-flowmode=flowblind cake-nat=no cake-wash=no cake-ack-filter=none
+
+0  ;;; ELMO-RUTX12-CAKE dynamic auto A
+   name="ELMO-RUTX12-CAKE-A" parent=global packet-mark=elmo-rutx12-cake-a
+   rate=0 packet-rate=0 queued-bytes=0 queued-packets=0 bytes=0 packets=0
+   dropped=0
+ 
+1  ;;; ELMO-RUTX12-CAKE dynamic auto B
+   name="ELMO-RUTX12-CAKE-B" parent=global packet-mark=elmo-rutx12-cake-b
+   rate=0 packet-rate=0 queued-bytes=0 queued-packets=0 bytes=0 packets=0
+   dropped=0
+
+Flags: I - INVALID
+Columns: CHAIN, ACTION, BYTES, PACKETS
+#   CHAIN    ACTION       BYTES  PACKETS
+;;; ELMO-RUTX12-CAKE-A-MARK
+6   forward  mark-packet      0        0
+;;; ELMO-RUTX12-CAKE-B-MARK
+7 I forward  mark-packet      0        0
+
+
+STDERR:

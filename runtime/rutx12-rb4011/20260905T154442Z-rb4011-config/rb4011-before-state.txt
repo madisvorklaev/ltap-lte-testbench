@@ -1,0 +1,140 @@
+                   uptime: 1h12m44s           
+                  version: 7.24.2 (stable)    
+               build-time: 2026-09-03 09:57:14
+          minimum-version: 6.44.6             
+              free-memory: 840.1MiB           
+             total-memory: 1024.0MiB          
+                      cpu: ARM                
+                cpu-count: 4                  
+            cpu-frequency: 1200MHz            
+                 cpu-load: 19%                
+           free-hdd-space: 423.9MiB           
+          total-hdd-space: 512.0MiB           
+  write-sect-since-reboot: 196                
+         write-sect-total: 196                
+               bad-blocks: 0%                 
+        architecture-name: arm                
+               board-name: RB4011iGS+         
+                 platform: MikroTik           
+
+       routerboard: yes         
+             model: RB4011iGS+  
+          revision: r2          
+     serial-number: D4480CEA5BAB
+     firmware-type: al2         
+  minimum-firmware: 6.45.9      
+  current-firmware: 7.24.2      
+  upgrade-firmware: 7.24.2      
+
+Flags: R - RUNNING; S - SLAVE
+ 0    name="ether1" default-name="ether1" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:10
+      last-link-down-time=2026-09-02 11:06:13
+      last-link-up-time=2026-09-02 11:05:34 link-downs=2
+ 
+ 1 RS name="ether2" default-name="ether2" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:11
+      last-link-up-time=2026-09-02 09:57:56 link-downs=0
+ 
+ 2 RS name="ether3" default-name="ether3" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:12
+      last-link-up-time=2026-09-02 09:58:19 link-downs=0
+ 
+ 3 RS name="ether4" default-name="ether4" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:13
+      last-link-down-time=2026-09-02 11:05:19
+      last-link-up-time=2026-09-02 11:06:18 link-downs=1
+ 
+ 4  S name="ether5" default-name="ether5" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:14
+      last-link-down-time=2026-09-02 11:05:31
+      last-link-up-time=2026-09-02 11:05:22 link-downs=1
+ 
+ 5  S name="ether6" default-name="ether6" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:15
+      link-downs=0
+ 
+ 6  S name="ether7" default-name="ether7" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:16
+      link-downs=0
+ 
+ 7  S name="ether8" default-name="ether8" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:17
+      link-downs=0
+ 
+ 8  S name="ether9" default-name="ether9" type="ether" mtu=1500 actual-mtu=1500
+      l2mtu=1592 max-l2mtu=9578 vrf=main mac-address=48:8F:5A:F3:2F:18
+      link-downs=0
+ 
+ 9  S name="ether10" default-name="ether10" type="ether" mtu=1500
+      actual-mtu=1500 l2mtu=1592 max-l2mtu=9578 vrf=main
+      mac-address=48:8F:5A:F3:2F:19 link-downs=0
+ 
+10  S name="sfp-sfpplus1" default-name="sfp-sfpplus1" type="ether" mtu=1500
+      actual-mtu=1500 l2mtu=1600 max-l2mtu=9586 vrf=main
+      mac-address=48:8F:5A:F3:2F:1A link-downs=0
+ 
+11 R  ;;; defconf
+      name="bridge" type="bridge" mtu=auto actual-mtu=1500 l2mtu=1592 vrf=main
+      mac-address=48:8F:5A:F3:2F:11 last-link-up-time=2026-09-02 09:57:18
+      link-downs=0
+ 
+12 R  name="lo" type="loopback" mtu=65536 actual-mtu=65536 vrf=main
+      mac-address=00:00:00:00:00:00 last-link-up-time=2026-09-02 09:57:18
+      link-downs=0
+
+0  ;;; defconf
+   address=192.168.88.1/24 network=192.168.88.0 interface=bridge
+   actual-interface=bridge vrf=main
+
+Flags: D - DYNAMIC; A - ACTIVE; c - CONNECT
+DAc dst-address=192.168.88.0/24 routing-table=main gateway=bridge
+    immediate-gw=bridge distance=0 scope=10 target-scope=5
+    local-address=192.168.88.1%bridge
+
+Flags: D - DYNAMIC
+0  D name="main" fib
+
+
+Flags: X - DISABLED
+ 0    ;;; defconf: accept established,related,untracked
+      chain=input action=accept connection-state=established,related,untracked
+ 
+ 1    ;;; defconf: drop invalid
+      chain=input action=drop connection-state=invalid
+ 
+ 2    ;;; defconf: accept ICMP
+      chain=input action=accept protocol=icmp
+ 
+ 3    ;;; defconf: accept to local loopback (for CAPsMAN)
+      chain=input action=accept src-address=127.0.0.1 dst-address=127.0.0.1
+      in-interface=lo
+ 
+ 4    ;;; defconf: drop all not coming from LAN
+      chain=input action=drop in-interface-list=!LAN
+ 
+ 5    ;;; defconf: accept in ipsec policy
+      chain=forward action=accept ipsec-policy=in,ipsec
+ 
+ 6    ;;; defconf: accept out ipsec policy
+      chain=forward action=accept ipsec-policy=out,ipsec
+ 
+ 7  X ;;; defconf: fasttrack
+      chain=forward action=fasttrack-connection
+      connection-state=established,related
+ 
+ 8    ;;; defconf: accept established,related, untracked
+      chain=forward action=accept
+      connection-state=established,related,untracked
+ 
+ 9    ;;; defconf: drop invalid
+      chain=forward action=drop connection-state=invalid
+ 
+10    ;;; defconf: drop all from WAN not DSTNATed
+      chain=forward action=drop connection-nat-state=!dstnat
+      in-interface-list=WAN
+
+0  ;;; defconf: masquerade
+   chain=srcnat action=masquerade out-interface-list=WAN ipsec-policy=out,none
+
+

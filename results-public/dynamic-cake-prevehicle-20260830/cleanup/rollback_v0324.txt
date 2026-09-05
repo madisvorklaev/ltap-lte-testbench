@@ -1,0 +1,89 @@
+$ rollback adaptive cake
+sample_utc=2026-08-30T11:16:36Z
+rc=0
+routeros_error=
+--- stdout ---
+#line 1
+# ELMO LtAP adaptive LTE shaper rollback
+#line 2
+# Version: 0.3.2.4 / 2026-08-17
+#line 3
+# Removes only ELMO ADAPTIVE project objects and restores Experiment 2b caps
+#line 4
+# to static 5M. Experiment 2b CAKE itself remains installed.
+#line 6
+:put "ELMO ADAPTIVE v0.3.2.4: removing adaptive controller"
+ELMO ADAPTIVE v0.3.2.4: removing adaptive controller
+#line 7
+/system scheduler remove [find where comment~"ELMO ADAPTIVE:"]
+#line 8
+/system script remove [find where comment~"ELMO ADAPTIVE:"]
+#line 9
+:delay 1s
+#line 10
+/tool netwatch remove [find where comment~"ELMO ADAPTIVE:"]
+#line 11
+/ip firewall mangle remove [find where comment~"ELMO ADAPTIVE:"]
+#line 12
+/ip firewall nat remove [find where comment~"ELMO ADAPTIVE:"]
+#line 13
+/ip address remove [find where comment~"ELMO ADAPTIVE:"]
+#line 14
+/interface bridge remove [find where name="ELMO-ADAPTIVE-LO"]
+#line 16
+/system script environment remove [find where name~"^elmoAdaptive.*v032"]
+#line 18..24
+:foreach g in={
+    "elmoAdaptiveHeartbeatv032";
+    "elmoAdaptiveCap1v032";"elmoAdaptiveBaseNs1v032";"elmoAdaptiveBaseCount1v032";"elmoAdaptiveSeen1v032";"elmoAdaptiveLastDone1v032";"elmoAdaptiveState1v032";"elmoAdaptiveLastBytes1v032";"elmoAdaptiveProbeLossSamples1v032";"elmoAdaptiveConsecutiveLoss1v032";
+    "elmoAdaptiveCap2v032";"elmoAdaptiveBaseNs2v032";"elmoAdaptiveBaseCount2v032";"elmoAdaptiveSeen2v032";"elmoAdaptiveLastDone2v032";"elmoAdaptiveState2v032";"elmoAdaptiveLastBytes2v032";"elmoAdaptiveProbeLossSamples2v032";"elmoAdaptiveConsecutiveLoss2v032"
+} do={
+    /system script environment remove [find where name=$g]
+}
+#line 26..29
+:if ([:len [/system script environment find where name~"^elmoAdaptive.*v032"]] > 0) do={
+    /system script environment print where name~"^elmoAdaptive.*v032"
+    :error "ELMO ADAPTIVE v0.3.2.4 rollback: v032 globals remain"
+}
+#line 31..33
+:if ([:len [/queue tree find where name="ELMO-EXP2B-LTE1"]] = 1) do={
+    /queue tree set [find where name="ELMO-EXP2B-LTE1"] max-limit=5M
+}
+#line 34..36
+:if ([:len [/queue tree find where name="ELMO-EXP2B-LTE2"]] = 1) do={
+    /queue tree set [find where name="ELMO-EXP2B-LTE2"] max-limit=5M
+}
+#line 38
+:put "ELMO ADAPTIVE v0.3.2.4 rollback complete; Experiment 2b CAKE remains at static 5M."
+ELMO ADAPTIVE v0.3.2.4 rollback complete; Experiment 2b CAKE remains at static 5M.
+#line 39
+/queue tree print stats detail where name~"ELMO-EXP2B-LTE"
+0  name="ELMO-EXP2B-LTE1" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=112666234 packets=91530
+   dropped=0
+ 
+1  name="ELMO-EXP2B-LTE2" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=112668957 packets=91543
+   dropped=0
+
+#line 40
+/tool netwatch print detail where comment~"ELMO ADAPTIVE:"
+
+#line 41
+/system scheduler print detail where comment~"ELMO ADAPTIVE:"
+
+#line 42
+/system script print detail where comment~"ELMO ADAPTIVE:"
+
+#line 43
+/system script environment print where name~"^elmoAdaptive.*v032"
+
+#line 44
+/ip firewall mangle print detail where comment~"ELMO ADAPTIVE:"
+
+#line 45
+/ip firewall nat print detail where comment~"ELMO ADAPTIVE:"
+
+
+--- stderr ---
+

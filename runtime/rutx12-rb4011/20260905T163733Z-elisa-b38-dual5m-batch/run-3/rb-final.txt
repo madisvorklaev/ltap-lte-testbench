@@ -1,0 +1,22 @@
+Columns: CHAIN, ACTION, BYTES, PACKETS
+# CHAIN    ACTION             BYTES  PACKETS
+;;; ELMO-TEST-A-CORRECT
+0 forward  passthrough  115 203 312   94 685
+;;; ELMO-TEST-A-CROSS
+1 forward  passthrough            0        0
+;;; ELMO-TEST-B-CORRECT
+2 forward  passthrough  115 201 592   94 666
+;;; ELMO-TEST-B-CROSS
+3 forward  passthrough            0        0
+
+Flags: R - RUNNING
+1 R name="ether2" last-link-up-time=2026-09-02 09:57:56 link-downs=0
+    rx-byte=593 604 tx-byte=467 419 697 rx-packet=5 261 tx-packet=382 697
+    tx-queue-drop=0 fp-rx-byte=572 756 fp-tx-byte=0 fp-rx-packet=5 263
+    fp-tx-packet=0 fp-rps-drop=0
+ 
+2 R name="ether3" last-link-up-time=2026-09-02 09:58:19 link-downs=0
+    rx-byte=1 482 355 tx-byte=469 092 178 rx-packet=11 559 tx-packet=391 525
+    tx-queue-drop=0 fp-rx-byte=1 437 361 fp-tx-byte=0 fp-rx-packet=11 570
+    fp-tx-packet=0 fp-rps-drop=0
+

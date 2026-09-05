@@ -1,0 +1,54 @@
+{
+  "mode": "static_cake",
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T165640Z-cake-vs-dynamic-b38/static_cake",
+  "iperf_a": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.828282066596772,
+    "lost_percent": 3.3973333333333335,
+    "jitter_ms": 2.237052258481985,
+    "lost_packets": 3185,
+    "packets": 93747,
+    "sender_mbps": 4.999991666680555,
+    "intervals": 180
+  },
+  "iperf_b": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 1.2930905977523206,
+    "lost_percent": 73.80266666666667,
+    "jitter_ms": 7.614276351082705,
+    "lost_packets": 69190,
+    "packets": 93750,
+    "sender_mbps": 4.99999000002,
+    "intervals": 180
+  },
+  "ping_a": {
+    "samples": 872,
+    "sent": 911,
+    "received": 872,
+    "loss_percent": 4.28101,
+    "p50_ms": 29.0,
+    "p95_ms": 36.7,
+    "p99_ms": 43.6,
+    "max_ms": 170.0
+  },
+  "ping_b": {
+    "samples": 226,
+    "sent": 888,
+    "received": 226,
+    "loss_percent": 74.5496,
+    "p50_ms": 2456.0,
+    "p95_ms": 2751.0,
+    "p99_ms": 2877.0,
+    "max_ms": 2971.0
+  },
+  "elisa_bands_seen": [
+    "LTE_B38"
+  ],
+  "elisa_disconnected_samples": 0,
+  "controller_last": [],
+  "controller_min_b_cap": null
+}

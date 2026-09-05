@@ -1,0 +1,118 @@
+{
+  "mode": "dynamic_cake_auto",
+  "classification": "INFRASTRUCTURE_INVALID",
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T175946Z-dynamic-cake-auto-dual5m-rerun",
+  "server_ipv4": "217.18.95.142",
+  "ports": {
+    "a": "5205",
+    "b": "5206"
+  },
+  "iperf_a": {
+    "error": "Expecting property name enclosed in double quotes: line 3014 column 3 (char 65536)"
+  },
+  "iperf_b": {
+    "error": "Unterminated string starting at: line 3029 column 5 (char 65531)"
+  },
+  "ping_a": {
+    "samples": 974,
+    "sent": 1143,
+    "received": 974,
+    "loss_percent": 14.7857,
+    "p50_ms": 64.7,
+    "p95_ms": 840.55,
+    "p99_ms": 1789.15,
+    "max_ms": 2438.0
+  },
+  "ping_b": {
+    "samples": 1092,
+    "sent": 1147,
+    "received": 1092,
+    "loss_percent": 4.79512,
+    "p50_ms": 63.95,
+    "p95_ms": 114.0,
+    "p99_ms": 125.18,
+    "max_ms": 181.0
+  },
+  "bands_seen": {
+    "a": [],
+    "b": []
+  },
+  "controller_min_caps": {
+    "a": 1500000,
+    "b": 4500000
+  },
+  "controller_last": [
+    {
+      "utc": "2026-09-05T18:03:11Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 126.0,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    },
+    {
+      "utc": "2026-09-05T18:03:16Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 54.666666666666664,
+      "cap_before": 2000000,
+      "cap_after": 2500000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:03:21Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 80.39999999999999,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    },
+    {
+      "utc": "2026-09-05T18:03:26Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 55.63333333333333,
+      "cap_before": 2500000,
+      "cap_after": 3000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:03:31Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 87.96666666666665,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    },
+    {
+      "utc": "2026-09-05T18:03:36Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 60.03333333333333,
+      "cap_before": 3000000,
+      "cap_after": 3500000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:03:41Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 71.10000000000001,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:03:47Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 58.0,
+      "cap_before": 3500000,
+      "cap_after": 4000000,
+      "reason": "increase"
+    }
+  ]
+}

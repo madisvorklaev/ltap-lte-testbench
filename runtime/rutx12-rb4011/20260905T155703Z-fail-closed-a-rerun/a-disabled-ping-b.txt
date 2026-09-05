@@ -1,0 +1,11 @@
+PING 1.1.1.1 (1.1.1.1) from 192.168.101.202 : 56(84) bytes of data.
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=159 ms
+64 bytes from 1.1.1.1: icmp_seq=2 ttl=57 time=22.1 ms
+64 bytes from 1.1.1.1: icmp_seq=3 ttl=57 time=20.8 ms
+64 bytes from 1.1.1.1: icmp_seq=4 ttl=57 time=19.9 ms
+64 bytes from 1.1.1.1: icmp_seq=5 ttl=57 time=33.5 ms
+64 bytes from 1.1.1.1: icmp_seq=6 ttl=57 time=27.0 ms
+
+--- 1.1.1.1 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time 5007ms
+rtt min/avg/max/mdev = 19.878/47.109/159.431/50.441 ms

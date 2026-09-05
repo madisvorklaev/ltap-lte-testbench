@@ -1,0 +1,9 @@
+CMD: ['ssh', '-i', '/home/madis/.ssh/elmo_openclaw_ed25519', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=5', 'root@192.168.11.1', 'gsmctl -O 3-1 -q 2>/dev/null || true']
+RC: 0
+STDOUT:
+RSSI: -67
+RSRP: -102
+SINR: 11
+RSRQ: -11
+
+STDERR:

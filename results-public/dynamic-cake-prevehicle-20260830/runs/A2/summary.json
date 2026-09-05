@@ -1,0 +1,142 @@
+{
+  "artifacts": [
+    "after.txt",
+    "before.txt",
+    "cell_change_timeline.csv",
+    "controller_cap_history.csv",
+    "controller_decisions.jsonl",
+    "controller_inputs.csv",
+    "iperf_lte2.json",
+    "iperf_lte2.stderr.txt",
+    "ping_rtt_samples_lte1.csv",
+    "ping_rtt_samples_lte2.csv",
+    "ping_samples_lte1.stderr.txt",
+    "ping_samples_lte1.txt",
+    "ping_samples_lte2.stderr.txt",
+    "ping_samples_lte2.txt",
+    "pre_run_idle_60s_after.txt",
+    "pre_run_idle_60s_ping_lte1.stderr.txt",
+    "pre_run_idle_60s_ping_lte1.txt",
+    "pre_run_idle_60s_ping_lte2.stderr.txt",
+    "pre_run_idle_60s_ping_lte2.txt",
+    "pre_run_idle_60s_set_caps_5m.txt",
+    "telemetry_sanitized.jsonl",
+    "test_definition.json"
+  ],
+  "completed_utc": "2026-08-30T11:16:33Z",
+  "idle_confirmation": {
+    "caps_5m_after": false,
+    "caps_after": {
+      "ELMO-EXP2B-LTE1": {
+        "bytes": "0",
+        "dropped": "0",
+        "max_limit": null,
+        "packets": "0",
+        "queued_bytes": "0"
+      },
+      "ELMO-EXP2B-LTE2": {
+        "bytes": "0",
+        "dropped": "0",
+        "max_limit": null,
+        "packets": "0",
+        "queued_bytes": "0"
+      }
+    },
+    "duration_s": 60,
+    "label": "pre_run_idle_60s",
+    "pings": {
+      "lte1": {
+        "loss_pct": 0.0,
+        "max_ms": 58.0,
+        "p50_ms": 26.0,
+        "p95_ms": 34.7,
+        "p99_ms": 35.4,
+        "received": 60,
+        "samples": 60,
+        "seconds_over_1000ms": 0.0,
+        "seconds_over_100ms": 0.0,
+        "seconds_over_300ms": 0.0,
+        "sent": 60
+      },
+      "lte2": {
+        "loss_pct": 0.0,
+        "max_ms": 52.9,
+        "p50_ms": 43.4,
+        "p95_ms": 52.6,
+        "p99_ms": 52.7,
+        "received": 60,
+        "samples": 60,
+        "seconds_over_1000ms": 0.0,
+        "seconds_over_100ms": 0.0,
+        "seconds_over_300ms": 0.0,
+        "sent": 60
+      }
+    }
+  },
+  "iperf_receiver": {
+    "error": null,
+    "json_ok": true,
+    "receiver_bps": 2689561.4969385066,
+    "receiver_jitter_ms": 2.<redacted-number>,
+    "receiver_lost_percent": 43.<redacted-number>,
+    "receiver_summary_available": true,
+    "sender_bps": 4999985.777818233
+  },
+  "ping": {
+    "lte1": {
+      "loss_pct": 0.<redacted-number>,
+      "max_ms": 104.0,
+      "p50_ms": 24.4,
+      "p95_ms": 37.4,
+      "p99_ms": 55.9,
+      "received": 379,
+      "samples": 379,
+      "seconds_over_1000ms": 0.0,
+      "seconds_over_100ms": 0.5,
+      "seconds_over_300ms": 0.0,
+      "sent": 380
+    },
+    "lte2": {
+      "loss_pct": 43.68421052631579,
+      "max_ms": 5279.0,
+      "p50_ms": 2805.0,
+      "p95_ms": 5002.0,
+      "p99_ms": 5239.0,
+      "received": 214,
+      "samples": 214,
+      "seconds_over_1000ms": 100.0,
+      "seconds_over_100ms": 101.5,
+      "seconds_over_300ms": 101.0,
+      "sent": 380
+    }
+  },
+  "process_rc": {
+    "iperf_lte2": 0,
+    "ping_lte1": 0,
+    "ping_lte2": 0
+  },
+  "raw_sensitive_not_committed": true,
+  "run": "A2",
+  "test_definition": {
+    "cap_reset_required": "5M before run",
+    "duration_s": 180,
+    "endpoint": {
+      "ip": "217.18.95.142",
+      "lte1_port": 5205,
+      "lte2_port": 5206,
+      "name": "eranium"
+    },
+    "idle_gate_required_s": 60,
+    "load": {
+      "lte1": "off",
+      "lte2": "5M"
+    },
+    "mode": "dynamic_cake",
+    "packet_length": 1200,
+    "run": "A2",
+    "source_ips": {
+      "lte1": "192.168.101.201",
+      "lte2": "192.168.101.202"
+    }
+  }
+}

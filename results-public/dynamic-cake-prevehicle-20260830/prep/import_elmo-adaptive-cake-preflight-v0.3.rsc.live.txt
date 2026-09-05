@@ -1,0 +1,42 @@
+$ /import file-name=elmo-adaptive-cake-preflight-v0.3.rsc
+sample_utc=2026-08-30T11:06:29Z
+rc=0
+routeros_error=
+--- stdout ---
+#line 1
+# ELMO adaptive LTE shaper preflight
+#line 2
+# Version: 0.3 / 2026-08-17
+#line 3
+# Read-only prerequisite checks before importing the v0.3 installer.
+#line 5
+:put "ELMO ADAPTIVE PREFLIGHT v0.3"
+ELMO ADAPTIVE PREFLIGHT v0.3
+#line 7
+:if ([:len [/interface lte find where name="lte1"]] != 1) do={ :error "missing lte1" }
+#line 8
+:if ([:len [/interface lte find where name="lte2"]] != 1) do={ :error "missing lte2" }
+#line 9
+:if ([:len [/queue type find where name="elmo-exp2b-cake" kind=cake]] != 1) do={ :error "missing elmo-exp2b-cake" }
+#line 10
+:if ([:len [/queue tree find where name="ELMO-EXP2B-LTE1" parent="lte1"]] != 1) do={ :error "missing LTE1 Experiment 2b CAKE queue" }
+#line 11
+:if ([:len [/queue tree find where name="ELMO-EXP2B-LTE2" parent="lte2"]] != 1) do={ :error "missing LTE2 Experiment 2b CAKE queue" }
+#line 12
+:if ([:len [/routing table find where name="to-lte1"]] != 1) do={ :error "missing to-lte1 routing table" }
+#line 13
+:if ([:len [/routing table find where name="to-lte2"]] != 1) do={ :error "missing to-lte2 routing table" }
+#line 14
+:if ([:len [/ip firewall filter find where action=fasttrack-connection disabled=no]] > 0) do={ :error "enabled FastTrack rule exists" }
+#line 16
+:put "RouterOS 7.24rc3 on this LtAP rejects routing-table= on /tool ping."
+RouterOS 7.24rc3 on this LtAP rejects routing-table= on /tool ping.
+#line 17
+:put "Validate forced probe paths after install/arm using Netwatch replies plus ELMO ADAPTIVE mangle/NAT counters."
+Validate forced probe paths after install/arm using Netwatch replies plus ELMO ADAPTIVE mangle/NAT counters.
+#line 18
+:put "Preflight passed."
+Preflight passed.
+
+--- stderr ---
+

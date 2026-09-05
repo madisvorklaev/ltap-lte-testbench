@@ -1,0 +1,89 @@
+$ /import file-name=elmo-adaptive-cake-arm-v0.3.2.rsc
+sample_utc=2026-08-30T11:07:43Z
+rc=0
+routeros_error=
+--- stdout ---
+#line 1
+# ELMO adaptive LTE shaper ARM script
+#line 2
+# Version: 0.3.2 / 2026-08-17
+#line 3
+# Run only after a fresh v0.3.2 install and with ALL fixed UDP test streams stopped.
+#line 5..58
+:do {
+
+:local n1 [/tool netwatch find where name="ELMO-ADAPTIVE-LTE1"]
+:local n2 [/tool netwatch find where name="ELMO-ADAPTIVE-LTE2"]
+:local s [/system scheduler find where name="ELMO-ADAPTIVE-v032-SCHEDULER"]
+:local c [/system script find where name="ELMO-ADAPTIVE-v032-CONTROLLER"]
+
+:if ([:len $n1] != 1) do={ :error "ELMO ADAPTIVE ARM: LTE1 Netwatch entry missing" }
+:if ([:len $n2] != 1) do={ :error "ELMO ADAPTIVE ARM: LTE2 Netwatch entry missing" }
+:if ([:len $s] != 1) do={ :error "ELMO ADAPTIVE ARM: scheduler missing" }
+:if ([:len $c] != 1) do={ :error "ELMO ADAPTIVE ARM: controller script missing" }
+:if ([/tool netwatch get $n1 disabled] = false) do={ :error "ELMO ADAPTIVE ARM: LTE1 already enabled; re-import installer for fresh calibration" }
+:if ([/tool netwatch get $n2 disabled] = false) do={ :error "ELMO ADAPTIVE ARM: LTE2 already enabled; re-import installer for fresh calibration" }
+:if ([/system scheduler get $s disabled] = false) do={ :error "ELMO ADAPTIVE ARM: scheduler already enabled; re-import installer for fresh calibration" }
+:if ([/tool netwatch get $n1 done-tests] > 0) do={ :error "ELMO ADAPTIVE ARM: LTE1 has prior probe history; re-import installer before calibration" }
+:if ([/tool netwatch get $n2 done-tests] > 0) do={ :error "ELMO ADAPTIVE ARM: LTE2 has prior probe history; re-import installer before calibration" }
+
+:if ([:len [/queue tree find where name="ELMO-EXP2B-LTE1"]] != 1) do={ :error "ELMO ADAPTIVE ARM: LTE1 queue missing" }
+:if ([:len [/queue tree find where name="ELMO-EXP2B-LTE2"]] != 1) do={ :error "ELMO ADAPTIVE ARM: LTE2 queue missing" }
+
+/queue tree set [find where name="ELMO-EXP2B-LTE1"] max-limit=5M
+/queue tree set [find where name="ELMO-EXP2B-LTE2"] max-limit=5M
+
+:global elmoAdaptiveHeartbeatv032 0
+:global elmoAdaptiveCap1v032 5000000
+:global elmoAdaptiveBaseNs1v032 0
+:global elmoAdaptiveBaseCount1v032 0
+:global elmoAdaptiveSeen1v032 0
+:global elmoAdaptiveLastDone1v032 0
+:global elmoAdaptiveState1v032 "calibrating"
+:global elmoAdaptiveLastBytes1v032 0
+:global elmoAdaptiveProbeLossSamples1v032 0
+:global elmoAdaptiveConsecutiveLoss1v032 0
+:global elmoAdaptiveCap2v032 5000000
+:global elmoAdaptiveBaseNs2v032 0
+:global elmoAdaptiveBaseCount2v032 0
+:global elmoAdaptiveSeen2v032 0
+:global elmoAdaptiveLastDone2v032 0
+:global elmoAdaptiveState2v032 "calibrating"
+:global elmoAdaptiveLastBytes2v032 0
+:global elmoAdaptiveProbeLossSamples2v032 0
+:global elmoAdaptiveConsecutiveLoss2v032 0
+
+/tool netwatch enable $n1
+/tool netwatch enable $n2
+/system scheduler enable $s
+
+:put "ELMO ADAPTIVE v0.3.2 ARMED."
+:put "KEEP TEST TRAFFIC STOPPED for at least 12 seconds."
+:put "Do not start a measured run unless logs report calibration OK for BOTH LTE1 and LTE2."
+/tool netwatch print detail where comment~"ELMO ADAPTIVE:"
+/system scheduler print detail where comment~"ELMO ADAPTIVE:"
+
+}
+ELMO ADAPTIVE v0.3.2 ARMED.
+KEEP TEST TRAFFIC STOPPED for at least 12 seconds.
+Do not start a measured run unless logs report calibration OK for BOTH LTE1 and LTE2.
+0  ;;; ELMO ADAPTIVE: LTE1 probe only
+   name="ELMO-ADAPTIVE-LTE1" host=1.1.1.1 type=icmp src-address=192.0.2.1
+   interval=1s timeout=800ms start-delay=1s startup-delay=1s
+   packet-interval=100ms packet-count=3 packet-size=64 thr-max=5s thr-avg=5s
+   thr-stdev=5s thr-jitter=5s thr-loss-percent=100% status=unknown
+ 
+1  ;;; ELMO ADAPTIVE: LTE2 probe only
+   name="ELMO-ADAPTIVE-LTE2" host=1.1.1.1 type=icmp src-address=192.0.2.2
+   interval=1s timeout=800ms start-delay=1s startup-delay=1s
+   packet-interval=100ms packet-count=3 packet-size=64 thr-max=5s thr-avg=5s
+   thr-stdev=5s thr-jitter=5s thr-loss-percent=100% status=unknown
+
+0  ;;; ELMO ADAPTIVE: scheduler tick v0.3.2
+   name="ELMO-ADAPTIVE-v032-SCHEDULER" start-time=startup interval=1s
+   on-event=ELMO-ADAPTIVE-v032-CONTROLLER owner="admin"
+   policy=read,write,policy,test run-count=0 next-run=2026-08-30 14:07:46
+
+
+--- stderr ---
+

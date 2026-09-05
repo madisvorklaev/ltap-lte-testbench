@@ -1,0 +1,136 @@
+{
+  "mode": "dynamic_cake_auto",
+  "classification": "VALID_DELIVERY",
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T180515Z-dynamic-cake-auto-dual5m-final",
+  "server_ipv4": "217.18.95.142",
+  "ports": {
+    "a": "5207",
+    "b": "5208"
+  },
+  "iperf_a": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.817,
+    "lost_percent": 3.630933333333333,
+    "jitter_ms": 2.83382559167172,
+    "lost_packets": 3404,
+    "packets": 93748,
+    "sender_mbps": 5.0,
+    "intervals": 180
+  },
+  "iperf_b": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.72,
+    "lost_percent": 5.5328,
+    "jitter_ms": 1.4524950876290592,
+    "lost_packets": 5187,
+    "packets": 93750,
+    "sender_mbps": 5.0,
+    "intervals": 180
+  },
+  "ping_a": {
+    "samples": 845,
+    "sent": 904,
+    "received": 845,
+    "loss_percent": 6.52655,
+    "p50_ms": 64.9,
+    "p95_ms": 72.4,
+    "p99_ms": 108.7,
+    "max_ms": 119.0
+  },
+  "ping_b": {
+    "samples": 858,
+    "sent": 904,
+    "received": 858,
+    "loss_percent": 5.0885,
+    "p50_ms": 64.0,
+    "p95_ms": 115.1,
+    "p99_ms": 163.9,
+    "max_ms": 211.0
+  },
+  "bands_seen": {
+    "a": [],
+    "b": []
+  },
+  "controller_min_caps": {
+    "a": 4500000,
+    "b": 4500000
+  },
+  "controller_last": [
+    {
+      "utc": "2026-09-05T18:07:45Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 63.833333333333336,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:07:51Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 92.39999999999999,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    },
+    {
+      "utc": "2026-09-05T18:07:56Z",
+      "path": "a",
+      "recv": 2,
+      "avg_ms": 61.650000000000006,
+      "cap_before": 5000000,
+      "cap_after": 4500000,
+      "reason": "reduce"
+    },
+    {
+      "utc": "2026-09-05T18:08:01Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 79.0,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:08:07Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 65.13333333333334,
+      "cap_before": 4500000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:08:11Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 97.43333333333334,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    },
+    {
+      "utc": "2026-09-05T18:08:17Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 66.76666666666667,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T18:08:21Z",
+      "path": "b",
+      "recv": 3,
+      "avg_ms": 81.96666666666667,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    }
+  ]
+}

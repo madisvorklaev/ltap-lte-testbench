@@ -1,0 +1,11 @@
+Columns: CHAIN, ACTION, BYTES, PACKETS
+# CHAIN    ACTION       BYTES  PACKETS
+;;; ELMO-TEST-A-CORRECT
+0 forward  passthrough    336        4
+;;; ELMO-TEST-A-CROSS
+1 forward  passthrough      0        0
+;;; ELMO-TEST-B-CORRECT
+2 forward  passthrough      0        0
+;;; ELMO-TEST-B-CROSS
+3 forward  passthrough      0        0
+

@@ -1,0 +1,5 @@
+CMD: ['ssh', '-i', '/home/madis/.ssh/elmo_openclaw_ed25519', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=8', 'admin@192.168.88.1', '/queue type add name=elmo-rutx12-cake kind=cake cake-bandwidth=0 cake-diffserv=besteffort cake-flowmode=flowblind cake-rtt=100ms; /ip firewall mangle add chain=forward src-address=192.168.101.201 out-interface=ether2 action=mark-packet new-packet-mark=elmo-rutx12-cake-a passthrough=yes comment=ELMO-RUTX12-CAKE-A-MARK; /ip firewall mangle add chain=forward src-address=192.168.101.202 out-interface=ether3 action=mark-packet new-packet-mark=elmo-rutx12-cake-b passthrough=yes comment=ELMO-RUTX12-CAKE-B-MARK; /queue tree add name=ELMO-RUTX12-CAKE-A parent=global packet-mark=elmo-rutx12-cake-a queue=elmo-rutx12-cake max-limit=5M comment="ELMO-RUTX12-CAKE dynamic auto A"; /queue tree add name=ELMO-RUTX12-CAKE-B parent=global packet-mark=elmo-rutx12-cake-b queue=elmo-rutx12-cake max-limit=5M comment="ELMO-RUTX12-CAKE dynamic auto B"']
+RC: 0
+STDOUT:
+
+STDERR:

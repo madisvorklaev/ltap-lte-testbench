@@ -1,0 +1,25 @@
+{
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T155623Z-fail-closed-proof",
+  "a_disabled_ping_a": {
+    "sent": 4,
+    "received": 1,
+    "loss_percent": 75.0
+  },
+  "a_disabled_ping_b": {
+    "sent": 4,
+    "received": 4,
+    "loss_percent": 0.0
+  },
+  "b_disabled_ping_b": {
+    "sent": 4,
+    "received": 0,
+    "loss_percent": 100.0
+  },
+  "b_disabled_ping_a": {
+    "sent": 4,
+    "received": 4,
+    "loss_percent": 0.0
+  },
+  "a_disabled_counters": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN    ACTION       BYTES  PACKETS\n;;; ELMO-TEST-A-CORRECT\n0 forward  passthrough     84        1\n;;; ELMO-TEST-A-CROSS\n1 forward  passthrough      0        0\n;;; ELMO-TEST-B-CORRECT\n2 forward  passthrough    336        4\n;;; ELMO-TEST-B-CROSS\n3 forward  passthrough      0        0\n\n",
+  "b_disabled_counters": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN    ACTION       BYTES  PACKETS\n;;; ELMO-TEST-A-CORRECT\n0 forward  passthrough    336        4\n;;; ELMO-TEST-A-CROSS\n1 forward  passthrough      0        0\n;;; ELMO-TEST-B-CORRECT\n2 forward  passthrough      0        0\n;;; ELMO-TEST-B-CROSS\n3 forward  passthrough      0        0\n\n"
+}

@@ -1,0 +1,23 @@
+10  name="elmo-rutx12-cake" kind=cake cake-bandwidth=0bps cake-overhead=0
+    cake-overhead-scheme="" cake-rtt=100ms cake-diffserv=besteffort
+    cake-flowmode=flowblind cake-nat=no cake-wash=no cake-ack-filter=none
+
+0  ;;; ELMO-RUTX12-CAKE static/dynamic A
+   name="ELMO-RUTX12-CAKE-A" parent=ether2 packet-mark=elmo-rutx12-cake-a
+   limit-at=0 queue=elmo-rutx12-cake priority=8 max-limit=5M burst-limit=0
+   burst-threshold=0 burst-time=0s bucket-size=0.1
+ 
+1  ;;; ELMO-RUTX12-CAKE static/dynamic B
+   name="ELMO-RUTX12-CAKE-B" parent=ether3 packet-mark=elmo-rutx12-cake-b
+   limit-at=0 queue=elmo-rutx12-cake priority=8 max-limit=5M burst-limit=0
+   burst-threshold=0 burst-time=0s bucket-size=0.1
+
+Flags: I - INVALID
+4    ;;; ELMO-RUTX12-CAKE-A-MARK
+     chain=forward action=mark-packet new-packet-mark=elmo-rutx12-cake-a
+     passthrough=yes src-address=192.168.101.201 out-interface=ether2
+ 
+5  I ;;; ELMO-RUTX12-CAKE-B-MARK
+     chain=forward action=mark-packet new-packet-mark=elmo-rutx12-cake-b
+     passthrough=yes src-address=192.168.101.202 out-interface=ether3
+

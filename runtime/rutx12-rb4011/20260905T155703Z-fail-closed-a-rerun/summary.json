@@ -1,0 +1,14 @@
+{
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T155703Z-fail-closed-a-rerun",
+  "a_disabled_ping_a": {
+    "sent": 6,
+    "received": 0,
+    "loss_percent": 100.0
+  },
+  "a_disabled_ping_b": {
+    "sent": 6,
+    "received": 6,
+    "loss_percent": 0.0
+  },
+  "state": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN    ACTION       BYTES  PACKETS\n;;; ELMO-TEST-A-CORRECT\n0 forward  passthrough      0        0\n;;; ELMO-TEST-A-CROSS\n1 forward  passthrough      0        0\n;;; ELMO-TEST-B-CORRECT\n2 forward  passthrough    504        6\n;;; ELMO-TEST-B-CROSS\n3 forward  passthrough      0        0\n\nFlags: X - DISABLED, A - ACTIVE; s - STATIC\n0 Xs ;;; ELMO-TEST-A-DEFAULT\n     dst-address=0.0.0.0/0 routing-table=elmo_rut_a gateway=192.168.11.1@main\n     distance=1\n \n1 As ;;; ELMO-TEST-B-DEFAULT\n     dst-address=0.0.0.0/0 routing-table=elmo_rut_b gateway=192.168.12.1\n     immediate-gw=192.168.12.1%ether3 distance=1 scope=30 target-scope=10\n\n"
+}

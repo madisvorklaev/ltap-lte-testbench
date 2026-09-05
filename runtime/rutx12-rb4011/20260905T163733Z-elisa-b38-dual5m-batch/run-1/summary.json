@@ -1,0 +1,53 @@
+{
+  "run": "1",
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T163733Z-elisa-b38-dual5m-batch/run-1",
+  "iperf_a": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.9983817739007,
+    "lost_percent": 0,
+    "jitter_ms": 2.3545783722319826,
+    "lost_packets": 0,
+    "packets": 93750,
+    "sender_mbps": 4.999989944464668,
+    "intervals": 180
+  },
+  "iperf_b": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 1.3732930368878289,
+    "lost_percent": 72.06933333333333,
+    "jitter_ms": 5.71345355945621,
+    "lost_packets": 67565,
+    "packets": 93654,
+    "sender_mbps": 4.999988944468891,
+    "intervals": 180
+  },
+  "ping_a": {
+    "samples": 912,
+    "sent": 912,
+    "received": 912,
+    "loss_percent": 0.0,
+    "p50_ms": 24.9,
+    "p95_ms": 30.9,
+    "p99_ms": 36.8,
+    "max_ms": 164.0
+  },
+  "ping_b": {
+    "samples": 249,
+    "sent": 889,
+    "received": 249,
+    "loss_percent": 71.991,
+    "p50_ms": 2346.0,
+    "p95_ms": 2750.0,
+    "p99_ms": 2893.0,
+    "max_ms": 2968.0
+  },
+  "elisa_bands_seen": [
+    "LTE_B38"
+  ],
+  "elisa_disconnected_samples": 0,
+  "cross_counter_text": "Columns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN    ACTION             BYTES  PACKETS\n;;; ELMO-TEST-A-CORRECT\n0 forward  passthrough  115 203 678   94 689\n;;; ELMO-TEST-A-CROSS\n1 forward  passthrough            0        0\n;;; ELMO-TEST-B-CORRECT\n2 forward  passthrough  115 206 580   94 725\n;;; ELMO-TEST-B-CROSS\n3 forward  passthrough            0        0\n\nFlags: R - RUNNING\n1 R name=\"ether2\" last-link-up-time=2026-09-02 09:57:56 link-downs=0\n    rx-byte=366 350 tx-byte=234 242 970 rx-packet=3 319 tx-packet=193 776\n    tx-queue-drop=0 fp-rx-byte=369 444 fp-tx-byte=0 fp-rx-packet=3 339\n    fp-tx-packet=0 fp-rps-drop=0\n \n2 R name=\"ether3\" last-link-up-time=2026-09-02 09:58:19 link-downs=0\n    rx-byte=876 907 tx-byte=235 074 947 rx-packet=6 932 tx-packet=198 307\n    tx-queue-drop=0 fp-rx-byte=849 515 fp-tx-byte=0 fp-rx-packet=6 936\n    fp-tx-packet=0 fp-rps-drop=0\n\n"
+}

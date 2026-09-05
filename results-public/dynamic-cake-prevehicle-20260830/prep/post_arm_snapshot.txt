@@ -1,0 +1,181 @@
+$ post_arm_snapshot
+sample_utc=2026-08-30T11:07:44Z
+rc=0
+routeros_error=
+--- stdout ---
+                   uptime: 4d14h57m14s        
+                  version: 7.24rc3 (testing)  
+               build-time: 2026-07-28 13:55:55
+          minimum-version: 7.11               
+              free-memory: 53.3MiB            
+             total-memory: 128.0MiB           
+                      cpu: MIPS 1004Kc V2.15  
+                cpu-count: 4                  
+            cpu-frequency: 880MHz             
+                 cpu-load: 28%                
+           free-hdd-space: 3600.0KiB          
+          total-hdd-space: 16.0MiB            
+  write-sect-since-reboot: 371079             
+         write-sect-total: 564991             
+        architecture-name: mmips              
+               board-name: LtAP-2HnD          
+                 platform: MikroTik           
+
+                   ;;; A newer version of modem firmware is available!
+               status: registered                                     
+           pin-status: ok                                             
+  registration-status: registered                                     
+         manufacturer: "MikroTik"                                     
+                model: "R11e-LTE6"                                    
+             revision: R11e-LTE6_V034                                 
+     current-operator: Telia                                          
+                  lac: 10012                                          
+       current-cellid: 51224331                                       
+               enb-id: 200095                                         
+            sector-id: 11                                             
+           phy-cellid: 310                                            
+           data-class: LTE                                            
+       session-uptime: 1d10h43m40s                                    
+                 imei: <redacted>                                
+                 imsi: <redacted>                                
+                iccid: <redacted>                            
+         primary-band: B3@20Mhz earfcn: 1344 phy-cellid: 310          
+                  cqi: 0                                              
+                 rssi: -63dBm                                         
+                 rsrp: -98dBm                                         
+                 rsrq: -13dB                                          
+                 sinr: -3dB                                           
+
+               status: registered                         
+           pin-status: ok                                 
+  registration-status: registered                         
+         manufacturer: MikroTik                           
+                model: R11l-LTE7                          
+             revision: R11l-LTE7_V005                     
+     current-operator: Elisa EE                           
+                  lac: 2022                               
+       current-cellid: 257028669                          
+               enb-id: 1004018                            
+            sector-id: 61                                 
+           phy-cellid: 69                                 
+           data-class: LTE                                
+       session-uptime: 4h10m6s                            
+                 imei: <redacted>                    
+                 imsi: <redacted>                    
+                iccid: <redacted>               
+    subscriber-number: <redacted>                     
+         primary-band: B1@15Mhz earfcn: 523 phy-cellid: 69
+                  cqi: 0                                  
+                 rssi: -62dBm                             
+                 rsrp: -95dBm                             
+                 rsrq: -13.5dB                            
+                 sinr: 2dB                                
+
+Flags: D - DYNAMIC
+0   ;;; ELMO: LAN address
+    address=192.168.101.254/24 network=192.168.101.0 interface=bridge1
+    actual-interface=bridge1 vrf=main
+ 
+1 D address=10.52.223.126/32 network=10.52.223.126 interface=lte1
+    actual-interface=lte1 vrf=main
+ 
+2 D address=10.66.132.161/32 network=10.66.132.161 interface=lte2
+    actual-interface=lte2 vrf=main
+ 
+3   ;;; ELMO ADAPTIVE: LTE1 probe source
+    address=192.0.2.1/32 network=192.0.2.1 interface=ELMO-ADAPTIVE-LO
+    actual-interface=ELMO-ADAPTIVE-LO vrf=main
+ 
+4   ;;; ELMO ADAPTIVE: LTE2 probe source
+    address=192.0.2.2/32 network=192.0.2.2 interface=ELMO-ADAPTIVE-LO
+    actual-interface=ELMO-ADAPTIVE-LO vrf=main
+
+Flags: A - ACTIVE; s - STATIC
+0 As ;;; ELMO:BASE: default to LTE1
+     dst-address=0.0.0.0/0 routing-table=to-lte1 gateway=lte1 immediate-gw=lte1
+     distance=1 scope=30 target-scope=10
+ 
+1  s ;;; ELMO:BASE: blackhole LTE1 fallback
+     dst-address=0.0.0.0/0 routing-table=to-lte1 blackhole immediate-gw=""
+     distance=254
+ 
+2 As ;;; ELMO:BASE: default to LTE2
+     dst-address=0.0.0.0/0 routing-table=to-lte2 gateway=lte2 immediate-gw=lte2
+     distance=1 scope=30 target-scope=10
+ 
+3  s ;;; ELMO:BASE: blackhole LTE2 fallback
+     dst-address=0.0.0.0/0 routing-table=to-lte2 blackhole immediate-gw=""
+     distance=254
+
+0  name="elmo-exp2b-cake" kind=cake cake-bandwidth=0bps cake-overhead=0
+   cake-overhead-scheme="" cake-rtt=100ms cake-diffserv=besteffort
+   cake-flowmode=flowblind cake-nat=no cake-wash=no cake-ack-filter=none
+
+0  name="ELMO-EXP2B-LTE1" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=0 packets=0 dropped=0
+ 
+1  name="ELMO-EXP2B-LTE2" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=0 packets=0 dropped=0
+
+0  ;;; ELMO ADAPTIVE: LTE1 probe only
+   name="ELMO-ADAPTIVE-LTE1" host=1.1.1.1 type=icmp src-address=192.0.2.1
+   interval=1s timeout=800ms start-delay=1s startup-delay=1s
+   packet-interval=100ms packet-count=3 packet-size=64 thr-max=5s thr-avg=5s
+   thr-stdev=5s thr-jitter=5s thr-loss-percent=100% status=unknown
+ 
+1  ;;; ELMO ADAPTIVE: LTE2 probe only
+   name="ELMO-ADAPTIVE-LTE2" host=1.1.1.1 type=icmp src-address=192.0.2.2
+   interval=1s timeout=800ms start-delay=1s startup-delay=1s
+   packet-interval=100ms packet-count=3 packet-size=64 thr-max=5s thr-avg=5s
+   thr-stdev=5s thr-jitter=5s thr-loss-percent=100% status=unknown
+
+0  ;;; ELMO ADAPTIVE: scheduler tick v0.3.2
+   name="ELMO-ADAPTIVE-v032-SCHEDULER" start-time=startup interval=1s
+   on-event=ELMO-ADAPTIVE-v032-CONTROLLER owner="admin"
+   policy=read,write,policy,test run-count=1 next-run=2026-08-30 14:07:48
+
+Columns: NAME, VALUE
+ #  NAME                               VALUE      
+ 0  elmoAdaptiveBaseCount1v032         0          
+ 1  elmoAdaptiveBaseCount2v032         0          
+ 2  elmoAdaptiveBaseNs1v032            0          
+ 3  elmoAdaptiveBaseNs2v032            0          
+ 4  elmoAdaptiveCap1v032               5000000    
+ 5  elmoAdaptiveCap2v032               5000000    
+ 6  elmoAdaptiveConsecutiveLoss1v032   0          
+ 7  elmoAdaptiveConsecutiveLoss2v032   0          
+ 8  elmoAdaptiveHeartbeatv032          1          
+ 9  elmoAdaptiveLastBytes1v032         0          
+10  elmoAdaptiveLastBytes2v032         0          
+11  elmoAdaptiveLastDone1v032          0          
+12  elmoAdaptiveLastDone2v032          0          
+13  elmoAdaptiveProbeLossSamples1v032  0          
+14  elmoAdaptiveProbeLossSamples2v032  0          
+15  elmoAdaptiveSeen1v032              0          
+16  elmoAdaptiveSeen2v032              0          
+17  elmoAdaptiveState1v032             calibrating
+18  elmoAdaptiveState2v032             calibrating
+
+2026-08-30 14:07:43 system,info device added by ssh-cmd:admin@192.168.101.200 (*8 = /interface bridge add comment="ELMO ADAPTIVE: probe loopback" name=ELMO-ADAPTIVE-LO protocol-mode=none)
+2026-08-30 14:07:43 system,info address added by ssh-cmd:admin@192.168.101.200 (*34 = /ip address add address=192.0.2.1/32 comment="ELMO ADAPTIVE: LTE1 probe source" interface=ELMO-ADAPTIVE-LO)
+2026-08-30 14:07:43 system,info address added by ssh-cmd:admin@192.168.101.200 (*35 = /ip address add address=192.0.2.2/32 comment="ELMO ADAPTIVE: LTE2 probe source" interface=ELMO-ADAPTIVE-LO)
+2026-08-30 14:07:43 system,info mangle rule added by ssh-cmd:admin@192.168.101.200 (*DB = /ip firewall mangle add action=mark-routing chain=output comment="ELMO ADAPTIVE: probe via LTE1" dst-address=1.1.1.1 new-routing-mark=to-lte1 passthrough=no protocol=icmp src-address=192.0.2.1)
+2026-08-30 14:07:43 system,info mangle rule added by ssh-cmd:admin@192.168.101.200 (*DC = /ip firewall mangle add action=mark-routing chain=output comment="ELMO ADAPTIVE: probe via LTE2" dst-address=1.1.1.1 new-routing-mark=to-lte2 passthrough=no protocol=icmp src-address=192.0.2.2)
+2026-08-30 14:07:43 system,info nat rule added by ssh-cmd:admin@192.168.101.200 (*D = /ip firewall nat add action=masquerade chain=srcnat comment="ELMO ADAPTIVE: probe NAT LTE1" out-interface=lte1 src-address=192.0.2.1)
+2026-08-30 14:07:43 system,info nat rule added by ssh-cmd:admin@192.168.101.200 (*E = /ip firewall nat add action=masquerade chain=srcnat comment="ELMO ADAPTIVE: probe NAT LTE2" out-interface=lte2 src-address=192.0.2.2)
+2026-08-30 14:07:43 system,info Netwatch config added by ssh-cmd:admin@192.168.101.200 (*1 = /tool netwatch add comment="ELMO ADAPTIVE: LTE1 probe only" disabled=yes host=1.1.1.1 interval=1s name=ELMO-ADAPTIVE-LTE1 packet-count=3 packet-interval=100ms packet-size=64 src-address=192.0.2.1 start-delay=1s startup-delay=1s thr-avg=5s thr-jitter=5s thr-loss-percent=100% thr-max=5s thr-stdev=5s timeout=800ms type=icmp)
+2026-08-30 14:07:43 system,info Netwatch config added by ssh-cmd:admin@192.168.101.200 (*2 = /tool netwatch add comment="ELMO ADAPTIVE: LTE2 probe only" disabled=yes host=1.1.1.1 interval=1s name=ELMO-ADAPTIVE-LTE2 packet-count=3 packet-interval=100ms packet-size=64 src-address=192.0.2.2 start-delay=1s startup-delay=1s thr-avg=5s thr-jitter=5s thr-loss-percent=100% thr-max=5s thr-stdev=5s timeout=800ms type=icmp)
+2026-08-30 14:07:43 system,info new script added by ssh-cmd:admin@192.168.101.200 (*1 = /system script add comment="ELMO ADAPTIVE: scheduler controller v0.3.2" name=ELMO-ADAPTIVE-v032-CONTROLLER policy=read,write,policy,test source="\;     \n    :global elmoAdaptiveHeartbeatv032\;     \n    :global elmoAdaptiveCap1v032\;     \n    :global elmoAdaptiveBaseNs1v032\;     \n    :global elmoAdaptiveBaseCount1v032\;     \n    :global elmoAdaptiveSeen1v032\;     \n    :global elmoAdaptiveLastDone1v032\;     \n    :global elmoAdaptiveState1v032\;     \n    :global elmoAdaptiveLastBytes1v032\;     \n    :global elmoAdaptiveProbeLossSamples1v032\;     \n    :global elmoAdaptiveConsecutiveLoss1v032\;     \n    :global elmoAdaptiveCap2v032\;     \n    :global elmoAdaptiveBaseNs2v032\;     \n    :global elmoAdaptiveBaseCount2v032\;     \n    :global elmoAdaptiveSeen2v032\;     \n    :global elmoAdaptiveLastDone2v032\;     \n    :global elmoAdaptiveState2v032\;     \n    :global elmoAdaptiveLastBytes2v032\;     \n    :global elmoAdaptiveProbeLossSamples2
+2026-08-30 14:07:43 system,info es2v032] != \"num\") do={ :set elmoAdaptiveLastBytes2v032 0 }\;     \n    :if ([:typeof \$elmoAdaptiveProbeLossSamples2v032] != \"num\") do={ :set elmoAdaptiveProbeLossSamples2v032 0 }\;     \n    :if ([:typeof \$elmoAdaptiveConsecutiveLoss2v032] != \"num\") do={ :set elmoAdaptiveConsecutiveLoss2v032 0 }\;     \n\;     \n    :local n [/tool netwatch find where name=\"ELMO-ADAPTIVE-LTE1\"]\;     \n    :local q [/queue tree find where name=\"ELMO-EXP2B-LTE1\"]\;     \n    :if (([:len \$n] != 1) || ([:len \$q] != 1)) do={\;     \n        :log error \"ELMO ADAPTIVE LTE1: probe or queue missing; scheduler cannot run\"\;     \n    } else={\;     \n        :local currentBytes [/queue tree get \$q bytes]\;     \n        :if ([:typeof \$currentBytes] != \"num\") do={\;     \n            :log error (\"ELMO ADAPTIVE LTE1: queue byte counter not numeric type=\" . [:typeof \$currentBytes] . \"; stopping controller decision\")\;     \n        } else={\;     \n            :local deltaBytes (\$currentBytes - \$elmoAdaptiveLa
+2026-08-30 14:07:43 system,info v032) + \$rttNs) / (\$elmoAdaptiveBaseCount1v032 + 1))\;     \n                        }\;     \n                        :set elmoAdaptiveBaseCount1v032 (\$elmoAdaptiveBaseCount1v032 + 1)\;     \n                    }\;     \n                    :if (\$elmoAdaptiveSeen1v032 >= 10) do={\;     \n                        :if (\$elmoAdaptiveBaseCount1v032 >= 7) do={\;     \n                            :set elmoAdaptiveState1v032 \"armed\"\;     \n                            :log info (\"ELMO ADAPTIVE LTE1: calibration OK samples=\" . \$elmoAdaptiveBaseCount1v032 . \" baseline_ms=\" . (\$elmoAdaptiveBaseNs1v032 / 1000000))\;     \n                        } else={\;     \n                            :set elmoAdaptiveState1v032 \"disarmed\"\;     \n                            :log warning (\"ELMO ADAPTIVE LTE1: calibration INVALID samples=\" . \$elmoAdaptiveBaseCount1v032 . \" seen=\" . \$elmoAdaptiveSeen1v032 . \"; holding 5M; re-import and recalibrate before measured test\")\;     \n                        }\;
+2026-08-30 14:07:43 system,info {\;     \n                                                :set newRate (\$cap + 100000)\;     \n                                                :set reason \"healthy-recover\"\;     \n                                            }\;     \n                                        }\;     \n                                    }\;     \n                                }\;     \n                            }\;     \n                        }\;     \n                        :if (\$newRate < \$minRate) do={ :set newRate \$minRate }\;     \n                        :if (\$newRate > \$maxRate) do={ :set newRate \$maxRate }\;     \n                        :if (\$newRate != \$cap) do={\;     \n                            /queue tree set \$q max-limit=\$newRate\;     \n                            :set elmoAdaptiveCap1v032 \$newRate\;     \n                            :log info (\"ELMO ADAPTIVE LTE1: reason=\" . \$reason . \" demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" rtt=\" . [/tool netwatch get \$
+2026-08-30 14:07:43 system,info n rtt-avg] . \" excess_ms=\" . \$excessMs . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples1v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss1v032 . \" cap=\" . \$cap . \"->\" . \$newRate)\;     \n                        } else={\;     \n                            :if ((\$active) && (\$replies < 3)) do={\;     \n                                :log info (\"ELMO ADAPTIVE LTE1: reason=probe-loss-hold demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples1v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss1v032 . \" cap=\" . \$cap)\;     \n                            }\;     \n                        }\;     \n                    } else={\;     \n                        /queue tree set \$q max-limit=5M\;     \n                        :set elmoAdaptiveCap1v032 \$maxRate\;     \n                    }\;     \n                }\;     \n            }\;     \n        }\;     \n
+2026-08-30 14:07:43 system,info   }\;     \n\;     \n    :local n [/tool netwatch find where name=\"ELMO-ADAPTIVE-LTE2\"]\;     \n    :local q [/queue tree find where name=\"ELMO-EXP2B-LTE2\"]\;     \n    :if (([:len \$n] != 1) || ([:len \$q] != 1)) do={\;     \n        :log error \"ELMO ADAPTIVE LTE2: probe or queue missing; scheduler cannot run\"\;     \n    } else={\;     \n        :local currentBytes [/queue tree get \$q bytes]\;     \n        :if ([:typeof \$currentBytes] != \"num\") do={\;     \n            :log error (\"ELMO ADAPTIVE LTE2: queue byte counter not numeric type=\" . [:typeof \$currentBytes] . \"; stopping controller decision\")\;     \n        } else={\;     \n            :local deltaBytes (\$currentBytes - \$elmoAdaptiveLastBytes2v032)\;     \n            :if (\$deltaBytes < 0) do={ :set deltaBytes 0 }\;     \n            :set elmoAdaptiveLastBytes2v032 \$currentBytes\;     \n            :local demandBps (\$deltaBytes * 8)\;     \n            :local active false\;     \n            :if (\$demandBps >= \$activeDemandBps
+2026-08-30 14:07:43 system,info                  :if (\$elmoAdaptiveBaseCount2v032 >= 7) do={\;     \n                            :set elmoAdaptiveState2v032 \"armed\"\;     \n                            :log info (\"ELMO ADAPTIVE LTE2: calibration OK samples=\" . \$elmoAdaptiveBaseCount2v032 . \" baseline_ms=\" . (\$elmoAdaptiveBaseNs2v032 / 1000000))\;     \n                        } else={\;     \n                            :set elmoAdaptiveState2v032 \"disarmed\"\;     \n                            :log warning (\"ELMO ADAPTIVE LTE2: calibration INVALID samples=\" . \$elmoAdaptiveBaseCount2v032 . \" seen=\" . \$elmoAdaptiveSeen2v032 . \"; holding 5M; re-import and recalibrate before measured test\")\;     \n                        }\;     \n                    }\;     \n                } else={\;     \n                    :if (\$elmoAdaptiveState2v032 = \"armed\") do={\;     \n                        :local cap \$elmoAdaptiveCap2v032\;     \n                        :local newRate \$cap\;     \n                        :local excessMs -1
+2026-08-30 14:07:43 system,info                       }\;     \n                                }\;     \n                            }\;     \n                        }\;     \n                        :if (\$newRate < \$minRate) do={ :set newRate \$minRate }\;     \n                        :if (\$newRate > \$maxRate) do={ :set newRate \$maxRate }\;     \n                        :if (\$newRate != \$cap) do={\;     \n                            /queue tree set \$q max-limit=\$newRate\;     \n                            :set elmoAdaptiveCap2v032 \$newRate\;     \n                            :log info (\"ELMO ADAPTIVE LTE2: reason=\" . \$reason . \" demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" rtt=\" . [/tool netwatch get \$n rtt-avg] . \" excess_ms=\" . \$excessMs . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples2v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss2v032 . \" cap=\" . \$cap . \"->\" . \$newRate)\;     \n                        } else={\;     \n
+ 2026-08-30 14:07:43 system,info       :if ((\$active) && (\$replies < 3)) do={\;     \n                                :log info (\"ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=\" . \$demandBps . \" bytes_delta=\" . \$deltaBytes . \" replies=\" . \$replies . \" loss_total=\" . \$elmoAdaptiveProbeLossSamples2v032 . \" loss_consecutive=\" . \$elmoAdaptiveConsecutiveLoss2v032 . \" cap=\" . \$cap)\;     \n                            }\;     \n                        }\;     \n                    } else={\;     \n                        /queue tree set \$q max-limit=5M\;     \n                        :set elmoAdaptiveCap2v032 \$maxRate\;     \n                    }\;     \n                }\;     \n            }\;     \n        }\;     \n    }\;     \n")
+ 2026-08-30 14:07:43 system,info new script scheduled by ssh-cmd:admin@192.168.101.200 (*0 = /system scheduler add comment="ELMO ADAPTIVE: scheduler tick v0.3.2" disabled=yes interval=1s name=ELMO-ADAPTIVE-v032-SCHEDULER on-event=ELMO-ADAPTIVE-v032-CONTROLLER policy=read,write,policy,test start-time=startup)
+
+
+--- stderr ---
+

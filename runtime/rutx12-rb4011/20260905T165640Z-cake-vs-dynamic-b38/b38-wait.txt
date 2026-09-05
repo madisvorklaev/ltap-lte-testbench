@@ -1,0 +1,110 @@
+--- 2026-09-05T16:56:42Z ---
+Connected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 3
+RSRQ: -15
+default dev qmimux0 proto static scope link src 10.210.121.176 metric 3 
+--- 2026-09-05T16:56:45Z ---
+Disconnected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 4
+RSRQ: -15
+--- 2026-09-05T16:56:47Z ---
+Disconnected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 8
+RSRQ: -15
+--- 2026-09-05T16:56:50Z ---
+Disconnected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 8
+RSRQ: -15
+--- 2026-09-05T16:56:52Z ---
+Disconnected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 8
+RSRQ: -15
+--- 2026-09-05T16:56:54Z ---
+Disconnected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 8
+RSRQ: -15
+--- 2026-09-05T16:56:57Z ---
+Disconnected
+Registered, home
+LTE_B1
+RSSI: -63
+RSRP: -97
+SINR: 8
+RSRQ: -15
+--- 2026-09-05T16:57:00Z ---
+Disconnected
+Not registered
+Unknown
+N/A
+--- 2026-09-05T16:57:02Z ---
+Disconnected
+Registered, home
+LTE_B38
+RSSI: -75
+RSRP: -109
+SINR: 11
+RSRQ: -14
+--- 2026-09-05T16:57:04Z ---
+Disconnected
+Registered, home
+LTE_B38
+RSSI: -75
+RSRP: -109
+SINR: 11
+RSRQ: -14
+--- 2026-09-05T16:57:07Z ---
+Disconnected
+Registered, home
+LTE_B38
+RSSI: -75
+RSRP: -109
+SINR: 9
+RSRQ: -14
+--- 2026-09-05T16:57:09Z ---
+Disconnected
+Registered, home
+LTE_B38
+RSSI: -75
+RSRP: -109
+SINR: 15
+RSRQ: -14
+--- 2026-09-05T16:57:12Z ---
+Connected
+Registered, home
+LTE_B38
+RSSI: -75
+RSRP: -109
+SINR: 15
+RSRQ: -14
+default dev qmimux0 proto static scope link src 10.209.153.7 metric 3 
+PING 1.1.1.1 (1.1.1.1) from 192.168.101.202 : 56(84) bytes of data.
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=39.9 ms
+64 bytes from 1.1.1.1: icmp_seq=2 ttl=57 time=38.6 ms
+
+--- 1.1.1.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 38.551/39.237/39.924/0.686 ms

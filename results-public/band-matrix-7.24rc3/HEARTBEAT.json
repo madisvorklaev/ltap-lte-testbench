@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-08-29T07:12:49+00:00",
-  "pid": 456618,
+  "timestamp": "2026-09-05T18:27:08+00:00",
+  "pid": 1035,
   "current_item": "C6",
   "current_item_state": "STARTING",
-  "elapsed_seconds": 1820327,
+  "elapsed_seconds": 2465586,
   "last_successful_telemetry_timestamp": null,
-  "router_reachable": true,
+  "router_reachable": false,
   "server_reachable": false,
   "completed": 20,
   "total": 20,
   "retry_queue_length": 0,
-  "last_error": "",
-  "last_pushed_commit": "6acdf88c1cb953d6ec98ef32fca89fcea27fe23d",
+  "last_error": "RouterOS/FW mismatch. resource='' routerboard=''",
+  "last_pushed_commit": "d47b7b4e0e6a5c714bc08f1337e4f06a719eaf57",
   "bands_currently_configured": {
-    "lte1": "",
-    "lte2": ""
+    "lte1": null,
+    "lte2": null
   }
 }

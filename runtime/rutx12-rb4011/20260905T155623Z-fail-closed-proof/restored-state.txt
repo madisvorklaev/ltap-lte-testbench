@@ -1,0 +1,20 @@
+Flags: A - ACTIVE; s - STATIC
+0 As ;;; ELMO-TEST-A-DEFAULT
+     dst-address=0.0.0.0/0 routing-table=elmo_rut_a gateway=192.168.11.1
+     immediate-gw=192.168.11.1%ether2 distance=1 scope=30 target-scope=10
+ 
+1 As ;;; ELMO-TEST-B-DEFAULT
+     dst-address=0.0.0.0/0 routing-table=elmo_rut_b gateway=192.168.12.1
+     immediate-gw=192.168.12.1%ether3 distance=1 scope=30 target-scope=10
+
+Columns: CHAIN, ACTION, BYTES, PACKETS
+# CHAIN    ACTION       BYTES  PACKETS
+;;; ELMO-TEST-A-CORRECT
+0 forward  passthrough    336        4
+;;; ELMO-TEST-A-CROSS
+1 forward  passthrough      0        0
+;;; ELMO-TEST-B-CORRECT
+2 forward  passthrough      0        0
+;;; ELMO-TEST-B-CROSS
+3 forward  passthrough      0        0
+

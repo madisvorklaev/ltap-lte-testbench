@@ -1,0 +1,65 @@
+CMD: ['ssh', '-i', '/home/madis/.ssh/elmo_openclaw_ed25519', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=8', 'admin@192.168.88.1', '/queue tree print stats detail where name~"ELMO-RUTX12-CAKE"; /ip firewall mangle print stats detail where comment~"ELMO-RUTX12-CAKE|ELMO-TEST"; /interface ethernet print stats detail where name~"ether2|ether3"']
+RC: 0
+STDOUT:
+0  ;;; ELMO-RUTX12-CAKE dynamic auto A
+   name="ELMO-RUTX12-CAKE-A" parent=global packet-mark=elmo-rutx12-cake-a
+   rate=3024 packet-rate=4 queued-bytes=0 queued-packets=0 bytes=84706742
+   packets=69805 dropped=0
+ 
+1  ;;; ELMO-RUTX12-CAKE dynamic auto B
+   name="ELMO-RUTX12-CAKE-B" parent=global packet-mark=elmo-rutx12-cake-b
+   rate=3192 packet-rate=4 queued-bytes=0 queued-packets=0 bytes=102620538
+   packets=84592 dropped=0
+
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ # CHAIN    ACTION             BYTES  PACKETS
+;;; ELMO-TEST-A-CORRECT
+ 0 forward  passthrough  230 950 932  191 619
+;;; ELMO-TEST-A-CROSS
+ 1 forward  passthrough            0        0
+;;; ELMO-TEST-B-CORRECT
+ 2 forward  passthrough  346 847 267  285 999
+;;; ELMO-TEST-B-CROSS
+ 3 forward  passthrough            0        0
+;;; ELMO-RUTX12-CAKE-A-MARK
+10 forward  mark-packet  115 228 190   94 981
+;;; ELMO-RUTX12-CAKE-B-MARK
+11 forward  mark-packet  115 227 778   94 974
+
+                    name:      ether2      ether3
+          driver-rx-byte:   1 161 258   2 490 511
+        driver-rx-packet:      10 556      20 243
+          driver-tx-byte: 789 114 049 852 682 373
+        driver-tx-packet:     647 509     709 898
+                rx-bytes:   1 203 482   2 571 483
+              rx-unicast:      10 527      20 146
+            rx-broadcast:           0           0
+                rx-pause:           0           0
+            rx-multicast:          29          97
+            rx-fcs-error:           0           0
+             rx-fragment:           0           0
+           rx-unknown-op:           0           0
+           rx-code-error:           0           0
+               rx-jabber:           0           0
+                 rx-drop:           0           0
+                tx-bytes: 791 726 481 855 542 255
+              tx-unicast:     644 900     707 281
+            tx-broadcast:         438         438
+                tx-pause:           0           0
+            tx-multicast:       2 490       2 475
+            tx-collision:           0           0
+  tx-excessive-collision:           0           0
+   tx-multiple-collision:           0           0
+     tx-single-collision:           0           0
+             tx-deferred:           0           0
+       tx-late-collision:           0           0
+                 tx-drop:           0           0
+                tx-rx-64:       2 714       2 702
+            tx-rx-65-127:      20 275      36 653
+           tx-rx-128-255:         770       4 646
+           tx-rx-256-511:         186       1 749
+          tx-rx-512-1023:          53         563
+         tx-rx-1024-1518:     634 386     684 124
+
+
+STDERR:

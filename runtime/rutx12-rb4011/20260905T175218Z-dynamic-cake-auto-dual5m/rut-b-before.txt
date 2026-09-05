@@ -1,0 +1,149 @@
+CMD: ['ssh', '-i', '/home/madis/.ssh/elmo_openclaw_ed25519', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=accept-new', 'root@192.168.12.1', 'gsmctl -O 3-1 -q; gsmctl -O 3-1 -E 2>/dev/null | head -n 140']
+RC: 0
+STDOUT:
+RSSI: -63
+RSRP: -97
+SINR: 11
+RSRQ: -16
+{
+	"name": "Quectel EG06-E",
+	"model": "EG06-E",
+	"manuf": "Quectel",
+	"soc": "qualcomm",
+	"driver": "Quectel EG06 AT",
+	"usb_id": "3-1",
+	"vid_pid": "2c7c:0306",
+	"tty_port": "/dev/ttyUSB2",
+	"gps_port": "/dev/ttyUSB1",
+	"data_port": "/dev/ttyUSB3",
+	"wdm_port": "/dev/cdc-wdm0",
+	"baudrate": 115200,
+	"aux_port": "/var/run/gsm/modem0",
+	"builtin": true,
+	"primary": true,
+	"simcount": 1,
+	"modem_func_id": 0,
+	"disabled_nr5g_sa_mode": false,
+	"is_busy": 0,
+	"pending": 0,
+	"state_id": 1,
+	"state": "Idle",
+	"last_active": "2026-09-05 17:52:21",
+	"ipv6": true,
+	"volte": true,
+	"multi_apn": true,
+	"operator_scan": true,
+	"rmnet": true,
+	"dynamic_mtu": true,
+	"dhcp_filter": true,
+	"low_signal_reconnect": true,
+	"default_ims": 2,
+	"service_mode_list": [
+		"3G",
+		"4G"
+	],
+	"band_list": [
+		"WCDMA_850",
+		"WCDMA_900",
+		"WCDMA_1800",
+		"WCDMA_2100",
+		"LTE_B1",
+		"LTE_B3",
+		"LTE_B5",
+		"LTE_B7",
+		"LTE_B8",
+		"LTE_B20",
+		"LTE_B28",
+		"LTE_B32",
+		"LTE_B38",
+		"LTE_B40",
+		"LTE_B41"
+	],
+	"gps_satellites": {
+		"gps": {
+			"sentences": [
+				"GGA",
+				"RMC",
+				"GSV",
+				"GSA",
+				"VTG"
+			],
+			"prefix": [
+				"GP"
+			]
+		},
+		"glonass": {
+			"sentences": [
+				"GSV",
+				"GSA",
+				"GNS"
+			],
+			"prefix": [
+				"GL",
+				"GN"
+			]
+		},
+		"galileo": {
+			"sentences": [
+				"GSV"
+			],
+			"prefix": [
+				"GA"
+			]
+		},
+		"beidou": {
+			"sentences": [
+				"GSV",
+				"GSA"
+			],
+			"prefix": [
+				"PQ"
+			]
+		},
+		"reboot_needed": true
+	},
+	"mbn_list": [
+		
+	],
+	"supported_sst_list": [
+		
+	],
+	"cache": {
+		"firmware": "EG06ELAR03A05M4G",
+		"imei": "868759033245145",
+		"serial_num": "MPA20IJ13002587",
+		"pin_state": 1,
+		"pin_state_str": "OK",
+		"gsm_bands": 0,
+		"wcdma_bands": 2256,
+		"lte_low_bands": 1788988621013,
+		"lte_high_bands": 0,
+		"sim": 1,
+		"sim_pin1": 3,
+		"sim_puk1": 10,
+		"imsi": "248022139482088",
+		"sms_mode": 1,
+		"sms_mode_str": "PDU Mode",
+		"iccid": "89372021231214279997",
+		"modem_state": 3,
+		"op_format": 3,
+		"net_mode": 21,
+		"net_mode_str": "LTE",
+		"net_mode_sel": 21,
+		"act": 21,
+		"service_mode": 21,
+		"service_mode_str": "LTE",
+		"ca_info": [
+			
+		],
+		"cell_info": [
+			{
+				"ue_state": 3,
+				"mcc": "248",
+				"mnc": "02",
+				"cellid": "257028669",
+				"tac": "2022",
+				"pcid": 69,
+				"bandwidth": "15",
+
+STDERR:

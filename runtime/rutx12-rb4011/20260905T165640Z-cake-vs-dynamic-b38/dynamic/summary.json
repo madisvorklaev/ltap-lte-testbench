@@ -1,0 +1,109 @@
+{
+  "mode": "dynamic",
+  "dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T165640Z-cake-vs-dynamic-b38/dynamic",
+  "iperf_a": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 4.828195789043938,
+    "lost_percent": 3.400605879592098,
+    "jitter_ms": 3.206058479978035,
+    "lost_packets": 3188,
+    "packets": 93748,
+    "sender_mbps": 4.99987325050911,
+    "intervals": 180
+  },
+  "iperf_b": {
+    "rc": "0",
+    "error": null,
+    "receiver_summary_present": true,
+    "receiver_mbps": 1.162960169045094,
+    "lost_percent": 76.72746666666667,
+    "jitter_ms": 9.30728286297426,
+    "lost_packets": 71932,
+    "packets": 93749,
+    "sender_mbps": 4.9999890000242,
+    "intervals": 180
+  },
+  "ping_a": {
+    "samples": 854,
+    "sent": 900,
+    "received": 854,
+    "loss_percent": 5.11111,
+    "p50_ms": 29.8,
+    "p95_ms": 37.6,
+    "p99_ms": 43.7,
+    "max_ms": 156.0
+  },
+  "ping_b": {
+    "samples": 186,
+    "sent": 876,
+    "received": 186,
+    "loss_percent": 78.7671,
+    "p50_ms": 2399.0,
+    "p95_ms": 4099.0,
+    "p99_ms": 4679.0,
+    "max_ms": 4697.0
+  },
+  "elisa_bands_seen": [
+    "LTE_B38"
+  ],
+  "elisa_disconnected_samples": 0,
+  "controller_last": [
+    {
+      "utc": "2026-09-05T17:03:57Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 31.098,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T17:04:00Z",
+      "path": "b",
+      "recv": 1,
+      "avg_ms": 44.606,
+      "cap_before": 1000000,
+      "cap_after": 1000000,
+      "reason": "reduce"
+    },
+    {
+      "utc": "2026-09-05T17:04:08Z",
+      "path": "a",
+      "recv": 2,
+      "avg_ms": 27.319,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "hold"
+    },
+    {
+      "utc": "2026-09-05T17:04:11Z",
+      "path": "b",
+      "recv": 1,
+      "avg_ms": 51.006,
+      "cap_before": 1000000,
+      "cap_after": 1000000,
+      "reason": "reduce"
+    },
+    {
+      "utc": "2026-09-05T17:04:18Z",
+      "path": "a",
+      "recv": 3,
+      "avg_ms": 31.16,
+      "cap_before": 5000000,
+      "cap_after": 5000000,
+      "reason": "increase"
+    },
+    {
+      "utc": "2026-09-05T17:04:21Z",
+      "path": "b",
+      "recv": 1,
+      "avg_ms": 51.408,
+      "cap_before": 1000000,
+      "cap_after": 1000000,
+      "reason": "reduce"
+    }
+  ],
+  "controller_min_b_cap": 1000000
+}

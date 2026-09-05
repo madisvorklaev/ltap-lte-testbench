@@ -1,0 +1,16 @@
+--- sample 1 2026-09-05T16:48:04Z ---
+elisa
+Connected
+Registered, home
+LTE_B38
+RSSI: -75
+RSRP: -109
+SINR: 4
+RSRQ: -15
+default dev qmimux0 proto static scope link src 10.211.18.141 metric 3 
+PING 1.1.1.1 (1.1.1.1) from 192.168.101.202 : 56(84) bytes of data.
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=56 time=169 ms
+
+--- 1.1.1.1 ping statistics ---
+2 packets transmitted, 1 received, 50% packet loss, time 1001ms
+rtt min/avg/max/mdev = 169.256/169.256/169.256/0.000 ms

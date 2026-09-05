@@ -1,0 +1,749 @@
+$ /import file-name=elmo-adaptive-cake-v0.3.2.rsc
+sample_utc=2026-08-30T11:07:40Z
+rc=0
+routeros_error=
+--- stdout ---
+#line 1
+# ELMO LtAP adaptive LTE shaper + CAKE proof of concept
+#line 2
+# Version: 0.3.2 / 2026-08-17
+#line 3
+# Scope: stationary LAB test only
+#line 4
+#
+#line 5
+# This installer is intentionally ARMED=NO. It creates disabled Netwatch probe
+#line 6
+# entries plus a disabled scheduler. Run the matching ARM script only after the
+#line 7
+# fixed UDP test streams are stopped.
+#line 8
+#
+#line 9
+# v0.3.2 design change:
+#line 10
+#   - Netwatch is only the per-path ICMP probe source.
+#line 11
+#   - No controller logic runs in Netwatch test-script.
+#line 12
+#   - A scheduler calls one RouterOS script once per second. That script reads
+#line 13
+#     Netwatch properties and changes only queue-tree max-limit.
+#line 14
+#
+#line 15
+# Control point: ONLY queue-tree max-limit on the existing Experiment 2b CAKE
+#line 16
+# leaves. CAKE's own bandwidth setting remains unchanged.
+#line 17
+#
+#line 18
+# v0.3.2 control law after 10 idle probe samples seen by scheduler (per LTE path):
+#line 19
+#   demand <100 kbit/s        -> reset/hold cap at 5M
+#line 20
+#   active demand + <3 replies -> hold cap, count/log probe loss
+#line 21
+#   active demand + 3 replies, excess >=250ms -> cap *= 0.70
+#line 22
+#   active demand + 3 replies, excess >=120ms -> cap *= 0.80
+#line 23
+#   active demand + 3 replies, excess >= 60ms -> cap *= 0.90
+#line 24
+#   active demand + 3 replies, excess <= 20ms -> cap += 100 kbit/s
+#line 25
+#   otherwise                 -> hold
+#line 26
+#   clamp                     -> 1...5 Mbit/s
+#line 27
+#
+#line 28
+# Calibration accepts only 3/3-response samples and requires >=7 valid samples.
+#line 29
+# An invalid calibration leaves the controller effectively static at 5M.
+#line 31..393
+:do {
+
+:local probeTarget "1.1.1.1"
+:local queueTreeLte1 "ELMO-EXP2B-LTE1"
+:local queueTreeLte2 "ELMO-EXP2B-LTE2"
+:local cakeType "elmo-exp2b-cake"
+:local controllerScript "ELMO-ADAPTIVE-v032-CONTROLLER"
+:local controllerScheduler "ELMO-ADAPTIVE-v032-SCHEDULER"
+:local controllerEvent "ELMO-ADAPTIVE-v032-CONTROLLER"
+
+:put "ELMO ADAPTIVE v0.3.2: checking prerequisites"
+
+:if ([:len [/interface lte find where name="lte1"]] != 1) do={
+    :error "ELMO ADAPTIVE: expected exactly one lte1 interface"
+}
+:if ([:len [/interface lte find where name="lte2"]] != 1) do={
+    :error "ELMO ADAPTIVE: expected exactly one lte2 interface"
+}
+:if ([:len [/queue type find where name=$cakeType kind=cake]] != 1) do={
+    :error "ELMO ADAPTIVE: Experiment 2b CAKE queue type not found"
+}
+:if ([:len [/queue tree find where name=$queueTreeLte1 parent="lte1"]] != 1) do={
+    :error "ELMO ADAPTIVE: expected LTE1 Experiment 2b queue tree not found"
+}
+:if ([:len [/queue tree find where name=$queueTreeLte2 parent="lte2"]] != 1) do={
+    :error "ELMO ADAPTIVE: expected LTE2 Experiment 2b queue tree not found"
+}
+:if ([:len [/routing table find where name="to-lte1"]] != 1) do={
+    :error "ELMO ADAPTIVE: routing table to-lte1 not found"
+}
+:if ([:len [/routing table find where name="to-lte2"]] != 1) do={
+    :error "ELMO ADAPTIVE: routing table to-lte2 not found"
+}
+:if ([:len [/ip firewall filter find where action=fasttrack-connection disabled=no]] > 0) do={
+    :error "ELMO ADAPTIVE: enabled FastTrack rule found; verify/fix base config first"
+}
+
+# Remove only an earlier adaptive-controller copy. Scheduler is removed first so
+# no controller run can race with object cleanup.
+/system scheduler remove [find where comment~"ELMO ADAPTIVE:"]
+/system script remove [find where comment~"ELMO ADAPTIVE:"]
+/tool netwatch remove [find where comment~"ELMO ADAPTIVE:"]
+/ip firewall mangle remove [find where comment~"ELMO ADAPTIVE:"]
+/ip firewall nat remove [find where comment~"ELMO ADAPTIVE:"]
+/ip address remove [find where comment~"ELMO ADAPTIVE:"]
+/interface bridge remove [find where name="ELMO-ADAPTIVE-LO"]
+/system script environment remove [find where name~"^elmoAdaptive.*v032"]
+
+# Reset the existing Experiment 2b rate-control point to the known 5M state.
+/queue tree set [find where name=$queueTreeLte1] max-limit=5M
+/queue tree set [find where name=$queueTreeLte2] max-limit=5M
+
+# Dedicated local probe source addresses.
+/interface bridge add name="ELMO-ADAPTIVE-LO" protocol-mode=none comment="ELMO ADAPTIVE: probe loopback"
+/ip address add address=192.0.2.1/32 interface="ELMO-ADAPTIVE-LO" comment="ELMO ADAPTIVE: LTE1 probe source"
+/ip address add address=192.0.2.2/32 interface="ELMO-ADAPTIVE-LO" comment="ELMO ADAPTIVE: LTE2 probe source"
+
+# Put the very narrow project-owned output routing marks ahead of existing
+# mangle rules when any exist, so unrelated output policy cannot steal probes.
+:if ([:len [/ip firewall mangle find]] > 0) do={
+    /ip firewall mangle add chain=output protocol=icmp src-address=192.0.2.1 dst-address=$probeTarget action=mark-routing new-routing-mark=to-lte1 passthrough=no place-before=0 comment="ELMO ADAPTIVE: probe via LTE1"
+    /ip firewall mangle add chain=output protocol=icmp src-address=192.0.2.2 dst-address=$probeTarget action=mark-routing new-routing-mark=to-lte2 passthrough=no place-before=0 comment="ELMO ADAPTIVE: probe via LTE2"
+} else={
+    /ip firewall mangle add chain=output protocol=icmp src-address=192.0.2.1 dst-address=$probeTarget action=mark-routing new-routing-mark=to-lte1 passthrough=no comment="ELMO ADAPTIVE: probe via LTE1"
+    /ip firewall mangle add chain=output protocol=icmp src-address=192.0.2.2 dst-address=$probeTarget action=mark-routing new-routing-mark=to-lte2 passthrough=no comment="ELMO ADAPTIVE: probe via LTE2"
+}
+
+# Explicit project NAT is also inserted before broad base masquerade rules.
+:if ([:len [/ip firewall nat find]] > 0) do={
+    /ip firewall nat add chain=srcnat src-address=192.0.2.1 out-interface=lte1 action=masquerade place-before=0 comment="ELMO ADAPTIVE: probe NAT LTE1"
+    /ip firewall nat add chain=srcnat src-address=192.0.2.2 out-interface=lte2 action=masquerade place-before=0 comment="ELMO ADAPTIVE: probe NAT LTE2"
+} else={
+    /ip firewall nat add chain=srcnat src-address=192.0.2.1 out-interface=lte1 action=masquerade comment="ELMO ADAPTIVE: probe NAT LTE1"
+    /ip firewall nat add chain=srcnat src-address=192.0.2.2 out-interface=lte2 action=masquerade comment="ELMO ADAPTIVE: probe NAT LTE2"
+}
+
+/tool netwatch add name="ELMO-ADAPTIVE-LTE1" disabled=yes comment="ELMO ADAPTIVE: LTE1 probe only" host=$probeTarget src-address=192.0.2.1 type=icmp interval=1s timeout=800ms packet-count=3 packet-interval=100ms packet-size=64 thr-avg=5s thr-max=5s thr-jitter=5s thr-stdev=5s thr-loss-percent=100 start-delay=1s startup-delay=1s
+/tool netwatch add name="ELMO-ADAPTIVE-LTE2" disabled=yes comment="ELMO ADAPTIVE: LTE2 probe only" host=$probeTarget src-address=192.0.2.2 type=icmp interval=1s timeout=800ms packet-count=3 packet-interval=100ms packet-size=64 thr-avg=5s thr-max=5s thr-jitter=5s thr-stdev=5s thr-loss-percent=100 start-delay=1s startup-delay=1s
+
+/system script add name=$controllerScript policy=read,write,policy,test comment="ELMO ADAPTIVE: scheduler controller v0.3.2" source={
+    :global elmoAdaptiveHeartbeatv032
+    :global elmoAdaptiveCap1v032
+    :global elmoAdaptiveBaseNs1v032
+    :global elmoAdaptiveBaseCount1v032
+    :global elmoAdaptiveSeen1v032
+    :global elmoAdaptiveLastDone1v032
+    :global elmoAdaptiveState1v032
+    :global elmoAdaptiveLastBytes1v032
+    :global elmoAdaptiveProbeLossSamples1v032
+    :global elmoAdaptiveConsecutiveLoss1v032
+    :global elmoAdaptiveCap2v032
+    :global elmoAdaptiveBaseNs2v032
+    :global elmoAdaptiveBaseCount2v032
+    :global elmoAdaptiveSeen2v032
+    :global elmoAdaptiveLastDone2v032
+    :global elmoAdaptiveState2v032
+    :global elmoAdaptiveLastBytes2v032
+    :global elmoAdaptiveProbeLossSamples2v032
+    :global elmoAdaptiveConsecutiveLoss2v032
+
+    :local minRate 1000000
+    :local maxRate 5000000
+    :local activeDemandBps 100000
+
+    :if ([:typeof $elmoAdaptiveHeartbeatv032] != "num") do={ :set elmoAdaptiveHeartbeatv032 0 }
+    :set elmoAdaptiveHeartbeatv032 ($elmoAdaptiveHeartbeatv032 + 1)
+    :if ([:typeof $elmoAdaptiveCap1v032] != "num") do={ :set elmoAdaptiveCap1v032 $maxRate }
+    :if ([:typeof $elmoAdaptiveBaseNs1v032] != "num") do={ :set elmoAdaptiveBaseNs1v032 0 }
+    :if ([:typeof $elmoAdaptiveBaseCount1v032] != "num") do={ :set elmoAdaptiveBaseCount1v032 0 }
+    :if ([:typeof $elmoAdaptiveSeen1v032] != "num") do={ :set elmoAdaptiveSeen1v032 0 }
+    :if ([:typeof $elmoAdaptiveLastDone1v032] != "num") do={ :set elmoAdaptiveLastDone1v032 0 }
+    :if ([:typeof $elmoAdaptiveState1v032] != "str") do={ :set elmoAdaptiveState1v032 "calibrating" }
+    :if ([:typeof $elmoAdaptiveLastBytes1v032] != "num") do={ :set elmoAdaptiveLastBytes1v032 0 }
+    :if ([:typeof $elmoAdaptiveProbeLossSamples1v032] != "num") do={ :set elmoAdaptiveProbeLossSamples1v032 0 }
+    :if ([:typeof $elmoAdaptiveConsecutiveLoss1v032] != "num") do={ :set elmoAdaptiveConsecutiveLoss1v032 0 }
+    :if ([:typeof $elmoAdaptiveCap2v032] != "num") do={ :set elmoAdaptiveCap2v032 $maxRate }
+    :if ([:typeof $elmoAdaptiveBaseNs2v032] != "num") do={ :set elmoAdaptiveBaseNs2v032 0 }
+    :if ([:typeof $elmoAdaptiveBaseCount2v032] != "num") do={ :set elmoAdaptiveBaseCount2v032 0 }
+    :if ([:typeof $elmoAdaptiveSeen2v032] != "num") do={ :set elmoAdaptiveSeen2v032 0 }
+    :if ([:typeof $elmoAdaptiveLastDone2v032] != "num") do={ :set elmoAdaptiveLastDone2v032 0 }
+    :if ([:typeof $elmoAdaptiveState2v032] != "str") do={ :set elmoAdaptiveState2v032 "calibrating" }
+    :if ([:typeof $elmoAdaptiveLastBytes2v032] != "num") do={ :set elmoAdaptiveLastBytes2v032 0 }
+    :if ([:typeof $elmoAdaptiveProbeLossSamples2v032] != "num") do={ :set elmoAdaptiveProbeLossSamples2v032 0 }
+    :if ([:typeof $elmoAdaptiveConsecutiveLoss2v032] != "num") do={ :set elmoAdaptiveConsecutiveLoss2v032 0 }
+
+    :local n [/tool netwatch find where name="ELMO-ADAPTIVE-LTE1"]
+    :local q [/queue tree find where name="ELMO-EXP2B-LTE1"]
+    :if (([:len $n] != 1) || ([:len $q] != 1)) do={
+        :log error "ELMO ADAPTIVE LTE1: probe or queue missing; scheduler cannot run"
+    } else={
+        :local currentBytes [/queue tree get $q bytes]
+        :if ([:typeof $currentBytes] != "num") do={
+            :log error ("ELMO ADAPTIVE LTE1: queue byte counter not numeric type=" . [:typeof $currentBytes] . "; stopping controller decision")
+        } else={
+            :local deltaBytes ($currentBytes - $elmoAdaptiveLastBytes1v032)
+            :if ($deltaBytes < 0) do={ :set deltaBytes 0 }
+            :set elmoAdaptiveLastBytes1v032 $currentBytes
+            :local demandBps ($deltaBytes * 8)
+            :local active false
+            :if ($demandBps >= $activeDemandBps) do={ :set active true }
+
+            :local done [/tool netwatch get $n done-tests]
+            :if ([:typeof $done] != "num") do={ :set done 0 }
+            :if ($done > $elmoAdaptiveLastDone1v032) do={
+                :set elmoAdaptiveLastDone1v032 $done
+                :local replies [/tool netwatch get $n response-count]
+                :if ([:typeof $replies] != "num") do={ :set replies 0 }
+                :if ($replies < 0) do={ :set replies 0 }
+                :if ($replies > 3) do={ :set replies 3 }
+                :if ($replies < 3) do={
+                    :set elmoAdaptiveProbeLossSamples1v032 ($elmoAdaptiveProbeLossSamples1v032 + 1)
+                    :set elmoAdaptiveConsecutiveLoss1v032 ($elmoAdaptiveConsecutiveLoss1v032 + 1)
+                } else={
+                    :set elmoAdaptiveConsecutiveLoss1v032 0
+                }
+
+                :if ($elmoAdaptiveState1v032 = "calibrating") do={
+                    /queue tree set $q max-limit=5M
+                    :set elmoAdaptiveCap1v032 $maxRate
+                    :set elmoAdaptiveSeen1v032 ($elmoAdaptiveSeen1v032 + 1)
+                    :if ($replies = 3) do={
+                        :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                        :if ($elmoAdaptiveBaseCount1v032 = 0) do={
+                            :set elmoAdaptiveBaseNs1v032 $rttNs
+                        } else={
+                            :set elmoAdaptiveBaseNs1v032 ((($elmoAdaptiveBaseNs1v032 * $elmoAdaptiveBaseCount1v032) + $rttNs) / ($elmoAdaptiveBaseCount1v032 + 1))
+                        }
+                        :set elmoAdaptiveBaseCount1v032 ($elmoAdaptiveBaseCount1v032 + 1)
+                    }
+                    :if ($elmoAdaptiveSeen1v032 >= 10) do={
+                        :if ($elmoAdaptiveBaseCount1v032 >= 7) do={
+                            :set elmoAdaptiveState1v032 "armed"
+                            :log info ("ELMO ADAPTIVE LTE1: calibration OK samples=" . $elmoAdaptiveBaseCount1v032 . " baseline_ms=" . ($elmoAdaptiveBaseNs1v032 / 1000000))
+                        } else={
+                            :set elmoAdaptiveState1v032 "disarmed"
+                            :log warning ("ELMO ADAPTIVE LTE1: calibration INVALID samples=" . $elmoAdaptiveBaseCount1v032 . " seen=" . $elmoAdaptiveSeen1v032 . "; holding 5M; re-import and recalibrate before measured test")
+                        }
+                    }
+                } else={
+                    :if ($elmoAdaptiveState1v032 = "armed") do={
+                        :local cap $elmoAdaptiveCap1v032
+                        :local newRate $cap
+                        :local excessMs -1
+                        :local reason "hold"
+                        :if ($active = false) do={
+                            :set newRate $maxRate
+                            :set reason "idle-reset"
+                        } else={
+                            :if ($replies < 3) do={
+                                :set reason "probe-loss-hold"
+                            } else={
+                                :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                                :local excessNs ($rttNs - $elmoAdaptiveBaseNs1v032)
+                                :if ($excessNs < 0) do={ :set excessNs 0 }
+                                :set excessMs ($excessNs / 1000000)
+                                :if ($excessMs >= 250) do={
+                                    :set newRate (($cap * 70) / 100)
+                                    :set reason "delay-severe"
+                                } else={
+                                    :if ($excessMs >= 120) do={
+                                        :set newRate (($cap * 80) / 100)
+                                        :set reason "delay-high"
+                                    } else={
+                                        :if ($excessMs >= 60) do={
+                                            :set newRate (($cap * 90) / 100)
+                                            :set reason "delay-moderate"
+                                        } else={
+                                            :if ($excessMs <= 20) do={
+                                                :set newRate ($cap + 100000)
+                                                :set reason "healthy-recover"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        :if ($newRate < $minRate) do={ :set newRate $minRate }
+                        :if ($newRate > $maxRate) do={ :set newRate $maxRate }
+                        :if ($newRate != $cap) do={
+                            /queue tree set $q max-limit=$newRate
+                            :set elmoAdaptiveCap1v032 $newRate
+                            :log info ("ELMO ADAPTIVE LTE1: reason=" . $reason . " demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " rtt=" . [/tool netwatch get $n rtt-avg] . " excess_ms=" . $excessMs . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples1v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss1v032 . " cap=" . $cap . "->" . $newRate)
+                        } else={
+                            :if (($active) && ($replies < 3)) do={
+                                :log info ("ELMO ADAPTIVE LTE1: reason=probe-loss-hold demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples1v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss1v032 . " cap=" . $cap)
+                            }
+                        }
+                    } else={
+                        /queue tree set $q max-limit=5M
+                        :set elmoAdaptiveCap1v032 $maxRate
+                    }
+                }
+            }
+        }
+    }
+
+    :local n [/tool netwatch find where name="ELMO-ADAPTIVE-LTE2"]
+    :local q [/queue tree find where name="ELMO-EXP2B-LTE2"]
+    :if (([:len $n] != 1) || ([:len $q] != 1)) do={
+        :log error "ELMO ADAPTIVE LTE2: probe or queue missing; scheduler cannot run"
+    } else={
+        :local currentBytes [/queue tree get $q bytes]
+        :if ([:typeof $currentBytes] != "num") do={
+            :log error ("ELMO ADAPTIVE LTE2: queue byte counter not numeric type=" . [:typeof $currentBytes] . "; stopping controller decision")
+        } else={
+            :local deltaBytes ($currentBytes - $elmoAdaptiveLastBytes2v032)
+            :if ($deltaBytes < 0) do={ :set deltaBytes 0 }
+            :set elmoAdaptiveLastBytes2v032 $currentBytes
+            :local demandBps ($deltaBytes * 8)
+            :local active false
+            :if ($demandBps >= $activeDemandBps) do={ :set active true }
+
+            :local done [/tool netwatch get $n done-tests]
+            :if ([:typeof $done] != "num") do={ :set done 0 }
+            :if ($done > $elmoAdaptiveLastDone2v032) do={
+                :set elmoAdaptiveLastDone2v032 $done
+                :local replies [/tool netwatch get $n response-count]
+                :if ([:typeof $replies] != "num") do={ :set replies 0 }
+                :if ($replies < 0) do={ :set replies 0 }
+                :if ($replies > 3) do={ :set replies 3 }
+                :if ($replies < 3) do={
+                    :set elmoAdaptiveProbeLossSamples2v032 ($elmoAdaptiveProbeLossSamples2v032 + 1)
+                    :set elmoAdaptiveConsecutiveLoss2v032 ($elmoAdaptiveConsecutiveLoss2v032 + 1)
+                } else={
+                    :set elmoAdaptiveConsecutiveLoss2v032 0
+                }
+
+                :if ($elmoAdaptiveState2v032 = "calibrating") do={
+                    /queue tree set $q max-limit=5M
+                    :set elmoAdaptiveCap2v032 $maxRate
+                    :set elmoAdaptiveSeen2v032 ($elmoAdaptiveSeen2v032 + 1)
+                    :if ($replies = 3) do={
+                        :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                        :if ($elmoAdaptiveBaseCount2v032 = 0) do={
+                            :set elmoAdaptiveBaseNs2v032 $rttNs
+                        } else={
+                            :set elmoAdaptiveBaseNs2v032 ((($elmoAdaptiveBaseNs2v032 * $elmoAdaptiveBaseCount2v032) + $rttNs) / ($elmoAdaptiveBaseCount2v032 + 1))
+                        }
+                        :set elmoAdaptiveBaseCount2v032 ($elmoAdaptiveBaseCount2v032 + 1)
+                    }
+                    :if ($elmoAdaptiveSeen2v032 >= 10) do={
+                        :if ($elmoAdaptiveBaseCount2v032 >= 7) do={
+                            :set elmoAdaptiveState2v032 "armed"
+                            :log info ("ELMO ADAPTIVE LTE2: calibration OK samples=" . $elmoAdaptiveBaseCount2v032 . " baseline_ms=" . ($elmoAdaptiveBaseNs2v032 / 1000000))
+                        } else={
+                            :set elmoAdaptiveState2v032 "disarmed"
+                            :log warning ("ELMO ADAPTIVE LTE2: calibration INVALID samples=" . $elmoAdaptiveBaseCount2v032 . " seen=" . $elmoAdaptiveSeen2v032 . "; holding 5M; re-import and recalibrate before measured test")
+                        }
+                    }
+                } else={
+                    :if ($elmoAdaptiveState2v032 = "armed") do={
+                        :local cap $elmoAdaptiveCap2v032
+                        :local newRate $cap
+                        :local excessMs -1
+                        :local reason "hold"
+                        :if ($active = false) do={
+                            :set newRate $maxRate
+                            :set reason "idle-reset"
+                        } else={
+                            :if ($replies < 3) do={
+                                :set reason "probe-loss-hold"
+                            } else={
+                                :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                                :local excessNs ($rttNs - $elmoAdaptiveBaseNs2v032)
+                                :if ($excessNs < 0) do={ :set excessNs 0 }
+                                :set excessMs ($excessNs / 1000000)
+                                :if ($excessMs >= 250) do={
+                                    :set newRate (($cap * 70) / 100)
+                                    :set reason "delay-severe"
+                                } else={
+                                    :if ($excessMs >= 120) do={
+                                        :set newRate (($cap * 80) / 100)
+                                        :set reason "delay-high"
+                                    } else={
+                                        :if ($excessMs >= 60) do={
+                                            :set newRate (($cap * 90) / 100)
+                                            :set reason "delay-moderate"
+                                        } else={
+                                            :if ($excessMs <= 20) do={
+                                                :set newRate ($cap + 100000)
+                                                :set reason "healthy-recover"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        :if ($newRate < $minRate) do={ :set newRate $minRate }
+                        :if ($newRate > $maxRate) do={ :set newRate $maxRate }
+                        :if ($newRate != $cap) do={
+                            /queue tree set $q max-limit=$newRate
+                            :set elmoAdaptiveCap2v032 $newRate
+                            :log info ("ELMO ADAPTIVE LTE2: reason=" . $reason . " demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " rtt=" . [/tool netwatch get $n rtt-avg] . " excess_ms=" . $excessMs . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples2v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss2v032 . " cap=" . $cap . "->" . $newRate)
+                        } else={
+                            :if (($active) && ($replies < 3)) do={
+                                :log info ("ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples2v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss2v032 . " cap=" . $cap)
+                            }
+                        }
+                    } else={
+                        /queue tree set $q max-limit=5M
+                        :set elmoAdaptiveCap2v032 $maxRate
+                    }
+                }
+            }
+        }
+    }
+}
+
+/system scheduler add name=$controllerScheduler disabled=yes interval=1s start-time=startup on-event=$controllerEvent policy=read,write,policy,test comment="ELMO ADAPTIVE: scheduler tick v0.3.2"
+
+:put ""
+:put "ELMO ADAPTIVE v0.3.2 installed but NOT ARMED."
+:put "Stop all fixed UDP test traffic, then import elmo-adaptive-cake-arm-v0.3.2.rsc."
+:put "The ARM step enables Netwatch probes plus one scheduler-driven controller."
+:put ""
+/tool netwatch print detail where comment~"ELMO ADAPTIVE:"
+/system script print detail where comment~"ELMO ADAPTIVE:"
+/system scheduler print detail where comment~"ELMO ADAPTIVE:"
+/queue tree print stats detail where name~"ELMO-EXP2B-LTE"
+/ip firewall mangle print stats detail where comment~"ELMO ADAPTIVE:"
+/ip firewall nat print stats detail where comment~"ELMO ADAPTIVE:"
+
+}
+ELMO ADAPTIVE v0.3.2: checking prerequisites
+
+ELMO ADAPTIVE v0.3.2 installed but NOT ARMED.
+Stop all fixed UDP test traffic, then import elmo-adaptive-cake-arm-v0.3.2.rsc.
+The ARM step enables Netwatch probes plus one scheduler-driven controller.
+
+Flags: X - DISABLED
+0  X ;;; ELMO ADAPTIVE: LTE1 probe only
+     name="ELMO-ADAPTIVE-LTE1" host=1.1.1.1 type=icmp src-address=192.0.2.1
+     interval=1s timeout=800ms start-delay=1s startup-delay=1s
+     packet-interval=100ms packet-count=3 packet-size=64 thr-max=5s thr-avg=5s
+     thr-stdev=5s thr-jitter=5s thr-loss-percent=100% status=unknown
+ 
+1  X ;;; ELMO ADAPTIVE: LTE2 probe only
+     name="ELMO-ADAPTIVE-LTE2" host=1.1.1.1 type=icmp src-address=192.0.2.2
+     interval=1s timeout=800ms start-delay=1s startup-delay=1s
+     packet-interval=100ms packet-count=3 packet-size=64 thr-max=5s thr-avg=5s
+     thr-stdev=5s thr-jitter=5s thr-loss-percent=100% status=unknown
+
+0  ;;; ELMO ADAPTIVE: scheduler controller v0.3.2
+   name="ELMO-ADAPTIVE-v032-CONTROLLER" owner="admin"
+   policy=read,write,policy,test dont-require-permissions=no run-count=0
+   source=
+      
+          :global elmoAdaptiveHeartbeatv032
+          :global elmoAdaptiveCap1v032
+          :global elmoAdaptiveBaseNs1v032
+          :global elmoAdaptiveBaseCount1v032
+          :global elmoAdaptiveSeen1v032
+          :global elmoAdaptiveLastDone1v032
+          :global elmoAdaptiveState1v032
+          :global elmoAdaptiveLastBytes1v032
+          :global elmoAdaptiveProbeLossSamples1v032
+          :global elmoAdaptiveConsecutiveLoss1v032
+          :global elmoAdaptiveCap2v032
+          :global elmoAdaptiveBaseNs2v032
+          :global elmoAdaptiveBaseCount2v032
+          :global elmoAdaptiveSeen2v032
+          :global elmoAdaptiveLastDone2v032
+          :global elmoAdaptiveState2v032
+          :global elmoAdaptiveLastBytes2v032
+          :global elmoAdaptiveProbeLossSamples2v032
+          :global elmoAdaptiveConsecutiveLoss2v032
+      
+          :local minRate 1000000
+          :local maxRate 5000000
+          :local activeDemandBps 100000
+      
+          :if ([:typeof $elmoAdaptiveHeartbeatv032] != "num") do={ :set elmoAdaptiveHeartbeatv032 0 }
+          :set elmoAdaptiveHeartbeatv032 ($elmoAdaptiveHeartbeatv032 + 1)
+          :if ([:typeof $elmoAdaptiveCap1v032] != "num") do={ :set elmoAdaptiveCap1v032 $maxRate }
+          :if ([:typeof $elmoAdaptiveBaseNs1v032] != "num") do={ :set elmoAdaptiveBaseNs1v032 0 }
+          :if ([:typeof $elmoAdaptiveBaseCount1v032] != "num") do={ :set elmoAdaptiveBaseCount1v032 0 }
+          :if ([:typeof $elmoAdaptiveSeen1v032] != "num") do={ :set elmoAdaptiveSeen1v032 0 }
+          :if ([:typeof $elmoAdaptiveLastDone1v032] != "num") do={ :set elmoAdaptiveLastDone1v032 0 }
+          :if ([:typeof $elmoAdaptiveState1v032] != "str") do={ :set elmoAdaptiveState1v032 "calibrating" }
+          :if ([:typeof $elmoAdaptiveLastBytes1v032] != "num") do={ :set elmoAdaptiveLastBytes1v032 0 }
+          :if ([:typeof $elmoAdaptiveProbeLossSamples1v032] != "num") do={ :set elmoAdaptiveProbeLossSamples1v032 0 }
+          :if ([:typeof $elmoAdaptiveConsecutiveLoss1v032] != "num") do={ :set elmoAdaptiveConsecutiveLoss1v032 0 }
+          :if ([:typeof $elmoAdaptiveCap2v032] != "num") do={ :set elmoAdaptiveCap2v032 $maxRate }
+          :if ([:typeof $elmoAdaptiveBaseNs2v032] != "num") do={ :set elmoAdaptiveBaseNs2v032 0 }
+          :if ([:typeof $elmoAdaptiveBaseCount2v032] != "num") do={ :set elmoAdaptiveBaseCount2v032 0 }
+          :if ([:typeof $elmoAdaptiveSeen2v032] != "num") do={ :set elmoAdaptiveSeen2v032 0 }
+          :if ([:typeof $elmoAdaptiveLastDone2v032] != "num") do={ :set elmoAdaptiveLastDone2v032 0 }
+          :if ([:typeof $elmoAdaptiveState2v032] != "str") do={ :set elmoAdaptiveState2v032 "calibrating" }
+          :if ([:typeof $elmoAdaptiveLastBytes2v032] != "num") do={ :set elmoAdaptiveLastBytes2v032 0 }
+          :if ([:typeof $elmoAdaptiveProbeLossSamples2v032] != "num") do={ :set elmoAdaptiveProbeLossSamples2v032 0 }
+          :if ([:typeof $elmoAdaptiveConsecutiveLoss2v032] != "num") do={ :set elmoAdaptiveConsecutiveLoss2v032 0 }
+      
+          :local n [/tool netwatch find where name="ELMO-ADAPTIVE-LTE1"]
+          :local q [/queue tree find where name="ELMO-EXP2B-LTE1"]
+          :if (([:len $n] != 1) || ([:len $q] != 1)) do={
+              :log error "ELMO ADAPTIVE LTE1: probe or queue missing; scheduler cannot run"
+          } else={
+              :local currentBytes [/queue tree get $q bytes]
+              :if ([:typeof $currentBytes] != "num") do={
+                  :log error ("ELMO ADAPTIVE LTE1: queue byte counter not numeric type=" . [:typeof $currentBytes] . "; stopping controller decision")
+              } else={
+                  :local deltaBytes ($currentBytes - $elmoAdaptiveLastBytes1v032)
+                  :if ($deltaBytes < 0) do={ :set deltaBytes 0 }
+                  :set elmoAdaptiveLastBytes1v032 $currentBytes
+                  :local demandBps ($deltaBytes * 8)
+                  :local active false
+                  :if ($demandBps >= $activeDemandBps) do={ :set active true }
+      
+                  :local done [/tool netwatch get $n done-tests]
+                  :if ([:typeof $done] != "num") do={ :set done 0 }
+                  :if ($done > $elmoAdaptiveLastDone1v032) do={
+                      :set elmoAdaptiveLastDone1v032 $done
+                      :local replies [/tool netwatch get $n response-count]
+                      :if ([:typeof $replies] != "num") do={ :set replies 0 }
+                      :if ($replies < 0) do={ :set replies 0 }
+                      :if ($replies > 3) do={ :set replies 3 }
+                      :if ($replies < 3) do={
+                          :set elmoAdaptiveProbeLossSamples1v032 ($elmoAdaptiveProbeLossSamples1v032 + 1)
+                          :set elmoAdaptiveConsecutiveLoss1v032 ($elmoAdaptiveConsecutiveLoss1v032 + 1)
+                      } else={
+                          :set elmoAdaptiveConsecutiveLoss1v032 0
+                      }
+      
+                      :if ($elmoAdaptiveState1v032 = "calibrating") do={
+                          /queue tree set $q max-limit=5M
+                          :set elmoAdaptiveCap1v032 $maxRate
+                          :set elmoAdaptiveSeen1v032 ($elmoAdaptiveSeen1v032 + 1)
+                          :if ($replies = 3) do={
+                              :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                              :if ($elmoAdaptiveBaseCount1v032 = 0) do={
+                                  :set elmoAdaptiveBaseNs1v032 $rttNs
+                              } else={
+                                  :set elmoAdaptiveBaseNs1v032 ((($elmoAdaptiveBaseNs1v032 * $elmoAdaptiveBaseCount1v032) + $rttNs) / ($elmoAdaptiveBaseCount1v032 + 1))
+                              }
+                              :set elmoAdaptiveBaseCount1v032 ($elmoAdaptiveBaseCount1v032 + 1)
+                          }
+                          :if ($elmoAdaptiveSeen1v032 >= 10) do={
+                              :if ($elmoAdaptiveBaseCount1v032 >= 7) do={
+                                  :set elmoAdaptiveState1v032 "armed"
+                                  :log info ("ELMO ADAPTIVE LTE1: calibration OK samples=" . $elmoAdaptiveBaseCount1v032 . " baseline_ms=" . ($elmoAdaptiveBaseNs1v032 / 1000000))
+                              } else={
+                                  :set elmoAdaptiveState1v032 "disarmed"
+                                  :log warning ("ELMO ADAPTIVE LTE1: calibration INVALID samples=" . $elmoAdaptiveBaseCount1v032 . " seen=" . $elmoAdaptiveSeen1v032 . "; holding 5M; re-import and recalibrate before measured test")
+                              }
+                          }
+                      } else={
+                          :if ($elmoAdaptiveState1v032 = "armed") do={
+                              :local cap $elmoAdaptiveCap1v032
+                              :local newRate $cap
+                              :local excessMs -1
+                              :local reason "hold"
+                              :if ($active = false) do={
+                                  :set newRate $maxRate
+                                  :set reason "idle-reset"
+                              } else={
+                                  :if ($replies < 3) do={
+                                      :set reason "probe-loss-hold"
+                                  } else={
+                                      :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                                      :local excessNs ($rttNs - $elmoAdaptiveBaseNs1v032)
+                                      :if ($excessNs < 0) do={ :set excessNs 0 }
+                                      :set excessMs ($excessNs / 1000000)
+                                      :if ($excessMs >= 250) do={
+                                          :set newRate (($cap * 70) / 100)
+                                          :set reason "delay-severe"
+                                      } else={
+                                          :if ($excessMs >= 120) do={
+                                              :set newRate (($cap * 80) / 100)
+                                              :set reason "delay-high"
+                                          } else={
+                                              :if ($excessMs >= 60) do={
+                                                  :set newRate (($cap * 90) / 100)
+                                                  :set reason "delay-moderate"
+                                              } else={
+                                                  :if ($excessMs <= 20) do={
+                                                      :set newRate ($cap + 100000)
+                                                      :set reason "healthy-recover"
+                                                  }
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                              :if ($newRate < $minRate) do={ :set newRate $minRate }
+                              :if ($newRate > $maxRate) do={ :set newRate $maxRate }
+                              :if ($newRate != $cap) do={
+                                  /queue tree set $q max-limit=$newRate
+                                  :set elmoAdaptiveCap1v032 $newRate
+                                  :log info ("ELMO ADAPTIVE LTE1: reason=" . $reason . " demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " rtt=" . [/tool netwatch get $n rtt-avg] . " excess_ms=" . $excessMs . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples1v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss1v032 . " cap=" . $cap . "->" . $newRate)
+                              } else={
+                                  :if (($active) && ($replies < 3)) do={
+                                      :log info ("ELMO ADAPTIVE LTE1: reason=probe-loss-hold demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples1v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss1v032 . " cap=" . $cap)
+                                  }
+                              }
+                          } else={
+                              /queue tree set $q max-limit=5M
+                              :set elmoAdaptiveCap1v032 $maxRate
+                          }
+                      }
+                  }
+              }
+          }
+      
+          :local n [/tool netwatch find where name="ELMO-ADAPTIVE-LTE2"]
+          :local q [/queue tree find where name="ELMO-EXP2B-LTE2"]
+          :if (([:len $n] != 1) || ([:len $q] != 1)) do={
+              :log error "ELMO ADAPTIVE LTE2: probe or queue missing; scheduler cannot run"
+          } else={
+              :local currentBytes [/queue tree get $q bytes]
+              :if ([:typeof $currentBytes] != "num") do={
+                  :log error ("ELMO ADAPTIVE LTE2: queue byte counter not numeric type=" . [:typeof $currentBytes] . "; stopping controller decision")
+              } else={
+                  :local deltaBytes ($currentBytes - $elmoAdaptiveLastBytes2v032)
+                  :if ($deltaBytes < 0) do={ :set deltaBytes 0 }
+                  :set elmoAdaptiveLastBytes2v032 $currentBytes
+                  :local demandBps ($deltaBytes * 8)
+                  :local active false
+                  :if ($demandBps >= $activeDemandBps) do={ :set active true }
+      
+                  :local done [/tool netwatch get $n done-tests]
+                  :if ([:typeof $done] != "num") do={ :set done 0 }
+                  :if ($done > $elmoAdaptiveLastDone2v032) do={
+                      :set elmoAdaptiveLastDone2v032 $done
+                      :local replies [/tool netwatch get $n response-count]
+                      :if ([:typeof $replies] != "num") do={ :set replies 0 }
+                      :if ($replies < 0) do={ :set replies 0 }
+                      :if ($replies > 3) do={ :set replies 3 }
+                      :if ($replies < 3) do={
+                          :set elmoAdaptiveProbeLossSamples2v032 ($elmoAdaptiveProbeLossSamples2v032 + 1)
+                          :set elmoAdaptiveConsecutiveLoss2v032 ($elmoAdaptiveConsecutiveLoss2v032 + 1)
+                      } else={
+                          :set elmoAdaptiveConsecutiveLoss2v032 0
+                      }
+      
+                      :if ($elmoAdaptiveState2v032 = "calibrating") do={
+                          /queue tree set $q max-limit=5M
+                          :set elmoAdaptiveCap2v032 $maxRate
+                          :set elmoAdaptiveSeen2v032 ($elmoAdaptiveSeen2v032 + 1)
+                          :if ($replies = 3) do={
+                              :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                              :if ($elmoAdaptiveBaseCount2v032 = 0) do={
+                                  :set elmoAdaptiveBaseNs2v032 $rttNs
+                              } else={
+                                  :set elmoAdaptiveBaseNs2v032 ((($elmoAdaptiveBaseNs2v032 * $elmoAdaptiveBaseCount2v032) + $rttNs) / ($elmoAdaptiveBaseCount2v032 + 1))
+                              }
+                              :set elmoAdaptiveBaseCount2v032 ($elmoAdaptiveBaseCount2v032 + 1)
+                          }
+                          :if ($elmoAdaptiveSeen2v032 >= 10) do={
+                              :if ($elmoAdaptiveBaseCount2v032 >= 7) do={
+                                  :set elmoAdaptiveState2v032 "armed"
+                                  :log info ("ELMO ADAPTIVE LTE2: calibration OK samples=" . $elmoAdaptiveBaseCount2v032 . " baseline_ms=" . ($elmoAdaptiveBaseNs2v032 / 1000000))
+                              } else={
+                                  :set elmoAdaptiveState2v032 "disarmed"
+                                  :log warning ("ELMO ADAPTIVE LTE2: calibration INVALID samples=" . $elmoAdaptiveBaseCount2v032 . " seen=" . $elmoAdaptiveSeen2v032 . "; holding 5M; re-import and recalibrate before measured test")
+                              }
+                          }
+                      } else={
+                          :if ($elmoAdaptiveState2v032 = "armed") do={
+                              :local cap $elmoAdaptiveCap2v032
+                              :local newRate $cap
+                              :local excessMs -1
+                              :local reason "hold"
+                              :if ($active = false) do={
+                                  :set newRate $maxRate
+                                  :set reason "idle-reset"
+                              } else={
+                                  :if ($replies < 3) do={
+                                      :set reason "probe-loss-hold"
+                                  } else={
+                                      :local rttNs [:tonsec value=[/tool netwatch get $n rtt-avg]]
+                                      :local excessNs ($rttNs - $elmoAdaptiveBaseNs2v032)
+                                      :if ($excessNs < 0) do={ :set excessNs 0 }
+                                      :set excessMs ($excessNs / 1000000)
+                                      :if ($excessMs >= 250) do={
+                                          :set newRate (($cap * 70) / 100)
+                                          :set reason "delay-severe"
+                                      } else={
+                                          :if ($excessMs >= 120) do={
+                                              :set newRate (($cap * 80) / 100)
+                                              :set reason "delay-high"
+                                          } else={
+                                              :if ($excessMs >= 60) do={
+                                                  :set newRate (($cap * 90) / 100)
+                                                  :set reason "delay-moderate"
+                                              } else={
+                                                  :if ($excessMs <= 20) do={
+                                                      :set newRate ($cap + 100000)
+                                                      :set reason "healthy-recover"
+                                                  }
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                              :if ($newRate < $minRate) do={ :set newRate $minRate }
+                              :if ($newRate > $maxRate) do={ :set newRate $maxRate }
+                              :if ($newRate != $cap) do={
+                                  /queue tree set $q max-limit=$newRate
+                                  :set elmoAdaptiveCap2v032 $newRate
+                                  :log info ("ELMO ADAPTIVE LTE2: reason=" . $reason . " demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " rtt=" . [/tool netwatch get $n rtt-avg] . " excess_ms=" . $excessMs . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples2v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss2v032 . " cap=" . $cap . "->" . $newRate)
+                              } else={
+                                  :if (($active) && ($replies < 3)) do={
+                                      :log info ("ELMO ADAPTIVE LTE2: reason=probe-loss-hold demand_bps=" . $demandBps . " bytes_delta=" . $deltaBytes . " replies=" . $replies . " loss_total=" . $elmoAdaptiveProbeLossSamples2v032 . " loss_consecutive=" . $elmoAdaptiveConsecutiveLoss2v032 . " cap=" . $cap)
+                                  }
+                              }
+                          } else={
+                              /queue tree set $q max-limit=5M
+                              :set elmoAdaptiveCap2v032 $maxRate
+                          }
+                      }
+                  }
+              }
+          }
+
+Flags: X - DISABLED
+0  X ;;; ELMO ADAPTIVE: scheduler tick v0.3.2
+     name="ELMO-ADAPTIVE-v032-SCHEDULER" start-time=startup interval=1s
+     on-event=ELMO-ADAPTIVE-v032-CONTROLLER owner="admin"
+     policy=read,write,policy,test run-count=0
+
+0  name="ELMO-EXP2B-LTE1" parent=lte1 packet-mark=elmo-exp2b-lte1 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=0 packets=0 dropped=0
+ 
+1  name="ELMO-EXP2B-LTE2" parent=lte2 packet-mark=elmo-exp2b-lte2 rate=0
+   packet-rate=0 queued-bytes=0 queued-packets=0 bytes=0 packets=0 dropped=0
+
+Flags: I - INVALID
+Columns: CHAIN, ACTION, BYTES, PACKETS
+#   CHAIN   ACTION        BYTES  PACKETS
+;;; ELMO ADAPTIVE: probe via LTE1
+8   output  mark-routing      0        0
+;;; ELMO ADAPTIVE: probe via LTE2
+9 I output  mark-routing      0        0
+
+Flags: I - INVALID
+Columns: CHAIN, ACTION, BYTES, PACKETS
+#   CHAIN   ACTION      BYTES  PACKETS
+;;; ELMO ADAPTIVE: probe NAT LTE1
+1   srcnat  masquerade      0        0
+;;; ELMO ADAPTIVE: probe NAT LTE2
+2 I srcnat  masquerade      0        0
+
+
+--- stderr ---
+

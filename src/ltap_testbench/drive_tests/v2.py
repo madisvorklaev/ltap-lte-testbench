@@ -382,7 +382,7 @@ def build_timeline(session_dir: Path, public_dir: Path) -> list[dict[str, Any]]:
                     f"{path}_ping_p95": pm["p95"],
                     f"{path}_ping_max": pm["max"],
                     f"{path}_ping_loss": pm["loss"],
-                    f"{path}_udp_mbps": tr.get("receiver_mbps") or tr.get("sender_mbps"),
+                    f"{path}_udp_mbps": tr.get("receiver_mbps"),
                     f"{path}_udp_loss": tr.get("loss_percent"),
                     f"{path}_udp_loss_window_s": tr.get("udp_loss_window_s"),
                 }

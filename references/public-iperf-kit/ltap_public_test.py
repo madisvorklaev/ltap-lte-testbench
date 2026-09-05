@@ -324,8 +324,18 @@ def summarize_iperf(j: dict[str, Any], protocol: str, reverse: bool) -> dict[str
 
     if protocol == "udp":
         # Receiver-side UDP loss/jitter/throughput is the useful result for video tests.
-        candidates = [end.get("sum_received"), end.get("sum"), end.get("sum_sent")]
-        x = next((v for v in candidates if isinstance(v, dict) and "bits_per_second" in v), {})
+        x = end.get("sum_received")
+        if not isinstance(x, dict):
+            return {
+                "error": "missing receiver UDP summary",
+                "receiver_summary_present": False,
+                "sender_mbps": (
+                    (end.get("sum_sent") or {}).get("bits_per_second") / 1e6
+                    if isinstance(end.get("sum_sent"), dict)
+                    and (end.get("sum_sent") or {}).get("bits_per_second") is not None
+                    else None
+                ),
+            }
         result.update({
             "bits_per_second": x.get("bits_per_second"),
             "mbps": (x.get("bits_per_second") / 1e6) if x.get("bits_per_second") is not None else None,
@@ -333,6 +343,7 @@ def summarize_iperf(j: dict[str, Any], protocol: str, reverse: bool) -> dict[str
             "lost_packets": x.get("lost_packets"),
             "packets": x.get("packets"),
             "lost_percent": x.get("lost_percent"),
+            "receiver_summary_present": True,
         })
     else:
         sent = end.get("sum_sent") or {}

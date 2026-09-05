@@ -1,0 +1,22 @@
+{
+  "cap_reset_required": "5M before run",
+  "duration_s": 180,
+  "endpoint": {
+    "ip": "217.18.95.142",
+    "lte1_port": 5205,
+    "lte2_port": 5206,
+    "name": "eranium"
+  },
+  "idle_gate_required_s": 60,
+  "load": {
+    "lte1": "5M",
+    "lte2": "off"
+  },
+  "mode": "dynamic_cake",
+  "packet_length": 1200,
+  "run": "A1",
+  "source_ips": {
+    "lte1": "192.168.101.201",
+    "lte2": "192.168.101.202"
+  }
+}
