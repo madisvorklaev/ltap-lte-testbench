@@ -75,6 +75,41 @@ RUT_ENDPOINTS = [
     "/api/sim_cards/status",
 ]
 
+RB4011_EGRESS_RULES = [
+    {
+        "key": "path-a-correct",
+        "path": "path-a",
+        "kind": "correct",
+        "source": rutx12.SOURCE_A,
+        "out_interface": "ether2",
+        "comment": "OC RUTX12 VERIFY path-a correct ether2",
+    },
+    {
+        "key": "path-a-wrong",
+        "path": "path-a",
+        "kind": "wrong",
+        "source": rutx12.SOURCE_A,
+        "out_interface": "ether3",
+        "comment": "OC RUTX12 VERIFY path-a wrong ether3",
+    },
+    {
+        "key": "path-b-correct",
+        "path": "path-b",
+        "kind": "correct",
+        "source": rutx12.SOURCE_B,
+        "out_interface": "ether3",
+        "comment": "OC RUTX12 VERIFY path-b correct ether3",
+    },
+    {
+        "key": "path-b-wrong",
+        "path": "path-b",
+        "kind": "wrong",
+        "source": rutx12.SOURCE_B,
+        "out_interface": "ether2",
+        "comment": "OC RUTX12 VERIFY path-b wrong ether2",
+    },
+]
+
 
 def slug(value: str) -> str:
     import re
@@ -141,6 +176,10 @@ class Supervisor:
         self.state = read_json(self.runtime / "STATE.json", {})
         self.blockers: list[str] = []
         self.lock = SessionLock(LOCK)
+
+    def add_blocker(self, blocker: str) -> None:
+        if blocker not in self.blockers:
+            self.blockers.append(blocker)
 
     def event(self, event_type: str, **extra: Any) -> None:
         rutx12.append_jsonl(
@@ -262,7 +301,7 @@ class Supervisor:
                     cfg.source,
                 )
             else:
-                self.blockers.append("PING_COMMAND_MISSING")
+                self.add_blocker("PING_COMMAND_MISSING")
 
     def start_capture(self) -> None:
         argv = [
@@ -291,7 +330,7 @@ class Supervisor:
                 "tcpdump",
             )
         else:
-            self.blockers.append("TCPDUMP_COMMAND_MISSING")
+            self.add_blocker("TCPDUMP_COMMAND_MISSING")
 
     def start_logs(self, label: str, cfg: PathConfig) -> None:
         argv = [*ssh_base(cfg.rut_host), "logread -f"]
@@ -304,7 +343,7 @@ class Supervisor:
                 cfg.rut_host,
             )
         else:
-            self.blockers.append(f"{label.upper()}_LOG_SSH_UNAVAILABLE")
+            self.add_blocker(f"{label.upper()}_LOG_SSH_UNAVAILABLE")
 
     def rut_collector(self, cfg: PathConfig) -> None:
         router_label = "rut-a" if cfg.label == "path-a" else "rut-b"
@@ -339,12 +378,7 @@ class Supervisor:
         while not self.stop_event.is_set():
             started = sample_start()
             if self.use_ssh_backend(cfg):
-                raw = {
-                    "ok": False,
-                    "backend": "ssh",
-                    "error": "GPS_UNAVAILABLE_OR_NO_FIX",
-                    "body": None,
-                }
+                raw = self.ssh_gps_status(cfg)
             else:
                 raw = self.api_get(cfg, "/api/gps/position/status")
             completed = sample_end(started)
@@ -360,6 +394,7 @@ class Supervisor:
             body = raw.get("body") if isinstance(raw, dict) else {}
             parsed = rutx12.normalize_gps(body if isinstance(body, dict) else {})
             parsed.update(completed)
+            parsed["backend"] = raw.get("backend") if isinstance(raw, dict) else None
             rutx12.append_jsonl(self.runtime / "gps" / "position.jsonl", parsed)
             self.stop_event.wait(1.0)
 
@@ -500,7 +535,6 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
         qualified: list[tuple[int, int]] = []
         attempts: list[dict[str, Any]] = []
         for ports in rutx12.PORT_PAIRS:
-            pair_ok = True
             for orientation, oriented_ports in (
                 ("a-b", ports),
                 ("b-a", (ports[1], ports[0])),
@@ -519,12 +553,15 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
                     "passed": rows["joint_classification"] == "VALID_DELIVERY",
                 }
                 attempts.append(attempt)
-                pair_ok = pair_ok and bool(attempt["passed"])
-            if pair_ok:
-                qualified.append(ports)
+                if attempt["passed"]:
+                    qualified.append(oriented_ports)
+        qualified = select_disjoint_assignments(qualified)
         if len(qualified) < 2:
-            self.blockers.append("FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED")
+            self.add_blocker("FEWER_THAN_TWO_ORIENTED_ASSIGNMENTS_PREQUALIFIED")
         self.state["qualified_port_pairs"] = qualified
+        self.state["qualified_oriented_assignments"] = [
+            {"path_a_port": ports[0], "path_b_port": ports[1]} for ports in qualified
+        ]
         self.state["preflight_attempts"] = attempts
         write_json(self.runtime / "preflight-attempts.json", attempts)
         self.save_state()
@@ -631,9 +668,9 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
         after_counters = self.sample_rb_egress_counters(epoch_id, "after")
         egress = evaluate_egress_isolation(before_counters, after_counters)
         if not egress["observed"]:
-            self.blockers.append("RB4011_EGRESS_ISOLATION_NOT_OBSERVED")
+            self.add_blocker("RB4011_EGRESS_ISOLATION_NOT_OBSERVED")
         elif egress["cross_egress"]:
-            self.blockers.append("RB4011_CROSS_EGRESS_DETECTED")
+            self.add_blocker("RB4011_CROSS_EGRESS_DETECTED")
         skew = abs(rows["path-a"]["started_mono"] - rows["path-b"]["started_mono"])
         joint = rutx12.classify_epoch(
             rows["path-a"],
@@ -666,13 +703,7 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
             row = {"epoch_id": epoch_id, "phase": phase, "observed": True, "counters": counters}
             rutx12.append_jsonl(self.runtime / "rb4011" / "egress-isolation.jsonl", row)
             return row
-        result = run_capture(
-            [
-                *ssh_base("admin@192.168.88.1"),
-                '/ip firewall mangle print stats detail where comment~"RUTX|source via"',
-            ],
-            timeout=8,
-        )
+        result = run_capture([*ssh_base("admin@192.168.88.1"), rb4011_counter_script()], timeout=8)
         counters = parse_rb4011_egress_counters(result.get("stdout", ""))
         row = {
             "epoch_id": epoch_id,
@@ -688,6 +719,7 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
         self.lock.acquire()
         try:
             self.event("ROAD_SUPERVISOR_STARTED")
+            self.ensure_rb4011_egress_rules()
             self.start_collectors()
             ports = self.state.get("qualified_port_pairs") or rutx12.PORT_PAIRS[:2]
             normalized_ports = [tuple(pair) for pair in ports if isinstance(pair, list | tuple)]
@@ -715,12 +747,48 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
         self.state["road_epoch"] = epoch
         self.save_state()
 
+    def ensure_rb4011_egress_rules(self) -> None:
+        if os.environ.get("RUTX12_FAKE_COMMANDS") == "1":
+            self.event("RB4011_EGRESS_RULES_FAKE_READY")
+            return
+        result = run_capture(
+            [*ssh_base("admin@192.168.88.1"), rb4011_rule_install_script()], timeout=15
+        )
+        rutx12.append_jsonl(
+            self.runtime / "rb4011" / "egress-rule-setup.jsonl",
+            {"utc": rutx12.utc_now(), "result": result, "rules": RB4011_EGRESS_RULES},
+        )
+        if result.get("returncode") != 0:
+            self.add_blocker("RB4011_EGRESS_RULE_SETUP_FAILED")
+
+    def ssh_gps_status(self, cfg: PathConfig) -> dict[str, Any]:
+        if os.environ.get("RUTX12_FAKE_COMMANDS") == "1":
+            return {"ok": True, "backend": "ssh", "body": fake_api_body("/api/gps/position/status")}
+        script = r"""
+printf '__GPS_UBUS_STATUS__\n'; ubus call gps status 2>/dev/null || true
+printf '__GPS_UBUS_POSITION__\n'; ubus call gps position 2>/dev/null || true
+printf '__GPS_GPSD__\n'; ubus call gpsd info 2>/dev/null || true
+printf '__GPS_GPSCTL__\n'; gpsctl -ix 2>/dev/null || true
+"""
+        result = run_capture([*ssh_base(cfg.rut_host), script], timeout=8)
+        sections = parse_marked_sections(result.get("stdout", ""))
+        body = parse_ssh_gps_sections(sections)
+        ok = result.get("returncode") == 0 and bool(body)
+        return {
+            "ok": ok,
+            "backend": "ssh",
+            "body": body or {},
+            "error": None if ok else "GPS_QUERY_NO_PARSEABLE_POSITION",
+            "ssh_result": result,
+        }
+
     def run_gate(self, idle_s: int, load_s: int, post_s: int) -> int:
         self.lock.acquire()
         try:
             if idle_s < 300 or load_s < 300 or post_s < 300:
-                self.blockers.append("FULL_15_MIN_STATIONARY_GATE_NOT_YET_RUN")
+                self.add_blocker("FULL_15_MIN_STATIONARY_GATE_NOT_YET_RUN")
             self.event("GATE_STARTED", idle_s=idle_s, load_s=load_s, post_s=post_s)
+            self.ensure_rb4011_egress_rules()
             self.start_collectors()
             self.save_state("PRE_IDLE", "PRE_IDLE")
             wait_interruptibly(self.stop_event, idle_s)
@@ -731,6 +799,7 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
             self.event("LOAD_STOPPED", deliberate_mid_epoch_stop=True)
             self.save_state("POST_IDLE", "POST_IDLE")
             wait_interruptibly(self.stop_event, post_s)
+            self.event("GATE_FINISHED")
             self.finalize("ANALYZING")
             return 0 if not self.blockers else 2
         finally:
@@ -938,24 +1007,65 @@ def fake_api_body(endpoint: str) -> Any:
     return {}
 
 
+def select_disjoint_assignments(assignments: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    selected: list[tuple[int, int]] = []
+    for assignment in assignments:
+        ports = set(assignment)
+        if selected and any(ports & set(existing) for existing in selected):
+            continue
+        selected.append(assignment)
+        if len(selected) >= 2:
+            return selected
+    return selected
+
+
+def rb4011_rule_install_script() -> str:
+    lines = []
+    for rule in RB4011_EGRESS_RULES:
+        comment = rule["comment"]
+        command = (
+            f':if ([:len [/ip firewall mangle find where comment="{comment}"]] = 0) do={{'
+            "/ip firewall mangle add chain=forward action=passthrough "
+            f"src-address={rule['source']} out-interface={rule['out_interface']} "
+            f'passthrough=yes comment="{comment}"'
+            "}"
+        )
+        lines.append(command)
+    lines.append(rb4011_counter_script())
+    return "; ".join(lines)
+
+
+def rb4011_counter_script() -> str:
+    lines = [
+        f':foreach i in=[/ip firewall mangle find where comment="{rule["comment"]}"] do={{'
+        f':put ("{rule["comment"]} packets=".[/ip firewall mangle get $i packets].'
+        '" bytes=".[/ip firewall mangle get $i bytes])}'
+        for rule in RB4011_EGRESS_RULES
+    ]
+    return "; ".join(lines)
+
+
 def parse_rb4011_egress_counters(text: str) -> dict[str, dict[str, int]]:
-    counters: dict[str, dict[str, int]] = {}
-    current: str | None = None
+    counters: dict[str, dict[str, int]] = {
+        "path-a": {"correct": 0, "cross": 0},
+        "path-b": {"correct": 0, "cross": 0},
+    }
     for line in text.splitlines():
         lower = line.lower()
-        if "192.168.101.201" in line or "source via lte1" in lower or "path-a" in lower:
-            current = "path-a"
-            counters.setdefault(current, {"correct": 0, "cross": 0})
-        elif "192.168.101.202" in line or "source via lte2" in lower or "path-b" in lower:
-            current = "path-b"
-            counters.setdefault(current, {"correct": 0, "cross": 0})
-        if current is None:
-            continue
-        key = "cross" if "cross" in lower or "wrong" in lower else "correct"
+        current = None
+        key = None
+        if "oc rutx12 verify path-a correct" in lower:
+            current, key = "path-a", "correct"
+        elif "oc rutx12 verify path-a wrong" in lower:
+            current, key = "path-a", "cross"
+        elif "oc rutx12 verify path-b correct" in lower:
+            current, key = "path-b", "correct"
+        elif "oc rutx12 verify path-b wrong" in lower:
+            current, key = "path-b", "cross"
         match = re_search_counter(line)
-        if match is not None:
+        if current is not None and key is not None and match is not None:
             counters[current][key] = max(counters[current].get(key, 0), match)
-    return counters
+    return counters if any(any(values.values()) for values in counters.values()) else {}
 
 
 def re_search_counter(line: str) -> int | None:
@@ -993,6 +1103,57 @@ def evaluate_egress_isolation(
         if cross is not None and cross > 0:
             cross_egress = True
     return {"observed": observed, "cross_egress": cross_egress, "deltas": deltas}
+
+
+def parse_ssh_gps_sections(sections: dict[str, str]) -> dict[str, Any]:
+    for name in ("GPS_UBUS_POSITION", "GPS_UBUS_STATUS", "GPS_GPSD"):
+        body = load_section_json(sections.get(name))
+        if isinstance(body, dict):
+            normalized = extract_gps_candidate(body)
+            if normalized:
+                return normalized
+    text = sections.get("GPS_GPSCTL") or ""
+    return parse_gpsctl_text(text)
+
+
+def extract_gps_candidate(body: dict[str, Any]) -> dict[str, Any] | None:
+    candidates = [body]
+    for key in ("position", "gps", "data", "status"):
+        value = body.get(key)
+        if isinstance(value, dict):
+            candidates.append(value)
+    for candidate in candidates:
+        lat = candidate.get("lat") if "lat" in candidate else candidate.get("latitude")
+        lon = candidate.get("lon") if "lon" in candidate else candidate.get("longitude")
+        if lat is None or lon is None:
+            continue
+        return {
+            "valid": candidate.get("valid", candidate.get("fix", True)),
+            "lat": lat,
+            "lon": lon,
+            "speed": candidate.get("speed") or candidate.get("speed_mps"),
+            "course": candidate.get("course") or candidate.get("bearing"),
+            "satellites": candidate.get("satellites") or candidate.get("sats"),
+            "hdop": candidate.get("hdop") or candidate.get("accuracy"),
+        }
+    return None
+
+
+def parse_gpsctl_text(text: str) -> dict[str, Any]:
+    if not text.strip():
+        return {}
+    out: dict[str, Any] = {}
+    for line in text.splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip().lower().replace(" ", "_")
+        out[key] = value.strip()
+    if "latitude" in out and "longitude" in out:
+        out["lat"] = out["latitude"]
+        out["lon"] = out["longitude"]
+        out.setdefault("valid", True)
+    return out
 
 
 def run_capture(argv: list[str], timeout: float | None = None) -> dict[str, Any]:
@@ -1189,6 +1350,9 @@ def start_cmd(args: argparse.Namespace) -> int:
             "gate_session_id": args.gate_session_id,
             "departure_authorized_by": args.departure_authorized_by,
             "qualified_port_pairs": gate_summary.get("qualified_port_pairs", []),
+            "qualified_oriented_assignments": gate_summary.get(
+                "qualified_oriented_assignments", []
+            ),
             "gate_fingerprint": gate_manifest.get("gate_fingerprint"),
         }
     )
@@ -1344,6 +1508,9 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
     dual_valid = [r for r in joint_rows if r.get("joint_classification") == "VALID_DELIVERY"]
     dual_usable = count_dual_usable(epoch_rows)
     qualified_port_pairs = read_json(runtime / "STATE.json", {}).get("qualified_port_pairs", [])
+    qualified_oriented = read_json(runtime / "STATE.json", {}).get(
+        "qualified_oriented_assignments", []
+    )
     egress_ok = (
         all(
             isinstance(row.get("egress_isolation"), dict)
@@ -1396,10 +1563,15 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
         and all(len(rows) > 0 for rows in path_rows.values())
         and len(gps_rows) > 0
     )
-    if len(qualified_port_pairs) < 2 and "FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED" not in blockers:
-        blockers.append("FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED")
+    blockers = list(dict.fromkeys(blockers))
+    if (
+        len(qualified_port_pairs) < 2
+        and "FEWER_THAN_TWO_ORIENTED_ASSIGNMENTS_PREQUALIFIED" not in blockers
+    ):
+        blockers.append("FEWER_THAN_TWO_ORIENTED_ASSIGNMENTS_PREQUALIFIED")
     if joint_rows and not egress_ok and "RB4011_EGRESS_ISOLATION_FAILED" not in blockers:
         blockers.append("RB4011_EGRESS_ISOLATION_FAILED")
+    blockers = list(dict.fromkeys(blockers))
     gate_passed = (
         not blockers
         and enough_raw_evidence
@@ -1444,6 +1616,7 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
         "telemetry_metrics": telemetry,
         "ping": ping,
         "qualified_port_pairs": qualified_port_pairs,
+        "qualified_oriented_assignments": qualified_oriented,
         "preflight_attempts": preflight_rows,
         "egress_isolation_ok": egress_ok,
         "device_config_fingerprint": device_config_fingerprint(path_rows, state),
@@ -1591,7 +1764,7 @@ def raw_phase_durations(runtime: Path) -> dict[str, float | None]:
     started = by_type.get("GATE_STARTED")
     load_started = by_type.get("LOAD_STARTED")
     load_stopped = by_type.get("LOAD_STOPPED")
-    final = by_type.get("FINAL_STATE_READY")
+    final = by_type.get("GATE_FINISHED") or by_type.get("FINAL_STATE_READY")
     return {
         "idle_s": elapsed_between(started, load_started),
         "loaded_s": elapsed_between(load_started, load_stopped),

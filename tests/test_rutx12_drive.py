@@ -325,6 +325,71 @@ def test_cross_egress_structurally_invalidates_joint_epoch() -> None:
     )
 
 
+def test_oriented_assignments_are_prequalified_independently() -> None:
+    selected = worker.select_disjoint_assignments(
+        [(5202, 5201), (5204, 5203), (5206, 5205), (5207, 5208)]
+    )
+    assert selected == [(5202, 5201), (5204, 5203)]
+
+
+def test_rb4011_explicit_counter_parser_and_delta() -> None:
+    before = {
+        "counters": worker.parse_rb4011_egress_counters(
+            "\n".join(
+                [
+                    "OC RUTX12 VERIFY path-a correct ether2 packets=10 bytes=1200",
+                    "OC RUTX12 VERIFY path-a wrong ether3 packets=0 bytes=0",
+                    "OC RUTX12 VERIFY path-b correct ether3 packets=20 bytes=2400",
+                    "OC RUTX12 VERIFY path-b wrong ether2 packets=0 bytes=0",
+                ]
+            )
+        )
+    }
+    after = {
+        "counters": worker.parse_rb4011_egress_counters(
+            "\n".join(
+                [
+                    "OC RUTX12 VERIFY path-a correct ether2 packets=14 bytes=1680",
+                    "OC RUTX12 VERIFY path-a wrong ether3 packets=0 bytes=0",
+                    "OC RUTX12 VERIFY path-b correct ether3 packets=25 bytes=3000",
+                    "OC RUTX12 VERIFY path-b wrong ether2 packets=0 bytes=0",
+                ]
+            )
+        )
+    }
+    assert worker.evaluate_egress_isolation(before, after) == {
+        "observed": True,
+        "cross_egress": False,
+        "deltas": {
+            "path-a": {"correct": 4, "cross": 0},
+            "path-b": {"correct": 5, "cross": 0},
+        },
+    }
+
+
+def test_ssh_gps_sections_parse_real_position_shape() -> None:
+    body = worker.parse_ssh_gps_sections(
+        {
+            "GPS_UBUS_POSITION": json.dumps(
+                {
+                    "position": {
+                        "valid": True,
+                        "latitude": 59.4,
+                        "longitude": 24.7,
+                        "speed": 0,
+                        "satellites": 9,
+                        "hdop": 0.9,
+                    }
+                }
+            )
+        }
+    )
+    parsed = rutx12.normalize_gps(body)
+    assert parsed["valid"] is True
+    assert parsed["latitude"] == 59.4
+    assert parsed["longitude"] == 24.7
+
+
 def test_road_start_requires_outdoor_gps_ready_even_after_passed_gate(
     tmp_path: Path, monkeypatch: object
 ) -> None:
@@ -470,6 +535,10 @@ def test_indoor_gps_no_fix_is_not_stationary_gate_blocker(tmp_path: Path) -> Non
     )
     state = worker.read_json(runtime / "STATE.json", {})
     state["qualified_port_pairs"] = [[5201, 5202], [5203, 5204]]
+    state["qualified_oriented_assignments"] = [
+        {"path_a_port": 5201, "path_b_port": 5202},
+        {"path_a_port": 5203, "path_b_port": 5204},
+    ]
     worker.write_json(runtime / "STATE.json", state)
     for path in ("rut-a", "rut-b"):
         for idx in range(20):
@@ -508,3 +577,13 @@ def test_indoor_gps_no_fix_is_not_stationary_gate_blocker(tmp_path: Path) -> Non
     assert summary["gate_passed"] is True
     assert summary["gps_required_for_stationary_gate"] is False
     assert summary["gps_limitation"] == "GPS_UNAVAILABLE_OR_NO_FIX"
+
+
+def test_analyzer_deduplicates_repeated_blockers(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime" / "sid"
+    public = tmp_path / "public" / "sid"
+    runtime.mkdir(parents=True)
+    public.mkdir(parents=True)
+    worker.write_json(runtime / "STATE.json", {"state": "ANALYZING"})
+    summary = worker.analyze_session(runtime, public, ["B", "B", "A", "B"])
+    assert summary["blockers"] == ["B", "A", "FEWER_THAN_TWO_ORIENTED_ASSIGNMENTS_PREQUALIFIED"]
