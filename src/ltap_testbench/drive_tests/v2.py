@@ -13,9 +13,10 @@ import json
 import math
 import re
 import statistics
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, cast
 
 SKILL_NAME = "elmo-lte-drive-test"
 SKILL_VERSION = "2.0"
@@ -24,19 +25,19 @@ LTE_STALE_S = 2.0
 
 
 def utc_now() -> str:
-    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds")
+    return dt.datetime.now(dt.UTC).isoformat(timespec="milliseconds")
 
 
 def parse_utc(value: str) -> dt.datetime:
     text = value.replace("Z", "+00:00")
     parsed = dt.datetime.fromisoformat(text)
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=dt.timezone.utc)
-    return parsed.astimezone(dt.timezone.utc)
+        parsed = parsed.replace(tzinfo=dt.UTC)
+    return parsed.astimezone(dt.UTC)
 
 
 def fmt_utc(value: dt.datetime) -> str:
-    return value.astimezone(dt.timezone.utc).isoformat(timespec="seconds")
+    return value.astimezone(dt.UTC).isoformat(timespec="seconds")
 
 
 def append_jsonl(path: Path, row: dict[str, Any]) -> None:
@@ -254,8 +255,11 @@ def parse_lte_monitor(
     }
 
 
-def parse_ping_line(line: str, path: str, operator: str | None = None, utc: str | None = None) -> dict[str, Any] | None:
-    seq = _int(re.search(r"icmp_seq=([0-9]+)", line).group(1)) if "icmp_seq=" in line else None
+def parse_ping_line(
+    line: str, path: str, operator: str | None = None, utc: str | None = None
+) -> dict[str, Any] | None:
+    seq_match = re.search(r"icmp_seq=([0-9]+)", line)
+    seq = _int(seq_match.group(1)) if seq_match else None
     tm = re.search(r"time=([0-9]+(?:\.[0-9]+)?)", line)
     if tm:
         return {
@@ -267,7 +271,14 @@ def parse_ping_line(line: str, path: str, operator: str | None = None, utc: str 
             "rtt_ms": float(tm.group(1)),
         }
     if "timeout" in line.lower() or "unreachable" in line.lower():
-        return {"utc": utc or utc_now(), "path": path, "operator": operator, "seq": seq, "success": False, "rtt_ms": None}
+        return {
+            "utc": utc or utc_now(),
+            "path": path,
+            "operator": operator,
+            "seq": seq,
+            "success": False,
+            "rtt_ms": None,
+        }
     return None
 
 
@@ -285,7 +296,9 @@ def percentile(values: list[float], pct: float) -> float | None:
     return values[lo] * (hi - idx) + values[hi] * (idx - lo)
 
 
-def nearest(rows: list[dict[str, Any]], when: dt.datetime, max_age_s: float) -> tuple[dict[str, Any] | None, float | None]:
+def nearest(
+    rows: list[dict[str, Any]], when: dt.datetime, max_age_s: float
+) -> tuple[dict[str, Any] | None, float | None]:
     best = None
     best_age = None
     for row in rows:
@@ -301,7 +314,9 @@ def nearest(rows: list[dict[str, Any]], when: dt.datetime, max_age_s: float) -> 
     return best, best_age
 
 
-def _session_bounds(streams: Iterable[list[dict[str, Any]]]) -> tuple[dt.datetime | None, dt.datetime | None]:
+def _session_bounds(
+    streams: Iterable[list[dict[str, Any]]],
+) -> tuple[dt.datetime | None, dt.datetime | None]:
     stamps: list[dt.datetime] = []
     for rows in streams:
         for row in rows:
@@ -316,9 +331,13 @@ def _session_bounds(streams: Iterable[list[dict[str, Any]]]) -> tuple[dt.datetim
     return min(stamps).replace(microsecond=0), max(stamps).replace(microsecond=0)
 
 
-def ping_metrics(rows: list[dict[str, Any]], start: dt.datetime, end: dt.datetime) -> dict[str, Any]:
+def ping_metrics(
+    rows: list[dict[str, Any]], start: dt.datetime, end: dt.datetime
+) -> dict[str, Any]:
     subset = [r for r in rows if r.get("utc") and start <= parse_utc(r["utc"]) < end]
-    successes = [float(r["rtt_ms"]) for r in subset if r.get("success") and r.get("rtt_ms") is not None]
+    successes = [
+        float(r["rtt_ms"]) for r in subset if r.get("success") and r.get("rtt_ms") is not None
+    ]
     count = len(subset)
     return {
         "probe_count": count,
@@ -362,7 +381,10 @@ def build_timeline(session_dir: Path, public_dir: Path) -> list[dict[str, Any]]:
             "speed_mps": gps_row.get("speed_mps") if gps_row else None,
             "gps_age_s": round(gps_age, 3) if gps_age is not None else None,
         }
-        for path, lte_rows, ping_rows, traffic_rows in (("lte1", lte1, p1, t1), ("lte2", lte2, p2, t2)):
+        for path, lte_rows, ping_rows, traffic_rows in (
+            ("lte1", lte1, p1, t1),
+            ("lte2", lte2, p2, t2),
+        ):
             lte, lte_age = nearest(lte_rows, cur, LTE_STALE_S)
             pm = ping_metrics(ping_rows, cur, cur + dt.timedelta(seconds=1))
             tr = traffic_for_second(traffic_rows, cur)
@@ -443,12 +465,16 @@ TIMELINE_COLUMNS = [
 
 def write_timeline(path: Path, rows: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=TIMELINE_COLUMNS, extrasaction="ignore", lineterminator="\n")
+        writer = csv.DictWriter(
+            fh, fieldnames=TIMELINE_COLUMNS, extrasaction="ignore", lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(rows)
 
 
-def detect_lte_events(rows: list[dict[str, Any]], path: str, gps_rows: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+def detect_lte_events(
+    rows: list[dict[str, Any]], path: str, gps_rows: list[dict[str, Any]] | None = None
+) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     last: dict[str, Any] | None = None
     gps_rows = gps_rows or []
@@ -472,7 +498,9 @@ def detect_lte_events(rows: list[dict[str, Any]], path: str, gps_rows: list[dict
             event_type = typ
             if key == "registered":
                 event_type = "REGISTRATION_RESTORED" if after else "REGISTRATION_LOST"
-            gps, _age = nearest(gps_rows, parse_utc(row["utc"]), GPS_STALE_S) if gps_rows else (None, None)
+            gps, _age = (
+                nearest(gps_rows, parse_utc(row["utc"]), GPS_STALE_S) if gps_rows else (None, None)
+            )
             events.append(
                 {
                     "utc": row.get("utc"),
@@ -505,7 +533,9 @@ def detect_buffering_events(timeline: list[dict[str, Any]]) -> list[dict[str, An
             if threshold:
                 if active is None:
                     active = {"type": threshold, "start": row["utc"], "rows": []}
-                active["type"] = "SEVERE_BUFFERING" if threshold == "SEVERE_BUFFERING" else active["type"]
+                active["type"] = (
+                    "SEVERE_BUFFERING" if threshold == "SEVERE_BUFFERING" else active["type"]
+                )
                 active["rows"].append(row)
             elif active:
                 if len(active["rows"]) >= 3:
@@ -520,7 +550,11 @@ def detect_buffering_events(timeline: list[dict[str, Any]]) -> list[dict[str, An
                             "type": active["type"],
                             "offered_bitrate": "6M",
                             "measured_mbps": statistics.median(
-                                [r[f"{path}_udp_mbps"] for r in active["rows"] if r.get(f"{path}_udp_mbps") is not None]
+                                [
+                                    r[f"{path}_udp_mbps"]
+                                    for r in active["rows"]
+                                    if r.get(f"{path}_udp_mbps") is not None
+                                ]
                             ),
                             "band": first.get(f"{path}_band"),
                             "cell": first.get(f"{path}_cell"),
@@ -535,7 +569,12 @@ def detect_buffering_events(timeline: list[dict[str, Any]]) -> list[dict[str, An
 def diversity_summary(timeline: list[dict[str, Any]], strict: bool = False) -> dict[str, Any]:
     rtt_limit = 60 if strict else 100
     loss_limit = 1 if strict else 2
-    counts = {"both_good": 0, "elisa_impaired_telia_good": 0, "telia_impaired_elisa_good": 0, "both_impaired": 0}
+    counts = {
+        "both_good": 0,
+        "elisa_impaired_telia_good": 0,
+        "telia_impaired_elisa_good": 0,
+        "both_impaired": 0,
+    }
     longest_both_bad = 0
     cur_bad = 0
     for row in timeline:
@@ -569,17 +608,28 @@ def diversity_summary(timeline: list[dict[str, Any]], strict: bool = False) -> d
     return {
         **counts,
         "longest_both_impaired_interval_s": longest_both_bad,
-        "percentage_with_at_least_one_good_path": round((total - counts["both_impaired"]) / total * 100.0, 2) if total else None,
+        "percentage_with_at_least_one_good_path": round(
+            (total - counts["both_impaired"]) / total * 100.0, 2
+        )
+        if total
+        else None,
         "criteria": "strict" if strict else "normal",
     }
 
 
-def write_geo_outputs(public_dir: Path, gps_rows: list[dict[str, Any]], events: list[dict[str, Any]]) -> None:
-    points = [r for r in gps_rows if r.get("valid") and r.get("latitude") is not None and r.get("longitude") is not None]
+def write_geo_outputs(
+    public_dir: Path, gps_rows: list[dict[str, Any]], events: list[dict[str, Any]]
+) -> None:
+    points = [
+        r
+        for r in gps_rows
+        if r.get("valid") and r.get("latitude") is not None and r.get("longitude") is not None
+    ]
     if not points:
         return
     trkpts = "\n".join(
-        f'      <trkpt lat="{p["latitude"]}" lon="{p["longitude"]}"><time>{p["utc"]}</time></trkpt>' for p in points
+        f'      <trkpt lat="{p["latitude"]}" lon="{p["longitude"]}"><time>{p["utc"]}</time></trkpt>'
+        for p in points
     )
     (public_dir / "track.gpx").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -597,7 +647,10 @@ def write_geo_outputs(public_dir: Path, gps_rows: list[dict[str, Any]], events: 
                     {
                         "type": "Feature",
                         "properties": {"utc": p["utc"]},
-                        "geometry": {"type": "Point", "coordinates": [p["longitude"], p["latitude"]]},
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [p["longitude"], p["latitude"]],
+                        },
                     }
                     for p in points
                 ],
@@ -615,7 +668,10 @@ def write_geo_outputs(public_dir: Path, gps_rows: list[dict[str, Any]], events: 
                 {
                     "type": "Feature",
                     "properties": {k: v for k, v in e.items() if k != "gps"},
-                    "geometry": {"type": "Point", "coordinates": [gps["longitude"], gps["latitude"]]},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [gps["longitude"], gps["latitude"]],
+                    },
                 }
             )
     (public_dir / "events.geojson").write_text(
@@ -623,11 +679,15 @@ def write_geo_outputs(public_dir: Path, gps_rows: list[dict[str, Any]], events: 
         encoding="utf-8",
     )
     with (public_dir / "hotspots.csv").open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=["lat_bin", "lon_bin", "event_count"], lineterminator="\n")
+        writer = csv.DictWriter(
+            fh, fieldnames=["lat_bin", "lon_bin", "event_count"], lineterminator="\n"
+        )
         writer.writeheader()
         bins: dict[tuple[float, float], int] = {}
         for e in event_features:
-            lon, lat = e["geometry"]["coordinates"]
+            geometry = cast(dict[str, Any], e["geometry"])
+            coordinates = cast(list[float], geometry["coordinates"])
+            lon, lat = float(coordinates[0]), float(coordinates[1])
             key = (round(lat, 3), round(lon, 3))
             bins[key] = bins.get(key, 0) + 1
         for (lat, lon), count in sorted(bins.items()):
@@ -663,7 +723,8 @@ def analyze_session(runtime_dir: Path, public_dir: Path) -> dict[str, Any]:
         legacy_note = (
             "# ELMO LTE Drive Test Report\n\n"
             "Resolution: `LEGACY_COARSE_EPOCH_DATA`\n\n"
-            "This session predates v2 continuous collectors. The analyzer did not fabricate GPS, LTE, or ping samples.\n\n"
+            "This session predates v2 continuous collectors. "
+            "The analyzer did not fabricate GPS, LTE, or ping samples.\n\n"
         )
         if "Resolution: `LEGACY_COARSE_EPOCH_DATA`" not in existing:
             report.write_text(legacy_note + existing, encoding="utf-8")
@@ -678,7 +739,9 @@ def analyze_session(runtime_dir: Path, public_dir: Path) -> dict[str, Any]:
         json.dump(events, fh, indent=2, ensure_ascii=False)
         fh.write("\n")
     with (public_dir / "events.csv").open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=["utc", "end_utc", "path", "operator", "type"], lineterminator="\n")
+        writer = csv.DictWriter(
+            fh, fieldnames=["utc", "end_utc", "path", "operator", "type"], lineterminator="\n"
+        )
         writer.writeheader()
         for e in events:
             writer.writerow({k: e.get(k) for k in writer.fieldnames or []})
@@ -705,7 +768,18 @@ def analyze_session(runtime_dir: Path, public_dir: Path) -> dict[str, Any]:
     (public_dir / "diversity.csv").write_text(
         "criteria,both_good,elisa_impaired_telia_good,telia_impaired_elisa_good,both_impaired,longest_both_impaired_interval_s,percentage_with_at_least_one_good_path\n"
         + "\n".join(
-            ",".join(str(d.get(k)) for k in ["criteria", "both_good", "elisa_impaired_telia_good", "telia_impaired_elisa_good", "both_impaired", "longest_both_impaired_interval_s", "percentage_with_at_least_one_good_path"])
+            ",".join(
+                str(d.get(k))
+                for k in [
+                    "criteria",
+                    "both_good",
+                    "elisa_impaired_telia_good",
+                    "telia_impaired_elisa_good",
+                    "both_impaired",
+                    "longest_both_impaired_interval_s",
+                    "percentage_with_at_least_one_good_path",
+                ]
+            )
             for d in (div_normal, div_strict)
         )
         + "\n",
@@ -720,7 +794,8 @@ def analyze_session(runtime_dir: Path, public_dir: Path) -> dict[str, Any]:
         f"Timeline rows: {len(timeline)}\n\n"
         f"GPS valid fixes: {gps_valid}\n\n"
         f"LTE samples: lte1={summary['lte1_samples']}, lte2={summary['lte2_samples']}\n\n"
-        f"Ping samples: lte1={summary['ping_lte1_samples']}, lte2={summary['ping_lte2_samples']}\n\n"
+        f"Ping samples: lte1={summary['ping_lte1_samples']}, "
+        f"lte2={summary['ping_lte2_samples']}\n\n"
         f"Normal diversity: {json.dumps(div_normal, ensure_ascii=False)}\n",
         encoding="utf-8",
     )
@@ -736,46 +811,152 @@ class Check:
 
 def synthetic_verification() -> list[Check]:
     checks: list[Check] = []
-    gps = parse_routeros_gps("valid: yes\nlatitude: 59.123456\nlongitude: 24.123456\nspeed: 0.1\n", "2026-08-12T00:00:00+00:00")
-    checks.append(Check("GPS parser valid decimal coordinate", gps["valid"] and gps["latitude"] == 59.123456, str(gps)))
+    gps = parse_routeros_gps(
+        "valid: yes\nlatitude: 59.123456\nlongitude: 24.123456\nspeed: 0.1\n",
+        "2026-08-12T00:00:00+00:00",
+    )
+    checks.append(
+        Check(
+            "GPS parser valid decimal coordinate",
+            gps["valid"] and gps["latitude"] == 59.123456,
+            str(gps),
+        )
+    )
     gps2 = parse_routeros_gps("valid: no\n", "2026-08-12T00:00:01+00:00")
-    checks.append(Check("GPS parser invalid/no-fix output", not gps2["valid"] and gps2["latitude"] is None, str(gps2)))
-    gps3 = parse_routeros_gps('valid: yes\nlatitude: "59 7 24.4416 N"\nlongitude: "24 7 24.4416 E"\n', "2026-08-12T00:00:02+00:00")
+    checks.append(
+        Check(
+            "GPS parser invalid/no-fix output",
+            not gps2["valid"] and gps2["latitude"] is None,
+            str(gps2),
+        )
+    )
+    gps3 = parse_routeros_gps(
+        'valid: yes\nlatitude: "59 7 24.4416 N"\nlongitude: "24 7 24.4416 E"\n',
+        "2026-08-12T00:00:02+00:00",
+    )
     checks.append(Check("GPS parser alternate DMS formatting", gps3["valid"], str(gps3)))
-    gps4 = parse_routeros_gps("valid: yes\nlatitude: 5922.0159\nlongitude: 02455.2192\nspeed: 7.2 km/h\n", "2026-08-12T00:00:03+00:00")
-    checks.append(Check("GPS parser RouterOS compact ddmm.mmmm formatting", gps4["valid"] and round(gps4["latitude"], 6) == 59.366932, str(gps4)))
-    for band in ("B1@10Mhz earfcn: 300 phy-cellid: 11", "B3@15Mhz earfcn: 1875 phy-cellid: 69", "B7", "B20", "B38"):
-        lte = parse_lte_monitor(f"status: registered\ncurrent-operator: Elisa EE\nprimary-band: {band}\nrsrp: -95dBm\n", "lte1")
-        checks.append(Check(f"LTE parser {band.split('@')[0]}", lte["primary_band"] is not None and lte["operator"] == "Elisa", str(lte)))
+    gps4 = parse_routeros_gps(
+        "valid: yes\nlatitude: 5922.0159\nlongitude: 02455.2192\nspeed: 7.2 km/h\n",
+        "2026-08-12T00:00:03+00:00",
+    )
+    checks.append(
+        Check(
+            "GPS parser RouterOS compact ddmm.mmmm formatting",
+            gps4["valid"] and round(gps4["latitude"], 6) == 59.366932,
+            str(gps4),
+        )
+    )
+    for band in (
+        "B1@10Mhz earfcn: 300 phy-cellid: 11",
+        "B3@15Mhz earfcn: 1875 phy-cellid: 69",
+        "B7",
+        "B20",
+        "B38",
+    ):
+        lte = parse_lte_monitor(
+            f"status: registered\ncurrent-operator: Elisa EE\nprimary-band: {band}\nrsrp: -95dBm\n",
+            "lte1",
+        )
+        checks.append(
+            Check(
+                f"LTE parser {band.split('@')[0]}",
+                lte["primary_band"] is not None and lte["operator"] == "Elisa",
+                str(lte),
+            )
+        )
     lte_down = parse_lte_monitor("status: searching\n", "lte1")
     checks.append(Check("LTE parser deregistered state", not lte_down["registered"], str(lte_down)))
     rows = [
-        parse_lte_monitor("status: registered\nprimary-band: B3\ncell-id: A\n", "lte1", "2026-08-12T00:00:00+00:00"),
-        parse_lte_monitor("status: registered\nprimary-band: B20\ncell-id: A\n", "lte1", "2026-08-12T00:00:01+00:00"),
-        parse_lte_monitor("status: registered\nprimary-band: B20\ncell-id: B\n", "lte1", "2026-08-12T00:00:02+00:00"),
-        parse_lte_monitor("status: searching\nprimary-band: B20\ncell-id: B\n", "lte1", "2026-08-12T00:00:03+00:00"),
-        parse_lte_monitor("status: registered\nprimary-band: B20\ncell-id: B\n", "lte1", "2026-08-12T00:00:04+00:00"),
+        parse_lte_monitor(
+            "status: registered\nprimary-band: B3\ncell-id: A\n",
+            "lte1",
+            "2026-08-12T00:00:00+00:00",
+        ),
+        parse_lte_monitor(
+            "status: registered\nprimary-band: B20\ncell-id: A\n",
+            "lte1",
+            "2026-08-12T00:00:01+00:00",
+        ),
+        parse_lte_monitor(
+            "status: registered\nprimary-band: B20\ncell-id: B\n",
+            "lte1",
+            "2026-08-12T00:00:02+00:00",
+        ),
+        parse_lte_monitor(
+            "status: searching\nprimary-band: B20\ncell-id: B\n",
+            "lte1",
+            "2026-08-12T00:00:03+00:00",
+        ),
+        parse_lte_monitor(
+            "status: registered\nprimary-band: B20\ncell-id: B\n",
+            "lte1",
+            "2026-08-12T00:00:04+00:00",
+        ),
     ]
     events = detect_lte_events(rows, "lte1")
     types = [e["type"] for e in events]
     checks.append(Check("Event detector B3 -> B20", "BAND_CHANGE" in types, str(types)))
     checks.append(Check("Event detector cell A -> B", "CELL_CHANGE" in types, str(types)))
-    checks.append(Check("Event detector registration loss/recovery", "REGISTRATION_LOST" in types and "REGISTRATION_RESTORED" in types, str(types)))
-    sample, age = nearest([{"utc": "2026-08-12T00:00:00+00:00", "v": 1}], parse_utc("2026-08-12T00:00:01+00:00"), 2)
-    stale, _ = nearest([{"utc": "2026-08-12T00:00:00+00:00", "v": 1}], parse_utc("2026-08-12T00:00:03+00:00"), 2)
-    checks.append(Check("Timeline nearest sample selection", sample is not None and age == 1, str((sample, age))))
+    checks.append(
+        Check(
+            "Event detector registration loss/recovery",
+            "REGISTRATION_LOST" in types and "REGISTRATION_RESTORED" in types,
+            str(types),
+        )
+    )
+    sample, age = nearest(
+        [{"utc": "2026-08-12T00:00:00+00:00", "v": 1}], parse_utc("2026-08-12T00:00:01+00:00"), 2
+    )
+    stale, _ = nearest(
+        [{"utc": "2026-08-12T00:00:00+00:00", "v": 1}], parse_utc("2026-08-12T00:00:03+00:00"), 2
+    )
+    checks.append(
+        Check(
+            "Timeline nearest sample selection", sample is not None and age == 1, str((sample, age))
+        )
+    )
     checks.append(Check("Timeline stale-data cutoff", stale is None, str(stale)))
     timeline = []
     for i, pair in enumerate([(50, 50), (150, 50), (50, 150), (150, 150)]):
-        timeline.append({"utc": f"2026-08-12T00:00:0{i}+00:00", "lte1_registered": True, "lte2_registered": True, "lte1_ping_p95": pair[0], "lte2_ping_p95": pair[1], "lte1_ping_loss": 0, "lte2_ping_loss": 0})
+        timeline.append(
+            {
+                "utc": f"2026-08-12T00:00:0{i}+00:00",
+                "lte1_registered": True,
+                "lte2_registered": True,
+                "lte1_ping_p95": pair[0],
+                "lte2_ping_p95": pair[1],
+                "lte1_ping_loss": 0,
+                "lte2_ping_loss": 0,
+            }
+        )
     div = diversity_summary(timeline)
-    checks.append(Check("Diversity analyzer all categories", all(div[k] == 1 for k in ("both_good", "elisa_impaired_telia_good", "telia_impaired_elisa_good", "both_impaired")), str(div)))
+    checks.append(
+        Check(
+            "Diversity analyzer all categories",
+            all(
+                div[k] == 1
+                for k in (
+                    "both_good",
+                    "elisa_impaired_telia_good",
+                    "telia_impaired_elisa_good",
+                    "both_impaired",
+                )
+            ),
+            str(div),
+        )
+    )
     return checks
 
 
-def write_verification_report(path: Path, checks: list[Check], live: dict[str, Any] | None = None) -> str:
+def write_verification_report(
+    path: Path, checks: list[Check], live: dict[str, Any] | None = None
+) -> str:
     critical_pass = all(c.passed for c in checks) and (live or {}).get("critical_pass", False)
-    classification = "PASS_DRIVE_SKILL_V2" if critical_pass else (live or {}).get("blocker") or "FAIL_DRIVE_SKILL_V2"
+    classification = (
+        "PASS_DRIVE_SKILL_V2"
+        if critical_pass
+        else (live or {}).get("blocker") or "FAIL_DRIVE_SKILL_V2"
+    )
     lines = [
         "# Drive Skill v2 Verification",
         "",
@@ -787,6 +968,13 @@ def write_verification_report(path: Path, checks: list[Check], live: dict[str, A
     for c in checks:
         lines.append(f"- {'PASS' if c.passed else 'FAIL'} - {c.name}: {c.detail}")
     if live is not None:
-        lines += ["", "## Stage B - Live/Stationary Validation", "", "```json", json.dumps(live, indent=2), "```"]
+        lines += [
+            "",
+            "## Stage B - Live/Stationary Validation",
+            "",
+            "```json",
+            json.dumps(live, indent=2),
+            "```",
+        ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return classification

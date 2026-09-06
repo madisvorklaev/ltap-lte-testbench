@@ -147,15 +147,30 @@ def normalize_modem_status(
     router_label: str,
     utc: str | None = None,
 ) -> dict[str, Any]:
-    cells = raw.get("cell_info") if isinstance(raw.get("cell_info"), list) else []
-    ca = raw.get("ca_signal") if isinstance(raw.get("ca_signal"), list) else []
+    cache_raw = raw.get("cache")
+    cache: dict[str, Any] = cache_raw if isinstance(cache_raw, dict) else {}
+    cells_source = raw.get("cell_info") or cache.get("cell_info")
+    ca_source = raw.get("ca_signal") or raw.get("ca_info") or cache.get("ca_info")
+    cells = cells_source if isinstance(cells_source, list) else []
+    ca = ca_source if isinstance(ca_source, list) else []
     registered = truthy(raw.get("registered"))
     if registered is None:
-        status_text = str(raw.get("registration") or raw.get("status") or "").lower()
+        reg_stat = raw.get("reg_stat") or cache.get("reg_stat")
+        registered = str(reg_stat) in {"1", "5"} if reg_stat is not None else None
+    if registered is None:
+        status_text = str(
+            raw.get("registration")
+            or raw.get("status")
+            or raw.get("reg_stat_str")
+            or cache.get("reg_stat_str")
+            or ""
+        ).lower()
         registered = "registered" in status_text
     data_connected = truthy(
         raw.get("data_connected") or raw.get("packet_data") or raw.get("connected")
     )
+    if data_connected is None and raw.get("pdp_addr"):
+        data_connected = True
     address = raw.get("ipv4_address") or raw.get("ip_address") or raw.get("address")
     route = raw.get("default_route") or raw.get("gateway") or raw.get("route")
     return {
@@ -163,18 +178,18 @@ def normalize_modem_status(
         "router": router_label,
         "modem_id": pseudonym("modem", raw.get("id") or raw.get("modem_id") or raw.get("imei")),
         "sim_id": pseudonym("sim", raw.get("sim_id") or raw.get("iccid") or raw.get("imsi")),
-        "operator": raw.get("operator") or raw.get("network"),
-        "rat": raw.get("rat") or raw.get("network_type"),
+        "operator": raw.get("operator") or raw.get("network") or cache.get("operator"),
+        "rat": raw.get("rat") or raw.get("network_type") or cache.get("net_mode_str"),
         "registered": bool(registered),
         "data_connected": data_connected,
         "selected_mobile_ipv4_present": bool(address),
         "default_route_present": bool(route),
-        "primary_band": raw.get("band") or raw.get("primary_band"),
+        "primary_band": raw.get("band") or raw.get("primary_band") or cache.get("band_str"),
         "cell_info": cells,
         "ca_signal": ca,
-        "rsrp_dbm": number_or_none(raw.get("rsrp")),
-        "rsrq_db": number_or_none(raw.get("rsrq")),
-        "sinr_db": number_or_none(raw.get("sinr")),
+        "rsrp_dbm": number_or_none(raw.get("rsrp") or cache.get("rsrp_value")),
+        "rsrq_db": number_or_none(raw.get("rsrq") or cache.get("rsrq_value")),
+        "sinr_db": number_or_none(raw.get("sinr") or cache.get("sinr_value")),
         "boot_id": raw.get("boot_id"),
         "interface": raw.get("interface"),
         "device": raw.get("device"),
@@ -230,16 +245,25 @@ def account_ping(lines: Iterable[str]) -> dict[str, Any]:
     rtts: list[float] = []
     duplicates = 0
     local_errors = 0
+    wrap_offset = 0
+    last_raw_seq: int | None = None
     for line in lines:
         row = parse_ping_line(line)
         if not row or row["seq"] is None:
             continue
-        seq = int(row["seq"])
+        raw_seq = int(row["seq"])
+        if last_raw_seq is not None and last_raw_seq > 65000 and raw_seq < 1000:
+            wrap_offset += 65536
+        last_raw_seq = raw_seq
+        seq = raw_seq + wrap_offset
         status = str(row["status"])
         if status == "reply":
             if seen.get(seq) == "reply":
                 duplicates += 1
-            seen[seq] = "reply"
+            elif seen.get(seq) == "timeout":
+                seen[seq] = "late"
+            else:
+                seen[seq] = "reply"
             if row["rtt_ms"] is not None:
                 rtts.append(float(row["rtt_ms"]))
         elif status == "duplicate":
@@ -263,12 +287,13 @@ def account_ping(lines: Iterable[str]) -> dict[str, Any]:
             counts[seen.get(seq, "timeout")] = counts.get(seen.get(seq, "timeout"), 0) + 1
     return {
         "scheduled": scheduled,
-        "answered": counts["reply"],
+        "answered": counts["reply"] + counts["late"],
         "timed_out": counts["timeout"],
+        "late": counts["late"],
         "duplicate": counts["duplicate"],
         "local_error": counts["local_error"],
         "loss_percent": (
-            round((scheduled - counts["reply"]) / scheduled * 100.0, 6)
+            round((scheduled - counts["reply"] - counts["late"]) / scheduled * 100.0, 6)
             if scheduled
             else None
         ),
@@ -306,8 +331,9 @@ def parse_iperf_json_text(text: str) -> dict[str, Any]:
             "classification": "INFRASTRUCTURE_INVALID",
             "error": str(data["error"]),
         }
-    end = data.get("end") if isinstance(data.get("end"), dict) else {}
-    sent = end.get("sum_sent") if isinstance(end.get("sum_sent"), dict) else {}
+    end: dict[str, Any] = data.get("end") if isinstance(data.get("end"), dict) else {}
+    sent_raw = end.get("sum_sent")
+    sent: dict[str, Any] = sent_raw if isinstance(sent_raw, dict) else {}
     received = end.get("sum_received")
     if not isinstance(received, dict):
         return {
@@ -320,9 +346,23 @@ def parse_iperf_json_text(text: str) -> dict[str, Any]:
             "lost_packets": None,
             "packets": None,
         }
+    sender_marker = received.get("sender")
+    finite = all(
+        math.isfinite(float(value))
+        for value in (
+            received.get("bits_per_second"),
+            received.get("lost_percent"),
+            received.get("jitter_ms"),
+        )
+        if value is not None
+    )
+    packets = int(received.get("packets") or 0)
+    loss_present = received.get("lost_percent") is not None
+    valid = sender_marker is False and packets > 0 and loss_present and finite
     return {
-        "valid": True,
-        "classification": "VALID_DELIVERY",
+        "valid": valid,
+        "classification": "VALID_DELIVERY" if valid else "INFRASTRUCTURE_INVALID",
+        "receiver_sender_false": sender_marker is False,
         "sender_mbps": mbps(sent.get("bits_per_second")),
         "receiver_mbps": mbps(received.get("bits_per_second")),
         "loss_percent": number_or_none(received.get("lost_percent")),
@@ -333,6 +373,140 @@ def parse_iperf_json_text(text: str) -> dict[str, Any]:
             received.get("out_of_order") or received.get("outoforder_packets") or 0
         ),
     }
+
+
+def validate_receiver_evidence(
+    argv: list[str],
+    returncode: int | None,
+    duration_s: float | None,
+    iperf_text: str,
+) -> dict[str, Any]:
+    parsed = parse_iperf_json_text(iperf_text)
+    problems = validate_iperf_argv(argv)
+    if returncode != 0:
+        problems.append("iperf exit status is not zero")
+    if duration_s is None or duration_s < 9.0:
+        problems.append("iperf duration shorter than required 10-second window")
+    if not parsed.get("valid"):
+        problems.append(str(parsed.get("error") or parsed.get("classification")))
+    classification = "VALID_DELIVERY" if not problems else parsed.get("classification")
+    if classification == "VALID_DELIVERY" and parsed.get("classification") != "VALID_DELIVERY":
+        classification = "INFRASTRUCTURE_INVALID"
+    return {
+        **parsed,
+        "valid": classification == "VALID_DELIVERY",
+        "classification": classification,
+        "problems": problems,
+    }
+
+
+def normalize_api_bundle(bundle: dict[str, Any], router_label: str) -> dict[str, Any]:
+    bodies = {endpoint: response_body(value) for endpoint, value in bundle.items()}
+    modems = as_list(bodies.get("/api/modems/status"))
+    selected = selected_modem([m for m in modems if isinstance(m, dict)]) or {}
+    modem_id = selected.get("id") or selected.get("modem_id")
+    selected_detail = bodies.get(f"/api/modems/status/{modem_id}") if modem_id else {}
+    signal = bodies.get(f"/api/modems/signal/status/{modem_id}") if modem_id else {}
+    selected_full = {
+        **selected,
+        **(selected_detail if isinstance(selected_detail, dict) else {}),
+        **(signal if isinstance(signal, dict) else {}),
+    }
+    interfaces = as_list(bodies.get("/api/interfaces/status"))
+    devices = as_list(bodies.get("/api/network/devices/status"))
+    routes = as_list(bodies.get("/api/ip_routes/ipv4/status"))
+    device_status = bodies.get("/api/system/device/status")
+    if not isinstance(device_status, dict):
+        device_status = {}
+    normalized = normalize_modem_status(selected_full, router_label)
+    normalized.update(
+        {
+            "boot_id": device_status.get("boot_id") or device_status.get("system_boot_id"),
+            "uptime_s": number_or_none(
+                device_status.get("uptime") or device_status.get("uptime_s")
+            ),
+            "selected_mobile_ipv4_present": has_mobile_address(interfaces),
+            "default_route_present": has_default_route(routes),
+            "interface": selected_interface(interfaces),
+            "device": selected_device(devices),
+        }
+    )
+    return normalized
+
+
+def response_body(value: Any) -> Any:
+    if (
+        isinstance(value, dict)
+        and "body" in value
+        and ("ok" in value or "status" in value or "error" in value)
+    ):
+        return value.get("body")
+    return value
+
+
+def as_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        for key in ("data", "modems", "interfaces", "routes", "devices", "interface", "list"):
+            if isinstance(value.get(key), list):
+                return value[key]
+    return []
+
+
+def has_mobile_address(interfaces: list[Any]) -> bool:
+    for row in interfaces:
+        if not isinstance(row, dict):
+            continue
+        data_raw = row.get("data")
+        data: dict[str, Any] = data_raw if isinstance(data_raw, dict) else {}
+        proto = str(
+            row.get("proto")
+            or row.get("type")
+            or row.get("interface")
+            or row.get("l3_device")
+            or data.get("modem")
+        ).lower()
+        ipv4_list = row.get("ipv4-address") if isinstance(row.get("ipv4-address"), list) else []
+        if (
+            "mobile" in proto
+            or "wwan" in proto
+            or "modem" in proto
+            or "qmimux" in proto
+            or data.get("modem")
+        ) and (row.get("ipv4") or row.get("ipaddr") or row.get("address") or ipv4_list):
+            return True
+    return False
+
+
+def has_default_route(routes: list[Any]) -> bool:
+    for row in routes:
+        if not isinstance(row, dict):
+            continue
+        target = str(row.get("target") or row.get("destination") or row.get("dest") or "")
+        mask = row.get("mask")
+        if target in {"0.0.0.0/0", "default"} or (target == "0.0.0.0" and str(mask) == "0"):
+            return True
+        nested_routes_raw = row.get("route")
+        nested_routes: list[Any] = nested_routes_raw if isinstance(nested_routes_raw, list) else []
+        if has_default_route(nested_routes):
+            return True
+    return False
+
+
+def selected_interface(interfaces: list[Any]) -> str | None:
+    for row in interfaces:
+        if isinstance(row, dict) and truthy(row.get("primary")) is True:
+            return str(row.get("id") or row.get("name"))
+    return None
+
+
+def selected_device(devices: list[Any]) -> str | None:
+    for row in devices:
+        if isinstance(row, dict) and truthy(row.get("up")) is True:
+            name = row.get("id") or row.get("name") or row.get("device")
+            return str(name) if name else None
+    return None
 
 
 def mbps(bits_per_second: Any) -> float | None:
@@ -427,11 +601,11 @@ class OvernightPathSummary:
 def recompute_overnight_soak(run_dir: Path) -> dict[str, Any]:
     epoch_dirs = sorted((run_dir / "epochs").glob("epoch-*"))
     full_epoch_dirs = [e for e in epoch_dirs if e.name != "epoch-0094"]
-    paths = {"a": [], "b": []}
-    paired_valid = []
+    paths: dict[str, list[dict[str, Any]]] = {"a": [], "b": []}
+    paired_valid: list[dict[str, dict[str, Any]]] = []
     missing_receiver = {"a": 0, "b": 0}
     for epoch_dir in full_epoch_dirs:
-        parsed = {}
+        parsed: dict[str, dict[str, Any]] = {}
         for path in ("a", "b"):
             iperf_path = epoch_dir / path / "iperf.json"
             text = (
@@ -498,3 +672,25 @@ def write_checksums(root: Path) -> None:
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             lines.append(f"{digest}  {path.relative_to(root)}")
     (root / "checksums.sha256").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def verify_checksums(root: Path) -> list[str]:
+    checksum = root / "checksums.sha256"
+    if not checksum.exists():
+        return [f"missing checksum: {checksum}"]
+    problems = []
+    for line in checksum.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        if "  " not in line:
+            problems.append(f"malformed checksum line in {checksum}: {line}")
+            continue
+        digest, rel = line.split("  ", 1)
+        path = root / rel
+        if not path.exists():
+            problems.append(f"missing hashed file: {path}")
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != digest:
+            problems.append(f"checksum mismatch: {path}")
+    return problems
