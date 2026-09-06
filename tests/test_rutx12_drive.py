@@ -574,9 +574,11 @@ def test_indoor_gps_no_fix_is_not_stationary_gate_blocker(tmp_path: Path) -> Non
         {"epoch_id": "partial", "path": "path-a", "partial": True},
     )
     summary = worker.analyze_session(runtime, public, [])
-    assert summary["gate_passed"] is True
+    assert summary["stationary_gate_passed"] is True
+    assert summary["gate_passed"] is False
     assert summary["gps_required_for_stationary_gate"] is False
     assert summary["gps_limitation"] == "GPS_UNAVAILABLE_OR_NO_FIX"
+    assert summary["ready_line"] == "READY FOR RUTX12 MOVING TEST: NO - ROAD_GPS_NOT_READY"
 
 
 def test_analyzer_deduplicates_repeated_blockers(tmp_path: Path) -> None:

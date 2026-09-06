@@ -1572,13 +1572,20 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
     if joint_rows and not egress_ok and "RB4011_EGRESS_ISOLATION_FAILED" not in blockers:
         blockers.append("RB4011_EGRESS_ISOLATION_FAILED")
     blockers = list(dict.fromkeys(blockers))
-    gate_passed = (
+    stationary_gate_passed = (
         not blockers
         and enough_raw_evidence
         and len(dual_valid) / len(joint_rows) >= 0.80
         and len(partial) > 0
         and all(len(telemetry_ok[path]) / len(path_rows[path]) >= 0.95 for path in path_rows)
     )
+    if (
+        stationary_gate_passed
+        and not gps_quality["road_ready"]
+        and "ROAD_GPS_NOT_READY" not in blockers
+    ):
+        blockers.append("ROAD_GPS_NOT_READY")
+    gate_passed = stationary_gate_passed and gps_quality["road_ready"]
     classification = "RUTX12_MOVING_TEST_VALID" if gate_passed else "RUTX12_MOVING_TEST_INVALID"
     ready_line = (
         "READY FOR RUTX12 MOVING TEST: YES"
@@ -1591,6 +1598,7 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
     summary = {
         "session_id": runtime.name,
         "classification": classification,
+        "stationary_gate_passed": stationary_gate_passed,
         "gate_passed": gate_passed,
         "gate_result_state": "READY_FOR_ROAD" if gate_passed else "BLOCKED_STATIONARY_GATE",
         "ready_line": ready_line,
