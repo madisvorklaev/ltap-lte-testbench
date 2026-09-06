@@ -1,0 +1,24 @@
+{
+  "attempted_dual_epochs": 0,
+  "attempted_path_epochs": 0,
+  "blockers": [],
+  "classification": "RUTX12_MOVING_TEST_INVALID",
+  "fixed_rate_iperf_not_gcc_video": true,
+  "gate_passed": false,
+  "gate_result_state": "BLOCKED_STATIONARY_GATE",
+  "gps_samples": 132,
+  "gps_valid_fixes": 0,
+  "invalid_receiver_epochs": 0,
+  "orphaned_processes": [],
+  "ready_line": "READY FOR RUTX12 MOVING TEST: NO - ZERO_MEASURED_EPOCHS",
+  "session_id": "rutx12-drive-20260906T104033Z-car-stationary-gate",
+  "state_before_analysis": "ANALYZING",
+  "traffic_phases": {
+    "idle_s": 153.25929688799079,
+    "loaded_s": 0.0003554179857019335,
+    "post_s": null
+  },
+  "unknown_receiver_epochs": 0,
+  "valid_dual_epochs": 0,
+  "valid_receiver_epochs": 0
+}

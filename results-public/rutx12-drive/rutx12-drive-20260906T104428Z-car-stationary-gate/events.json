@@ -1,0 +1,55 @@
+[
+  {
+    "type": "SESSION_CREATED",
+    "utc": "2026-09-06T10:44:28.319+00:00"
+  },
+  {
+    "idle_s": 300,
+    "load_s": 300,
+    "mono": 233123.704532803,
+    "post_s": 300,
+    "type": "GATE_STARTED",
+    "utc": "2026-09-06T10:44:28.320+00:00"
+  },
+  {
+    "label": "heartbeat",
+    "mono": 233123.705260939,
+    "type": "THREAD_STARTED",
+    "utc": "2026-09-06T10:44:28.320+00:00"
+  },
+  {
+    "label": "path-a-rut",
+    "mono": 233123.71024252,
+    "type": "THREAD_STARTED",
+    "utc": "2026-09-06T10:44:28.325+00:00"
+  },
+  {
+    "label": "path-b-rut",
+    "mono": 233123.71273823,
+    "type": "THREAD_STARTED",
+    "utc": "2026-09-06T10:44:28.328+00:00"
+  },
+  {
+    "label": "gps",
+    "mono": 233123.71374496,
+    "type": "THREAD_STARTED",
+    "utc": "2026-09-06T10:44:28.329+00:00"
+  },
+  {
+    "label": "rb4011",
+    "mono": 233123.715032864,
+    "type": "THREAD_STARTED",
+    "utc": "2026-09-06T10:44:28.330+00:00"
+  },
+  {
+    "mono": 233455.664461204,
+    "type": "LOAD_STARTED",
+    "utc": "2026-09-06T10:50:00.280+00:00"
+  },
+  {
+    "deliberate_mid_epoch_stop": true,
+    "mono": 233748.677845864,
+    "type": "LOAD_STOPPED",
+    "utc": "2026-09-06T10:54:53.293+00:00"
+  }
+]

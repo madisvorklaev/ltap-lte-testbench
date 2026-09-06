@@ -1,0 +1,45 @@
+{
+  "created_utc": "2026-09-06T09:10:46.054+00:00",
+  "direction": "stationary",
+  "dirty_state_digest": "5434829db6c5977d33ad04b35207c973c37671d4c8b84512fcbb96aa07f99818",
+  "gps_policy": "precise GPS remains private unless explicitly approved",
+  "name": "car-stationary-gate",
+  "pinned_base_commit": "b3689512f91683fdcaf62f49f333cb2c35823cff",
+  "route_id": "stationary-gate",
+  "schema_version": "rutx12-drive-v1",
+  "session_id": "rutx12-drive-20260906T091046Z-car-stationary-gate",
+  "test_code_commit": "7a684ddf24aad1e8af5bbbb4f0d1816d42cda7d8",
+  "topology": "RB4011 plus two RUTX12, one active modem per RUT",
+  "traffic": {
+    "epoch_seconds": 10,
+    "ipv4": true,
+    "parallel_streams_per_path": 1,
+    "payload_bytes": 1200,
+    "port_pairs": [
+      [
+        5201,
+        5202
+      ],
+      [
+        5203,
+        5204
+      ],
+      [
+        5205,
+        5206
+      ],
+      [
+        5207,
+        5208
+      ]
+    ],
+    "rate_bps_per_path": 5000000,
+    "server_ipv4": "217.18.95.142",
+    "sources": {
+      "path-a": "192.168.101.201",
+      "path-b": "192.168.101.202"
+    },
+    "udp": true
+  },
+  "validation_only": true
+}

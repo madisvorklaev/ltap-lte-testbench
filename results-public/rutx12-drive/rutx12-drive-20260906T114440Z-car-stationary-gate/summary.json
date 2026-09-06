@@ -1,0 +1,36 @@
+{
+  "attempted_dual_epochs": 28,
+  "attempted_path_epochs": 56,
+  "blockers": [
+    "FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED"
+  ],
+  "classification": "RUTX12_MOVING_TEST_INVALID",
+  "fixed_rate_iperf_not_gcc_video": true,
+  "gate_passed": false,
+  "gate_result_state": "BLOCKED_STATIONARY_GATE",
+  "gps_limitation": "GPS_UNAVAILABLE_OR_NO_FIX",
+  "gps_required_for_stationary_gate": false,
+  "gps_samples": 914,
+  "gps_valid_fixes": 0,
+  "invalid_receiver_epochs": 2,
+  "orphaned_processes": [],
+  "ready_line": "READY FOR RUTX12 MOVING TEST: NO - FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED",
+  "session_id": "rutx12-drive-20260906T114440Z-car-stationary-gate",
+  "state_before_analysis": "ANALYZING",
+  "telemetry_ok_samples": {
+    "path-a": 612,
+    "path-b": 659
+  },
+  "telemetry_samples": {
+    "path-a": 612,
+    "path-b": 659
+  },
+  "traffic_phases": {
+    "idle_s": 322.27945880399784,
+    "loaded_s": 292.95684066499234,
+    "post_s": null
+  },
+  "unknown_receiver_epochs": 0,
+  "valid_dual_epochs": 27,
+  "valid_receiver_epochs": 54
+}
