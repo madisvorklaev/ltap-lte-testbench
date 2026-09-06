@@ -1,0 +1,40 @@
+{
+  "created_utc": "2026-09-06T13:48:04.641+00:00",
+  "direction": "stationary",
+  "dirty_state_digest": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+  "gate_fingerprint": "83739f3b1fcf4604123512f74062fbcfd637c217f75218330ba38193a1407e5f",
+  "pinned_base_commit": "b3689512f91683fdcaf62f49f333cb2c35823cff",
+  "route_id": "stationary-gate",
+  "schema_version": "rutx12-drive-v1",
+  "session_id": "rutx12-drive-20260906T134804Z-car-stationary-gate",
+  "test_code_commit": "c37d72eae86b905a350a3d648c6f71332c5486d8",
+  "traffic": {
+    "epoch_seconds": 10,
+    "payload_bytes": 1200,
+    "port_pairs": [
+      [
+        5201,
+        5202
+      ],
+      [
+        5203,
+        5204
+      ],
+      [
+        5205,
+        5206
+      ],
+      [
+        5207,
+        5208
+      ]
+    ],
+    "rate_bps_per_path": 5000000,
+    "server_ipv4": "217.18.95.142",
+    "sources": {
+      "path-a": "192.168.101.201",
+      "path-b": "192.168.101.202"
+    }
+  },
+  "validation_only": true
+}

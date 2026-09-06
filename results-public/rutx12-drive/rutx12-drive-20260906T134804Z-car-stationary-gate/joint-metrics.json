@@ -1,0 +1,220 @@
+{
+  "attempted_dual_epochs": 27,
+  "attempted_path_epochs": 54,
+  "blockers": [
+    "ROAD_GPS_NOT_READY"
+  ],
+  "classification": "RUTX12_MOVING_TEST_INVALID",
+  "device_config_fingerprint": "eace933643bb5302b474f37ab3974276b4d0351e11727e1a36d0811ade94bd2d",
+  "egress_isolation_ok": true,
+  "fixed_rate_iperf_not_gcc_video": true,
+  "gate_passed": false,
+  "gate_result_state": "BLOCKED_STATIONARY_GATE",
+  "gps_limitation": "GPS_UNAVAILABLE_OR_NO_FIX",
+  "gps_max_gap_s": null,
+  "gps_required_for_stationary_gate": false,
+  "gps_samples": 743,
+  "gps_valid_fix_rate": 0.0,
+  "gps_valid_fixes": 0,
+  "impaired_receiver_epochs": 4,
+  "invalid_receiver_epochs": 5,
+  "orphaned_processes": [],
+  "ping": {
+    "path-a": {
+      "answered": 4913,
+      "duplicate": 0,
+      "late": 2,
+      "local_error": 0,
+      "loss_percent": 0.02035,
+      "rtt_max_ms": 431.0,
+      "rtt_p50_ms": 61.0,
+      "rtt_p95_ms": 67.43999999999997,
+      "rtt_p99_ms": 72.6,
+      "scheduled": 4914,
+      "timed_out": 1
+    },
+    "path-b": {
+      "answered": 4911,
+      "duplicate": 0,
+      "late": 4,
+      "local_error": 0,
+      "loss_percent": 0.06105,
+      "rtt_max_ms": 224.0,
+      "rtt_p50_ms": 56.1,
+      "rtt_p95_ms": 115.0,
+      "rtt_p99_ms": 127.0,
+      "scheduled": 4914,
+      "timed_out": 3
+    }
+  },
+  "preflight_attempts": [
+    {
+      "assigned_ports": [
+        5201,
+        5202
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "a-b",
+      "passed": false,
+      "ports": [
+        5201,
+        5202
+      ]
+    },
+    {
+      "assigned_ports": [
+        5202,
+        5201
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "b-a",
+      "passed": false,
+      "ports": [
+        5201,
+        5202
+      ]
+    },
+    {
+      "assigned_ports": [
+        5203,
+        5204
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "a-b",
+      "passed": false,
+      "ports": [
+        5203,
+        5204
+      ]
+    },
+    {
+      "assigned_ports": [
+        5204,
+        5203
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "b-a",
+      "passed": false,
+      "ports": [
+        5203,
+        5204
+      ]
+    },
+    {
+      "assigned_ports": [
+        5205,
+        5206
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "a-b",
+      "passed": true,
+      "ports": [
+        5205,
+        5206
+      ]
+    },
+    {
+      "assigned_ports": [
+        5206,
+        5205
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "b-a",
+      "passed": true,
+      "ports": [
+        5205,
+        5206
+      ]
+    },
+    {
+      "assigned_ports": [
+        5207,
+        5208
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "a-b",
+      "passed": true,
+      "ports": [
+        5207,
+        5208
+      ]
+    },
+    {
+      "assigned_ports": [
+        5208,
+        5207
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "b-a",
+      "passed": true,
+      "ports": [
+        5207,
+        5208
+      ]
+    }
+  ],
+  "qualified_oriented_assignments": [
+    {
+      "path_a_port": 5205,
+      "path_b_port": 5206
+    },
+    {
+      "path_a_port": 5207,
+      "path_b_port": 5208
+    }
+  ],
+  "qualified_port_pairs": [
+    [
+      5205,
+      5206
+    ],
+    [
+      5207,
+      5208
+    ]
+  ],
+  "ready_line": "READY FOR RUTX12 MOVING TEST: NO - ROAD_GPS_NOT_READY",
+  "road_gps_ready": false,
+  "session_id": "rutx12-drive-20260906T134804Z-car-stationary-gate",
+  "simultaneous_usable_fraction": 0.8260869565217391,
+  "state_before_analysis": "ANALYZING",
+  "stationary_gate_passed": true,
+  "telemetry_metrics": {
+    "path-a": {
+      "address_outage_samples": 0,
+      "boot_id_changes": 0,
+      "data_outage_samples": 0,
+      "max_gap_s": 1.7320639709942043,
+      "registration_outage_samples": 0,
+      "route_outage_samples": 0,
+      "samples": 658
+    },
+    "path-b": {
+      "address_outage_samples": 0,
+      "boot_id_changes": 0,
+      "data_outage_samples": 0,
+      "max_gap_s": 1.4575748500064947,
+      "registration_outage_samples": 0,
+      "route_outage_samples": 0,
+      "samples": 710
+    }
+  },
+  "telemetry_ok_samples": {
+    "path-a": 658,
+    "path-b": 710
+  },
+  "telemetry_samples": {
+    "path-a": 658,
+    "path-b": 710
+  },
+  "traffic_phases": {
+    "idle_s": 389.8597977680038,
+    "loaded_s": 296.0580985049892,
+    "post_s": 300.0019890750118
+  },
+  "unknown_receiver_epochs": 0,
+  "usable_dual_epochs": 19,
+  "usable_receiver_epochs": 45,
+  "valid_dual_epochs": 23,
+  "valid_receiver_epochs": 49
+}
