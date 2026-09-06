@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "ssh",
+    "-i",
+    "/home/madis/.ssh/<redacted-key>",
+    "-o",
+    "IdentitiesOnly=yes",
+    "-o",
+    "StrictHostKeyChecking=accept-new",
+    "-o",
+    "ConnectTimeout=8",
+    "admin@192.168.88.1",
+    "/queue tree print detail; /ip firewall mangle print stats detail where comment~\"ELMO|RUTX\"; /system resource print"
+  ],
+  "returncode": 0,
+  "stdout": "\nColumns: CHAIN, ACTION, BYTES, PACKETS\n# CHAIN    ACTION                BYTES     PACKETS\n;;; ELMO-TEST-A-CORRECT\n0 forward  passthrough  17 351 804 456  14 271 357\n;;; ELMO-TEST-A-CROSS\n1 forward  passthrough               0           0\n;;; ELMO-TEST-B-CORRECT\n2 forward  passthrough  17 607 958 484  14 479 921\n;;; ELMO-TEST-B-CROSS\n3 forward  passthrough               0           0\n\n                   uptime: 13h26m9s           \n                  version: 7.24.2 (stable)    \n               build-time: 2026-09-03 09:57:14\n          minimum-version: 6.44.6             \n              free-memory: 835.0MiB           \n             total-memory: 1024.0MiB          \n                      cpu: ARM                \n                cpu-count: 4                  \n            cpu-frequency: 1200MHz            \n                 cpu-load: 0%                 \n           free-hdd-space: 423.6MiB           \n          total-hdd-space: 512.0MiB           \n  write-sect-since-reboot: 7419               \n         write-sect-total: 7419               \n               bad-blocks: 0%                 \n        architecture-name: arm                \n               board-name: RB4011iGS+         \n                 platform: MikroTik           \n\n",
+  "stderr": "",
+  "duration_s": 0.2269896810175851,
+  "timeout": false
+}

@@ -1,0 +1,130 @@
+{
+  "run_dir": "/home/madis/projects/ltap-lte-testbench/runtime/rutx12-rb4011/20260905T195803Z-overnight-auto-dual5m-soak",
+  "state": "COMPLETE",
+  "summary": {
+    "epochs_total": 94,
+    "epochs_valid_dual": 79,
+    "ping": {
+      "a": {
+        "loss_percent": 0.00139874,
+        "max_ms": 499.0,
+        "p50_ms": 60.1,
+        "p95_ms": 65.8,
+        "p99_ms": 70.0,
+        "received": 142984,
+        "samples": 142984,
+        "sent": 142986
+      },
+      "b": {
+        "loss_percent": 0.0706615,
+        "max_ms": 594.0,
+        "p50_ms": 57.1,
+        "p95_ms": 94.0,
+        "p99_ms": 129.0,
+        "received": 142834,
+        "samples": 142834,
+        "sent": 142935
+      }
+    },
+    "recent_epochs": [
+      {
+        "a": {
+          "jitter_ms": 1.7211674410249669,
+          "lost_packets": 0,
+          "lost_percent": 0,
+          "packets": 156245,
+          "receiver_mbps": 4.998829320025313,
+          "sender_mbps": 4.999913850381643,
+          "valid": true
+        },
+        "b": {
+          "jitter_ms": 5.304097607397362,
+          "lost_packets": 1998,
+          "lost_percent": 1.27872,
+          "packets": 156246,
+          "receiver_mbps": 4.9341466481652,
+          "sender_mbps": 4.9999945333393105,
+          "valid": true
+        },
+        "epoch": "epoch-0090"
+      },
+      {
+        "a": {
+          "jitter_ms": 1.9584943307285954,
+          "lost_packets": 0,
+          "lost_percent": 0,
+          "packets": 156249,
+          "receiver_mbps": 4.998837729463783,
+          "sender_mbps": 4.999885419292475,
+          "valid": true
+        },
+        "b": {
+          "jitter_ms": 2.3988991434370117,
+          "lost_packets": 1312,
+          "lost_percent": 0.839674626082393,
+          "packets": 156251,
+          "receiver_mbps": 4.95714242922103,
+          "sender_mbps": 4.999945700937202,
+          "valid": true
+        },
+        "epoch": "epoch-0091"
+      },
+      {
+        "a": {
+          "jitter_ms": 2.090158849158191,
+          "lost_packets": 0,
+          "lost_percent": 0,
+          "packets": 156247,
+          "receiver_mbps": 4.998944835791207,
+          "sender_mbps": 4.9999945333393105,
+          "valid": true
+        },
+        "b": {
+          "jitter_ms": 2.17687686847396,
+          "lost_packets": 2591,
+          "lost_percent": 1.65824,
+          "packets": 156250,
+          "receiver_mbps": 4.916009706044377,
+          "sender_mbps": 4.999913201506822,
+          "valid": true
+        },
+        "epoch": "epoch-0092"
+      },
+      {
+        "a": {
+          "jitter_ms": 2.115185588262996,
+          "lost_packets": 0,
+          "lost_percent": 0,
+          "packets": 156249,
+          "receiver_mbps": 4.99884284378991,
+          "sender_mbps": 4.999940250714004,
+          "valid": true
+        },
+        "b": {
+          "jitter_ms": 2.6707170389811634,
+          "lost_packets": 39,
+          "lost_percent": 0.02496015974502237,
+          "packets": 156249,
+          "receiver_mbps": 4.9977899779223085,
+          "sender_mbps": 4.99991245097267,
+          "valid": true
+        },
+        "epoch": "epoch-0093"
+      },
+      {
+        "a": {
+          "error": "Expecting value: line 1 column 1 (char 0)",
+          "valid": false
+        },
+        "b": {
+          "error": "Expecting value: line 1 column 1 (char 0)",
+          "valid": false
+        },
+        "epoch": "epoch-0094"
+      }
+    ],
+    "session": "20260905T195803Z-overnight-auto-dual5m-soak",
+    "updated_utc": "2026-09-06T03:58:10+00:00"
+  },
+  "updated_utc": "2026-09-06T03:58:13+00:00"
+}

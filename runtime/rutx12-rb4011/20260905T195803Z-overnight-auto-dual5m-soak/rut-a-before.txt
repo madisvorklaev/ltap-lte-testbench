@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "ssh",
+    "-i",
+    "/home/madis/.ssh/<redacted-key>",
+    "-o",
+    "IdentitiesOnly=yes",
+    "-o",
+    "StrictHostKeyChecking=accept-new",
+    "-o",
+    "ConnectTimeout=5",
+    "root@192.168.11.1",
+    "gsmctl -O 3-1 -q 2>/dev/null || true"
+  ],
+  "returncode": 0,
+  "stdout": "RSSI: -68\nRSRP: -98\nSINR: 21\nRSRQ: -12\n",
+  "stderr": "",
+  "duration_s": 0.3172570999886375,
+  "timeout": false
+}
