@@ -1,0 +1,241 @@
+{
+  "attempted_dual_epochs": 27,
+  "attempted_path_epochs": 54,
+  "blockers": [
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+    "RB4011_EGRESS_ISOLATION_FAILED"
+  ],
+  "classification": "RUTX12_MOVING_TEST_INVALID",
+  "device_config_fingerprint": "78f1ccfe19a01945aab08cbdc6fe49f78c6519ffa7a49f38b58b401fe61c3eb3",
+  "egress_isolation_ok": false,
+  "fixed_rate_iperf_not_gcc_video": true,
+  "gate_passed": false,
+  "gate_result_state": "BLOCKED_STATIONARY_GATE",
+  "gps_limitation": "GPS_UNAVAILABLE_OR_NO_FIX",
+  "gps_max_gap_s": null,
+  "gps_required_for_stationary_gate": false,
+  "gps_samples": 984,
+  "gps_valid_fix_rate": 0.0,
+  "gps_valid_fixes": 0,
+  "impaired_receiver_epochs": 18,
+  "invalid_receiver_epochs": 2,
+  "orphaned_processes": [],
+  "ping": {
+    "path-a": {
+      "answered": 4909,
+      "duplicate": 0,
+      "late": 0,
+      "local_error": 0,
+      "loss_percent": 0.020367,
+      "rtt_max_ms": 137.0,
+      "rtt_p50_ms": 60.9,
+      "rtt_p95_ms": 66.7,
+      "rtt_p99_ms": 72.6,
+      "scheduled": 4910,
+      "timed_out": 1
+    },
+    "path-b": {
+      "answered": 4902,
+      "duplicate": 0,
+      "late": 3,
+      "local_error": 0,
+      "loss_percent": 0.162933,
+      "rtt_max_ms": 222.0,
+      "rtt_p50_ms": 56.5,
+      "rtt_p95_ms": 111.0,
+      "rtt_p99_ms": 126.0,
+      "scheduled": 4910,
+      "timed_out": 8
+    }
+  },
+  "preflight_attempts": [
+    {
+      "assigned_ports": [
+        5201,
+        5202
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "a-b",
+      "passed": false,
+      "ports": [
+        5201,
+        5202
+      ]
+    },
+    {
+      "assigned_ports": [
+        5202,
+        5201
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "b-a",
+      "passed": true,
+      "ports": [
+        5201,
+        5202
+      ]
+    },
+    {
+      "assigned_ports": [
+        5203,
+        5204
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "a-b",
+      "passed": false,
+      "ports": [
+        5203,
+        5204
+      ]
+    },
+    {
+      "assigned_ports": [
+        5204,
+        5203
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "b-a",
+      "passed": true,
+      "ports": [
+        5203,
+        5204
+      ]
+    },
+    {
+      "assigned_ports": [
+        5205,
+        5206
+      ],
+      "joint_classification": "INFRASTRUCTURE_INVALID",
+      "orientation": "a-b",
+      "passed": false,
+      "ports": [
+        5205,
+        5206
+      ]
+    },
+    {
+      "assigned_ports": [
+        5206,
+        5205
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "b-a",
+      "passed": true,
+      "ports": [
+        5205,
+        5206
+      ]
+    },
+    {
+      "assigned_ports": [
+        5207,
+        5208
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "a-b",
+      "passed": true,
+      "ports": [
+        5207,
+        5208
+      ]
+    },
+    {
+      "assigned_ports": [
+        5208,
+        5207
+      ],
+      "joint_classification": "VALID_DELIVERY",
+      "orientation": "b-a",
+      "passed": true,
+      "ports": [
+        5207,
+        5208
+      ]
+    }
+  ],
+  "qualified_port_pairs": [
+    [
+      5207,
+      5208
+    ]
+  ],
+  "ready_line": "READY FOR RUTX12 MOVING TEST: NO - RB4011_EGRESS_ISOLATION_NOT_OBSERVED",
+  "road_gps_ready": false,
+  "session_id": "rutx12-drive-20260906T125504Z-car-stationary-gate",
+  "simultaneous_usable_fraction": 0.3076923076923077,
+  "state_before_analysis": "ANALYZING",
+  "telemetry_metrics": {
+    "path-a": {
+      "address_outage_samples": 0,
+      "boot_id_changes": 0,
+      "data_outage_samples": 0,
+      "max_gap_s": 1.7121075299801305,
+      "registration_outage_samples": 0,
+      "route_outage_samples": 0,
+      "samples": 659
+    },
+    "path-b": {
+      "address_outage_samples": 0,
+      "boot_id_changes": 0,
+      "data_outage_samples": 0,
+      "max_gap_s": 1.4459199030243326,
+      "registration_outage_samples": 0,
+      "route_outage_samples": 0,
+      "samples": 709
+    }
+  },
+  "telemetry_ok_samples": {
+    "path-a": 659,
+    "path-b": 709
+  },
+  "telemetry_samples": {
+    "path-a": 659,
+    "path-b": 709
+  },
+  "traffic_phases": {
+    "idle_s": 389.0354765499942,
+    "loaded_s": 295.62842326401733,
+    "post_s": null
+  },
+  "unknown_receiver_epochs": 0,
+  "usable_dual_epochs": 8,
+  "usable_receiver_epochs": 34,
+  "valid_dual_epochs": 26,
+  "valid_receiver_epochs": 52
+}
