@@ -13,6 +13,14 @@ Current drive-test v2 implementation:
 - `tests/test_drive_tests_v2.py`
 - `tools/verify_drive_skill_v2.py`
 
+RUTX12/RB4011 fixed-load moving-drive implementation:
+
+- `tools/rutx12_drive_worker.py`
+- `src/ltap_testbench/drive_tests/rutx12.py`
+- `tests/test_rutx12_drive.py`
+- private runtime: `runtime/rutx12-drive/<session-id>/`
+- sanitized public output: `results-public/rutx12-drive/<session-id>/`
+
 Preserved regression fixture:
 
 ```text
