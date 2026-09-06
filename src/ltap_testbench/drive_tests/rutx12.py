@@ -322,13 +322,17 @@ def parse_iperf_json_text(text: str) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         return {
             "valid": False,
+            "structurally_valid": False,
             "classification": "INFRASTRUCTURE_INVALID",
+            "quality": None,
             "error": f"malformed iperf JSON: {exc}",
         }
     if data.get("error"):
         return {
             "valid": False,
+            "structurally_valid": False,
             "classification": "INFRASTRUCTURE_INVALID",
+            "quality": None,
             "error": str(data["error"]),
         }
     end: dict[str, Any] = data.get("end") if isinstance(data.get("end"), dict) else {}
@@ -338,7 +342,9 @@ def parse_iperf_json_text(text: str) -> dict[str, Any]:
     if not isinstance(received, dict):
         return {
             "valid": False,
-            "classification": "UNATTRIBUTED_DELIVERY_UNMEASURED",
+            "structurally_valid": False,
+            "classification": "INFRASTRUCTURE_INVALID",
+            "quality": None,
             "error": "missing receiver UDP summary",
             "sender_mbps": mbps(sent.get("bits_per_second")),
             "receiver_mbps": None,
@@ -358,17 +364,38 @@ def parse_iperf_json_text(text: str) -> dict[str, Any]:
     )
     packets = int(received.get("packets") or 0)
     loss_present = received.get("lost_percent") is not None
-    valid = sender_marker is False and packets > 0 and loss_present and finite
+    seconds = number_or_none(received.get("seconds"))
+    structurally_valid = sender_marker is False and packets > 0 and loss_present and finite
+    if seconds is not None and seconds < 9.0:
+        structurally_valid = False
+    receiver_mbps = mbps(received.get("bits_per_second"))
+    loss_percent = number_or_none(received.get("lost_percent"))
+    jitter_ms = number_or_none(received.get("jitter_ms"))
+    quality = None
+    if structurally_valid:
+        quality = (
+            "USABLE_DELIVERY"
+            if receiver_mbps is not None
+            and receiver_mbps >= 4.90
+            and loss_percent is not None
+            and loss_percent <= 2.0
+            and jitter_ms is not None
+            and jitter_ms <= 30.0
+            else "IMPAIRED_DELIVERY"
+        )
     return {
-        "valid": valid,
-        "classification": "VALID_DELIVERY" if valid else "INFRASTRUCTURE_INVALID",
+        "valid": structurally_valid,
+        "structurally_valid": structurally_valid,
+        "classification": "VALID_DELIVERY" if structurally_valid else "INFRASTRUCTURE_INVALID",
+        "quality": quality,
         "receiver_sender_false": sender_marker is False,
         "sender_mbps": mbps(sent.get("bits_per_second")),
-        "receiver_mbps": mbps(received.get("bits_per_second")),
-        "loss_percent": number_or_none(received.get("lost_percent")),
+        "receiver_mbps": receiver_mbps,
+        "loss_percent": loss_percent,
         "lost_packets": int(received.get("lost_packets") or 0),
         "packets": int(received.get("packets") or 0),
-        "jitter_ms": number_or_none(received.get("jitter_ms")),
+        "receiver_seconds": seconds,
+        "jitter_ms": jitter_ms,
         "out_of_order_packets": int(
             received.get("out_of_order") or received.get("outoforder_packets") or 0
         ),
@@ -389,12 +416,11 @@ def validate_receiver_evidence(
         problems.append("iperf duration shorter than required 10-second window")
     if not parsed.get("valid"):
         problems.append(str(parsed.get("error") or parsed.get("classification")))
-    classification = "VALID_DELIVERY" if not problems else parsed.get("classification")
-    if classification == "VALID_DELIVERY" and parsed.get("classification") != "VALID_DELIVERY":
-        classification = "INFRASTRUCTURE_INVALID"
+    classification = "VALID_DELIVERY" if not problems else "INFRASTRUCTURE_INVALID"
     return {
         **parsed,
         "valid": classification == "VALID_DELIVERY",
+        "structurally_valid": classification == "VALID_DELIVERY",
         "classification": classification,
         "problems": problems,
     }

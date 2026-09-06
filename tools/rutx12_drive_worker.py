@@ -498,20 +498,35 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
 
     def prequalify_ports(self) -> list[tuple[int, int]]:
         qualified: list[tuple[int, int]] = []
+        attempts: list[dict[str, Any]] = []
         for ports in rutx12.PORT_PAIRS:
-            rows = self.run_dual_epoch(
-                ports,
-                duration_s=10,
-                epoch_id=f"preflight-{len(qualified) + 1}",
-                ledger_name="preflight-ledger",
-            )
-            if rows["joint_classification"] == "VALID_DELIVERY":
+            pair_ok = True
+            for orientation, oriented_ports in (
+                ("a-b", ports),
+                ("b-a", (ports[1], ports[0])),
+            ):
+                rows = self.run_dual_epoch(
+                    oriented_ports,
+                    duration_s=10,
+                    epoch_id=f"preflight-{ports[0]}-{ports[1]}-{orientation}",
+                    ledger_name="preflight-ledger",
+                )
+                attempt = {
+                    "ports": list(ports),
+                    "orientation": orientation,
+                    "assigned_ports": list(oriented_ports),
+                    "joint_classification": rows["joint_classification"],
+                    "passed": rows["joint_classification"] == "VALID_DELIVERY",
+                }
+                attempts.append(attempt)
+                pair_ok = pair_ok and bool(attempt["passed"])
+            if pair_ok:
                 qualified.append(ports)
-            if len(qualified) >= 2:
-                break
         if len(qualified) < 2:
             self.blockers.append("FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED")
         self.state["qualified_port_pairs"] = qualified
+        self.state["preflight_attempts"] = attempts
+        write_json(self.runtime / "preflight-attempts.json", attempts)
         self.save_state()
         return qualified
 
@@ -549,6 +564,7 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
         epoch_dir = self.runtime / "traffic" / f"epoch-{epoch_id}"
         epoch_dir.mkdir(parents=True, exist_ok=True)
         assignments = [("path-a", ports[0]), ("path-b", ports[1])]
+        before_counters = self.sample_rb_egress_counters(epoch_id, "before")
         processes = []
         start_barrier = time.monotonic() + 0.250
         while time.monotonic() < start_barrier:
@@ -584,10 +600,15 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
             completed_mono = time.monotonic()
             completed_utc = rutx12.utc_now()
             text = (path_dir / "iperf.json").read_text(encoding="utf-8", errors="ignore")
+            measured_duration = (
+                float(duration_s)
+                if os.environ.get("RUTX12_FAKE_COMMANDS") == "1"
+                else completed_mono - started_mono
+            )
             evidence = rutx12.validate_receiver_evidence(
                 argv,
                 proc.returncode,
-                completed_mono - started_mono,
+                measured_duration,
                 text,
             )
             row = {
@@ -607,9 +628,26 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
             write_json(path_dir / "result.json", row)
             rutx12.append_jsonl(self.runtime / "traffic" / f"{ledger_name}.jsonl", row)
             rows[label] = row
+        after_counters = self.sample_rb_egress_counters(epoch_id, "after")
+        egress = evaluate_egress_isolation(before_counters, after_counters)
+        if not egress["observed"]:
+            self.blockers.append("RB4011_EGRESS_ISOLATION_NOT_OBSERVED")
+        elif egress["cross_egress"]:
+            self.blockers.append("RB4011_CROSS_EGRESS_DETECTED")
         skew = abs(rows["path-a"]["started_mono"] - rows["path-b"]["started_mono"])
-        joint = rutx12.classify_epoch(rows["path-a"], rows["path-b"], skew_s=skew, partial=partial)
-        out = {"epoch_id": epoch_id, "joint_classification": joint, "start_skew_s": skew}
+        joint = rutx12.classify_epoch(
+            rows["path-a"],
+            rows["path-b"],
+            skew_s=skew,
+            cross_egress=bool(egress["cross_egress"]),
+            partial=partial,
+        )
+        out = {
+            "epoch_id": epoch_id,
+            "joint_classification": joint,
+            "start_skew_s": skew,
+            "egress_isolation": egress,
+        }
         rutx12.append_jsonl(
             self.runtime
             / "traffic"
@@ -617,6 +655,65 @@ printf '__IFACES__\n'; ubus call network.interface dump 2>/dev/null || true
             out,
         )
         return out
+
+    def sample_rb_egress_counters(self, epoch_id: str, phase: str) -> dict[str, Any]:
+        if os.environ.get("RUTX12_FAKE_COMMANDS") == "1":
+            base = int(time.monotonic() * 1000)
+            counters = {
+                "path-a": {"correct": base + (100 if phase == "after" else 0), "cross": 0},
+                "path-b": {"correct": base + (100 if phase == "after" else 0), "cross": 0},
+            }
+            row = {"epoch_id": epoch_id, "phase": phase, "observed": True, "counters": counters}
+            rutx12.append_jsonl(self.runtime / "rb4011" / "egress-isolation.jsonl", row)
+            return row
+        result = run_capture(
+            [
+                *ssh_base("admin@192.168.88.1"),
+                '/ip firewall mangle print stats detail where comment~"RUTX|source via"',
+            ],
+            timeout=8,
+        )
+        counters = parse_rb4011_egress_counters(result.get("stdout", ""))
+        row = {
+            "epoch_id": epoch_id,
+            "phase": phase,
+            "observed": bool(counters),
+            "counters": counters,
+            "result": result,
+        }
+        rutx12.append_jsonl(self.runtime / "rb4011" / "egress-isolation.jsonl", row)
+        return row
+
+    def run_road(self) -> int:
+        self.lock.acquire()
+        try:
+            self.event("ROAD_SUPERVISOR_STARTED")
+            self.start_collectors()
+            ports = self.state.get("qualified_port_pairs") or rutx12.PORT_PAIRS[:2]
+            normalized_ports = [tuple(pair) for pair in ports if isinstance(pair, list | tuple)]
+            self.save_state("PRE_IDLE", "PRE_IDLE")
+            while not self.stop_event.is_set():
+                if (self.runtime / "STOP_REQUESTED").exists():
+                    self.event("STOP_FILE_OBSERVED")
+                    break
+                state = read_json(self.runtime / "STATE.json", {})
+                phase = state.get("phase")
+                self.state.update(state)
+                if phase in {"LOADED_PARKED", "MOVING_LOADED", "ARRIVED_LOADED"}:
+                    self.run_traffic_for_road(normalized_ports)
+                else:
+                    self.stop_event.wait(1.0)
+            self.finalize("ANALYZING")
+            return 0
+        finally:
+            self.lock.release()
+
+    def run_traffic_for_road(self, ports: list[tuple[int, int]]) -> None:
+        epoch = int(self.state.get("road_epoch", 0)) + 1
+        pair = ports[(epoch - 1) % len(ports)] if ports else rutx12.PORT_PAIRS[0]
+        self.run_dual_epoch(pair, duration_s=10, epoch_id=f"road-{epoch:04d}")
+        self.state["road_epoch"] = epoch
+        self.save_state()
 
     def run_gate(self, idle_s: int, load_s: int, post_s: int) -> int:
         self.lock.acquire()
@@ -841,6 +938,63 @@ def fake_api_body(endpoint: str) -> Any:
     return {}
 
 
+def parse_rb4011_egress_counters(text: str) -> dict[str, dict[str, int]]:
+    counters: dict[str, dict[str, int]] = {}
+    current: str | None = None
+    for line in text.splitlines():
+        lower = line.lower()
+        if "192.168.101.201" in line or "source via lte1" in lower or "path-a" in lower:
+            current = "path-a"
+            counters.setdefault(current, {"correct": 0, "cross": 0})
+        elif "192.168.101.202" in line or "source via lte2" in lower or "path-b" in lower:
+            current = "path-b"
+            counters.setdefault(current, {"correct": 0, "cross": 0})
+        if current is None:
+            continue
+        key = "cross" if "cross" in lower or "wrong" in lower else "correct"
+        match = re_search_counter(line)
+        if match is not None:
+            counters[current][key] = max(counters[current].get(key, 0), match)
+    return counters
+
+
+def re_search_counter(line: str) -> int | None:
+    import re
+
+    for pattern in (r"\bpackets=(\d+)", r"\bpacket[s]?:\s*(\d+)", r"\bbytes=(\d+)"):
+        match = re.search(pattern, line, flags=re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def evaluate_egress_isolation(
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> dict[str, Any]:
+    before_counters = before.get("counters") if isinstance(before, dict) else {}
+    after_counters = after.get("counters") if isinstance(after, dict) else {}
+    if not isinstance(before_counters, dict) or not isinstance(after_counters, dict):
+        return {"observed": False, "cross_egress": False, "deltas": {}}
+    deltas: dict[str, dict[str, int | None]] = {}
+    observed = True
+    cross_egress = False
+    for path in ("path-a", "path-b"):
+        b = before_counters.get(path)
+        a = after_counters.get(path)
+        if not isinstance(b, dict) or not isinstance(a, dict):
+            observed = False
+            continue
+        correct, _ = rutx12.counter_delta(int(b.get("correct", 0)), int(a.get("correct", 0)))
+        cross, _ = rutx12.counter_delta(int(b.get("cross", 0)), int(a.get("cross", 0)))
+        deltas[path] = {"correct": correct, "cross": cross}
+        if correct is None or correct <= 0:
+            observed = False
+        if cross is not None and cross > 0:
+            cross_egress = True
+    return {"observed": observed, "cross_egress": cross_egress, "deltas": deltas}
+
+
 def run_capture(argv: list[str], timeout: float | None = None) -> dict[str, Any]:
     started = time.monotonic()
     try:
@@ -994,6 +1148,13 @@ def start_cmd(args: argparse.Namespace) -> int:
     gate_manifest = read_json(gate_dir / "manifest.json", {})
     if gate_state.get("state") != "READY_FOR_ROAD" or not gate_summary.get("gate_passed"):
         raise SystemExit("Road start blocked: stationary gate has not passed.")
+    if not gate_summary.get("road_gps_ready"):
+        raise SystemExit("Road start blocked: five outdoor minutes of fresh GPS fixes are missing.")
+    verify_problems = verify_session(gate_dir, PUBLIC_ROOT / args.gate_session_id)
+    if verify_problems:
+        raise SystemExit(
+            "Road start blocked: gate verification failed: " + "; ".join(verify_problems)
+        )
     if not args.departure_authorized_by:
         raise SystemExit("Road start blocked: explicit departure authorization missing.")
     current_fingerprint = rutx12.stable_hash(
@@ -1027,11 +1188,47 @@ def start_cmd(args: argparse.Namespace) -> int:
             "phase": "PRE_IDLE",
             "gate_session_id": args.gate_session_id,
             "departure_authorized_by": args.departure_authorized_by,
+            "qualified_port_pairs": gate_summary.get("qualified_port_pairs", []),
+            "gate_fingerprint": gate_manifest.get("gate_fingerprint"),
         }
     )
     write_json(state_path, state)
     write_json(ACTIVE, state)
-    print(f"RUTX12 road session prepared: {session_id}")
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "supervise-road",
+            "--session-id",
+            session_id,
+        ],
+        stdout=(ROOT / session_id / "logs" / "supervisor.stdout").open("w", encoding="utf-8"),
+        stderr=(ROOT / session_id / "logs" / "supervisor.stderr").open("w", encoding="utf-8"),
+        start_new_session=True,
+        text=True,
+    )
+    state["worker_pid"] = proc.pid
+    write_json(state_path, state)
+    write_json(ACTIVE, state)
+    rutx12.append_jsonl(
+        ROOT / session_id / "process-ledger.jsonl",
+        {
+            "utc": rutx12.utc_now(),
+            "event": "START",
+            "label": "road-supervisor",
+            "pid": proc.pid,
+            "pgid": os.getpgid(proc.pid),
+            "argv": [
+                "python",
+                "tools/rutx12_drive_worker.py",
+                "supervise-road",
+                "--session-id",
+                session_id,
+            ],
+            "expected_token": "rutx12-road-supervisor",
+        },
+    )
+    print(f"RUTX12 road session started: {session_id}")
     return 0
 
 
@@ -1082,10 +1279,20 @@ def status_cmd(_args: argparse.Namespace) -> int:
 
 def stop_cmd(_args: argparse.Namespace) -> int:
     sid = active_session_id()
-    supervisor = Supervisor(sid)
-    supervisor.finalize()
-    print(f"Stopped: {sid}")
+    runtime = ROOT / sid
+    (runtime / "STOP_REQUESTED").write_text(rutx12.utc_now() + "\n", encoding="utf-8")
+    state = read_json(runtime / "STATE.json", {})
+    pid = state.get("worker_pid")
+    if isinstance(pid, int) and Path(f"/proc/{pid}").exists():
+        os.kill(pid, signal.SIGTERM)
+    print(f"Stop requested: {sid}")
     return 0
+
+
+def supervise_road_cmd(args: argparse.Namespace) -> int:
+    supervisor = Supervisor(args.session_id)
+    install_signal_handlers(supervisor)
+    return supervisor.run_road()
 
 
 def analyze_cmd(args: argparse.Namespace) -> int:
@@ -1123,14 +1330,30 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
     }
     epoch_rows = rutx12.load_jsonl(runtime / "traffic" / "epoch-ledger.jsonl")
     joint_rows = rutx12.load_jsonl(runtime / "traffic" / "joint-epochs.jsonl")
+    preflight_raw = read_json(runtime / "preflight-attempts.json", [])
+    preflight_rows = preflight_raw if isinstance(preflight_raw, list) else []
     valid = [r for r in epoch_rows if r.get("classification") == "VALID_DELIVERY"]
     invalid = [r for r in epoch_rows if r.get("classification") == "INFRASTRUCTURE_INVALID"]
     unknown = [
         r for r in epoch_rows if r.get("classification") == "UNATTRIBUTED_DELIVERY_UNMEASURED"
     ]
     partial = [r for r in epoch_rows if r.get("partial")]
+    usable = [r for r in valid if r.get("quality") == "USABLE_DELIVERY"]
+    impaired = [r for r in valid if r.get("quality") == "IMPAIRED_DELIVERY"]
     gps_valid = [r for r in gps_rows if r.get("valid")]
     dual_valid = [r for r in joint_rows if r.get("joint_classification") == "VALID_DELIVERY"]
+    dual_usable = count_dual_usable(epoch_rows)
+    qualified_port_pairs = read_json(runtime / "STATE.json", {}).get("qualified_port_pairs", [])
+    egress_ok = (
+        all(
+            isinstance(row.get("egress_isolation"), dict)
+            and row["egress_isolation"].get("observed") is True
+            and row["egress_isolation"].get("cross_egress") is False
+            for row in joint_rows
+        )
+        if joint_rows
+        else False
+    )
     telemetry_ok = {
         path: [
             row
@@ -1149,12 +1372,34 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
     if orphaned:
         blockers.append("SESSION_OWNED_ORPHANS_REMAIN")
     traffic_phases = raw_phase_durations(runtime)
+    gps_quality = gps_readiness(gps_rows)
+    telemetry = {path: telemetry_metrics(rows) for path, rows in path_rows.items()}
+    ping = {
+        "path-a": rutx12.account_ping(
+            (runtime / "probes" / "path-a.ping.txt")
+            .read_text(encoding="utf-8", errors="ignore")
+            .splitlines()
+            if (runtime / "probes" / "path-a.ping.txt").exists()
+            else []
+        ),
+        "path-b": rutx12.account_ping(
+            (runtime / "probes" / "path-b.ping.txt")
+            .read_text(encoding="utf-8", errors="ignore")
+            .splitlines()
+            if (runtime / "probes" / "path-b.ping.txt").exists()
+            else []
+        ),
+    }
     enough_raw_evidence = (
         len(joint_rows) > 0
         and len(epoch_rows) > 0
         and all(len(rows) > 0 for rows in path_rows.values())
         and len(gps_rows) > 0
     )
+    if len(qualified_port_pairs) < 2 and "FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED" not in blockers:
+        blockers.append("FEWER_THAN_TWO_PORT_PAIRS_PREQUALIFIED")
+    if joint_rows and not egress_ok and "RB4011_EGRESS_ISOLATION_FAILED" not in blockers:
+        blockers.append("RB4011_EGRESS_ISOLATION_FAILED")
     gate_passed = (
         not blockers
         and enough_raw_evidence
@@ -1180,15 +1425,28 @@ def analyze_session(runtime: Path, public: Path, blockers: list[str]) -> dict[st
         "valid_receiver_epochs": len(valid),
         "invalid_receiver_epochs": len(invalid),
         "unknown_receiver_epochs": len(unknown),
+        "usable_receiver_epochs": len(usable),
+        "impaired_receiver_epochs": len(impaired),
         "attempted_path_epochs": len(epoch_rows),
         "attempted_dual_epochs": len(joint_rows),
         "valid_dual_epochs": len(dual_valid),
+        "usable_dual_epochs": dual_usable,
+        "simultaneous_usable_fraction": (dual_usable / len(dual_valid) if dual_valid else None),
         "gps_valid_fixes": len(gps_valid),
         "gps_samples": len(gps_rows),
+        "road_gps_ready": gps_quality["road_ready"],
+        "gps_valid_fix_rate": gps_quality["valid_fix_rate"],
+        "gps_max_gap_s": gps_quality["max_gap_s"],
         "gps_required_for_stationary_gate": False,
         "gps_limitation": "GPS_UNAVAILABLE_OR_NO_FIX" if gps_rows and not gps_valid else None,
         "telemetry_ok_samples": {path: len(rows) for path, rows in telemetry_ok.items()},
         "telemetry_samples": {path: len(rows) for path, rows in path_rows.items()},
+        "telemetry_metrics": telemetry,
+        "ping": ping,
+        "qualified_port_pairs": qualified_port_pairs,
+        "preflight_attempts": preflight_rows,
+        "egress_isolation_ok": egress_ok,
+        "device_config_fingerprint": device_config_fingerprint(path_rows, state),
         "blockers": blockers,
         "traffic_phases": traffic_phases,
         "orphaned_processes": orphaned or [],
@@ -1232,6 +1490,101 @@ def first_blocker(
     return "GATE_CRITERIA_NOT_MET"
 
 
+def count_dual_usable(epoch_rows: list[dict[str, Any]]) -> int:
+    by_epoch: dict[str, dict[str, dict[str, Any]]] = {}
+    for row in epoch_rows:
+        epoch = str(row.get("epoch_id"))
+        path = str(row.get("path"))
+        by_epoch.setdefault(epoch, {})[path] = row
+    count = 0
+    for paths in by_epoch.values():
+        if (
+            paths.get("path-a", {}).get("quality") == "USABLE_DELIVERY"
+            and paths.get("path-b", {}).get("quality") == "USABLE_DELIVERY"
+        ):
+            count += 1
+    return count
+
+
+def gps_readiness(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    valid = [row for row in rows if row.get("valid")]
+    rate = len(valid) / len(rows) if rows else 0.0
+    gaps = []
+    previous: float | None = None
+    for row in valid:
+        mono = row.get("sample_completed_mono") or row.get("sample_started_mono")
+        if isinstance(mono, int | float):
+            if previous is not None:
+                gaps.append(float(mono) - previous)
+            previous = float(mono)
+    max_gap = max(gaps) if gaps else None
+    span = (
+        float(valid[-1].get("sample_completed_mono") or 0)
+        - float(valid[0].get("sample_completed_mono") or 0)
+        if len(valid) >= 2
+        else 0.0
+    )
+    return {
+        "road_ready": bool(rows)
+        and rate >= 0.95
+        and span >= 300.0
+        and (max_gap is None or max_gap <= 3.0),
+        "valid_fix_rate": rate,
+        "max_gap_s": max_gap,
+        "valid_span_s": span,
+    }
+
+
+def telemetry_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    gaps = []
+    boot_ids = {row.get("boot_id") for row in rows if row.get("boot_id")}
+    registration_outages = count_false_runs(rows, "registered")
+    data_outages = count_false_runs(rows, "data_connected")
+    address_outages = count_false_runs(rows, "selected_mobile_ipv4_present")
+    route_outages = count_false_runs(rows, "default_route_present")
+    previous: float | None = None
+    for row in rows:
+        mono = row.get("sample_completed_mono") or row.get("sample_started_mono")
+        if isinstance(mono, int | float):
+            if previous is not None:
+                gaps.append(float(mono) - previous)
+            previous = float(mono)
+    return {
+        "samples": len(rows),
+        "max_gap_s": max(gaps) if gaps else None,
+        "boot_id_changes": max(0, len(boot_ids) - 1),
+        "registration_outage_samples": registration_outages,
+        "data_outage_samples": data_outages,
+        "address_outage_samples": address_outages,
+        "route_outage_samples": route_outages,
+    }
+
+
+def count_false_runs(rows: list[dict[str, Any]], key: str) -> int:
+    return sum(1 for row in rows if row.get(key) is False)
+
+
+def device_config_fingerprint(
+    path_rows: dict[str, list[dict[str, Any]]],
+    state: dict[str, Any],
+) -> str:
+    first_rows = {path: rows[0] for path, rows in path_rows.items() if rows}
+    public_identity = {
+        path: {
+            "boot_id_hash": rutx12.pseudonym("boot", row.get("boot_id")),
+            "operator": row.get("operator"),
+            "rat": row.get("rat"),
+            "primary_band": row.get("primary_band"),
+            "interface": row.get("interface"),
+            "device": row.get("device"),
+        }
+        for path, row in first_rows.items()
+    }
+    return rutx12.stable_hash(
+        {"identity": public_identity, "qualified_port_pairs": state.get("qualified_port_pairs")}
+    )
+
+
 def raw_phase_durations(runtime: Path) -> dict[str, float | None]:
     events = rutx12.load_jsonl(runtime / "events.jsonl")
     by_type = {str(row.get("type")): row for row in events if isinstance(row, dict)}
@@ -1268,6 +1621,7 @@ def write_public_manifest(runtime: Path, public: Path) -> None:
         "pinned_base_commit",
         "test_code_commit",
         "dirty_state_digest",
+        "gate_fingerprint",
         "traffic",
     }
     write_json(public / "manifest.json", {key: manifest[key] for key in allowed if key in manifest})
@@ -1298,11 +1652,17 @@ def write_report(public: Path, summary: dict[str, Any]) -> None:
         f"Receiver evidence: {summary['valid_dual_epochs']}/{attempted} ({percent:.1f}%)",
         f"GPS evidence: {summary['gps_valid_fixes']}/{summary['gps_samples']}",
         "",
-        "Path A: see derived metrics; unavailable state remains null.",
-        "Path B: see derived metrics; unavailable state remains null.",
-        "Joint behavior: simultaneous usable windows are derived only from raw receiver evidence.",
+        "Path A: delivery, RTT, outage and state continuity are derived only from raw ledgers.",
+        "Path B: delivery, RTT, outage and state continuity are derived only from raw ledgers.",
+        "Joint behavior: simultaneous usable windows are derived only from structurally "
+        "valid receiver evidence.",
+        f"Receiver quality: {summary['usable_receiver_epochs']} usable path epochs, "
+        f"{summary['impaired_receiver_epochs']} impaired path epochs.",
+        f"Port preflight: {len(summary.get('qualified_port_pairs') or [])} qualified pairs; "
+        f"RB4011 egress isolation ok: {summary.get('egress_isolation_ok')}.",
         f"GPS limitation: {summary.get('gps_limitation') or 'none'}; "
-        "GPS is not a stationary indoor gate blocker.",
+        "GPS is not a stationary indoor gate blocker, but road start requires five "
+        "outdoor minutes.",
         "",
         "Comparison status: NOT A METHOD-MATCHED LTAP COMPARISON.",
         "This is fixed-rate iPerf evidence, not GCC, encoded video, one-way video latency, "
@@ -1325,6 +1685,16 @@ def verify_session(runtime: Path, public: Path) -> list[str]:
     state = read_json(runtime / "STATE.json", {})
     if state.get("state") not in {"READY_FOR_ROAD", "BLOCKED_STATIONARY_GATE"}:
         problems.append("session state is not finalized")
+    if state.get("state") == "READY_FOR_ROAD" and not summary.get("gate_passed"):
+        problems.append("state/report consistency failure: READY_FOR_ROAD without gate_passed")
+    if (
+        summary.get("gate_passed")
+        and summary.get("ready_line") != "READY FOR RUTX12 MOVING TEST: YES"
+    ):
+        problems.append("state/report consistency failure: gate_passed without READY YES")
+    report = public / "report.md"
+    if report.exists() and summary.get("ready_line") not in report.read_text(encoding="utf-8"):
+        problems.append("state/report consistency failure: ready line missing from report")
     return problems
 
 
@@ -1362,6 +1732,9 @@ def main() -> int:
     load_stop.add_argument("--post-idle", type=int, default=300)
     load_stop.set_defaults(func=load_stop_cmd)
     sub.add_parser("stop").set_defaults(func=stop_cmd)
+    supervise = sub.add_parser("supervise-road")
+    supervise.add_argument("--session-id", required=True)
+    supervise.set_defaults(func=supervise_road_cmd)
     verify = sub.add_parser("verify")
     verify.add_argument("--session-id", required=True)
     verify.set_defaults(func=verify_cmd)

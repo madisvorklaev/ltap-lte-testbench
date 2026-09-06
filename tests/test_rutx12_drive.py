@@ -293,6 +293,86 @@ def test_receiver_evidence_rejects_missing_loss_and_short_output() -> None:
     assert "iperf duration shorter than required 10-second window" in short["problems"]
 
 
+def test_structurally_valid_low_quality_receiver_is_impaired_not_invalid() -> None:
+    argv = rutx12.build_iperf_argv(rutx12.SERVER_IPV4, 5201, rutx12.SOURCE_A)
+    payload = json.dumps(
+        {
+            "end": {
+                "sum_sent": {"bits_per_second": 5_000_000},
+                "sum_received": {
+                    "sender": False,
+                    "seconds": 10.0,
+                    "bits_per_second": 3_800_000,
+                    "lost_packets": 600,
+                    "packets": 4200,
+                    "lost_percent": 14.285,
+                    "jitter_ms": 45.0,
+                },
+            }
+        }
+    )
+    evidence = rutx12.validate_receiver_evidence(argv, 0, 10.0, payload)
+    assert evidence["valid"] is True
+    assert evidence["classification"] == "VALID_DELIVERY"
+    assert evidence["quality"] == "IMPAIRED_DELIVERY"
+
+
+def test_cross_egress_structurally_invalidates_joint_epoch() -> None:
+    valid = {"classification": "VALID_DELIVERY", "quality": "USABLE_DELIVERY"}
+    assert (
+        rutx12.classify_epoch(valid, valid, skew_s=0.1, cross_egress=True)
+        == "INFRASTRUCTURE_INVALID"
+    )
+
+
+def test_road_start_requires_outdoor_gps_ready_even_after_passed_gate(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    monkeypatch.setattr(worker, "ROOT", tmp_path / "runtime")
+    monkeypatch.setattr(worker, "PUBLIC_ROOT", tmp_path / "public")
+    monkeypatch.setattr(worker, "ACTIVE", tmp_path / "runtime" / "ACTIVE_SESSION.json")
+    monkeypatch.setattr(worker, "LOCK", tmp_path / "runtime" / "ACTIVE_SESSION.lock")
+    sid = "gate"
+    runtime = tmp_path / "runtime" / sid
+    public = tmp_path / "public" / sid
+    runtime.mkdir(parents=True)
+    public.mkdir(parents=True)
+    worker.write_json(runtime / "STATE.json", {"state": "READY_FOR_ROAD"})
+    worker.write_json(
+        runtime / "manifest.json",
+        {"gate_fingerprint": "mismatch-is-not-reached", "traffic": {}},
+    )
+    worker.write_json(
+        public / "summary.json",
+        {
+            "gate_passed": True,
+            "ready_line": "READY FOR RUTX12 MOVING TEST: YES",
+            "attempted_dual_epochs": 1,
+            "road_gps_ready": False,
+        },
+    )
+    (public / "report.md").write_text("READY FOR RUTX12 MOVING TEST: YES\n", encoding="utf-8")
+    rutx12.write_checksums(runtime)
+    rutx12.write_checksums(public)
+    args = type(
+        "Args",
+        (),
+        {
+            "gate_session_id": sid,
+            "departure_authorized_by": "Madis",
+            "name": "road",
+            "route_id": "route",
+            "direction": "CW",
+        },
+    )()
+    try:
+        worker.start_cmd(args)
+    except SystemExit as exc:
+        assert "five outdoor minutes" in str(exc)
+    else:
+        raise AssertionError("road start bypassed missing outdoor GPS proof")
+
+
 def test_checksum_lifecycle_detects_post_hash_mutation(tmp_path: Path) -> None:
     (tmp_path / "STATE.json").write_text('{"state":"READY_FOR_ROAD"}\n', encoding="utf-8")
     rutx12.write_checksums(tmp_path)
@@ -379,6 +459,18 @@ def test_indoor_gps_no_fix_is_not_stationary_gate_blocker(tmp_path: Path) -> Non
     runtime.mkdir(parents=True)
     public.mkdir(parents=True)
     worker.write_json(runtime / "STATE.json", {"state": "ANALYZING"})
+    worker.write_json(
+        runtime / "preflight-attempts.json",
+        [
+            {"ports": [5201, 5202], "orientation": "a-b", "passed": True},
+            {"ports": [5201, 5202], "orientation": "b-a", "passed": True},
+            {"ports": [5203, 5204], "orientation": "a-b", "passed": True},
+            {"ports": [5203, 5204], "orientation": "b-a", "passed": True},
+        ],
+    )
+    state = worker.read_json(runtime / "STATE.json", {})
+    state["qualified_port_pairs"] = [[5201, 5202], [5203, 5204]]
+    worker.write_json(runtime / "STATE.json", state)
     for path in ("rut-a", "rut-b"):
         for idx in range(20):
             rutx12.append_jsonl(
@@ -397,7 +489,11 @@ def test_indoor_gps_no_fix_is_not_stationary_gate_blocker(tmp_path: Path) -> Non
     for idx in range(10):
         rutx12.append_jsonl(
             runtime / "traffic" / "joint-epochs.jsonl",
-            {"epoch_id": idx, "joint_classification": "VALID_DELIVERY"},
+            {
+                "epoch_id": idx,
+                "joint_classification": "VALID_DELIVERY",
+                "egress_isolation": {"observed": True, "cross_egress": False},
+            },
         )
         for path in ("path-a", "path-b"):
             rutx12.append_jsonl(
