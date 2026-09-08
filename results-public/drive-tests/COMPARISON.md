@@ -1,8 +1,12 @@
 # Drive Test Comparison
 
-Latest: drive-20260814-223317-seedri-smarten-seedri-cake5m-dual6m
+Latest: drive-20260908-190452-auto-dual-6m
 
 See per-session REPORT.md files for quick summaries.
+
+## 2026-09-08 AUTO Dual 6M
+
+`drive-20260908-190452-auto-dual-6m` completed with `V2_CONTINUOUS_TIMELINE` resolution. GPS produced no valid fixes. Both paths were classified impaired for every timeline second under normal and strict criteria, so this run is useful as a failure/impairment case but not as a route-correlated GPS drive.
 
 ## CAKE 5M vs PFIFO Reference
 

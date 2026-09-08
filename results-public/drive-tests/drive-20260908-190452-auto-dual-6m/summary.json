@@ -1,0 +1,31 @@
+{
+  "skill": "elmo-lte-drive-test",
+  "skill_version": "2.0",
+  "resolution": "V2_CONTINUOUS_TIMELINE",
+  "session_id": "drive-20260908-190452-auto-dual-6m",
+  "timeline_rows": 1407,
+  "gps_valid_fixes": 0,
+  "lte1_samples": 1345,
+  "lte2_samples": 1345,
+  "ping_lte1_samples": 2804,
+  "ping_lte2_samples": 2731,
+  "traffic_loss_resolution_s": 10,
+  "diversity_normal": {
+    "both_good": 0,
+    "elisa_impaired_telia_good": 0,
+    "telia_impaired_elisa_good": 0,
+    "both_impaired": 1407,
+    "longest_both_impaired_interval_s": 1407,
+    "percentage_with_at_least_one_good_path": 0.0,
+    "criteria": "normal"
+  },
+  "diversity_strict": {
+    "both_good": 0,
+    "elisa_impaired_telia_good": 0,
+    "telia_impaired_elisa_good": 0,
+    "both_impaired": 1407,
+    "longest_both_impaired_interval_s": 1407,
+    "percentage_with_at_least_one_good_path": 0.0,
+    "criteria": "strict"
+  }
+}
